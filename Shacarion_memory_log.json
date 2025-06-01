@@ -1,0 +1,157 @@
+[
+    {
+        "timestamp": "2025-06-01 04:17:03",
+        "question": "modes",
+        "response": "Viewed modes and entered mode selector"
+    },
+    {
+        "timestamp": "2025-06-01 04:17:06",
+        "question": "Selected mode: 1",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:17:09",
+        "question": "exit",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:17:09",
+        "question": "exit",
+        "response": "Checked name recognition"
+    },
+    {
+        "timestamp": "2025-06-01 04:17:11",
+        "question": "Selected mode: 2",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:17:18",
+        "question": "3829 * 4832",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:17:19",
+        "question": "3829 * 4832",
+        "response": "Interpretation:\n3829\u00d74832\n\nFinal Result:\n18501728"
+    },
+    {
+        "timestamp": "2025-06-01 04:17:29",
+        "question": "Selected mode: 2",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:17:38",
+        "question": "427892 * 843924382",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:17:39",
+        "question": "427892 * 843924382",
+        "response": "Interpretation:\n427892\u00d7843924382\n\nFinal Result:\n361108491662744"
+    },
+    {
+        "timestamp": "2025-06-01 04:17:42",
+        "question": "Selected mode: 2",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:17:49",
+        "question": "932 * 38910",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:17:49",
+        "question": "932 * 38910",
+        "response": "Interpretation:\n932\u00d738910\n\nFinal Result:\n36264120"
+    },
+    {
+        "timestamp": "2025-06-01 04:17:53",
+        "question": "Exited mode selector",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:17:58",
+        "question": "mdoes",
+        "response": "Sorry, please type 'modes' to open the mode selector or 'bye' to exit."
+    },
+    {
+        "timestamp": "2025-06-01 04:18:00",
+        "question": "modes",
+        "response": "Viewed modes and entered mode selector"
+    },
+    {
+        "timestamp": "2025-06-01 04:18:09",
+        "question": "Selected mode: 0",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:18:11",
+        "question": "",
+        "response": "Sorry, please type 'modes' to open the mode selector or 'bye' to exit."
+    },
+    {
+        "timestamp": "2025-06-01 04:18:13",
+        "question": "modes",
+        "response": "Viewed modes and entered mode selector"
+    },
+    {
+        "timestamp": "2025-06-01 04:18:23",
+        "question": "Selected mode: 5",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:18:25",
+        "question": "Over the last two weeks, how often have you felt down, depressed, or hopeless?",
+        "response": 1
+    },
+    {
+        "timestamp": "2025-06-01 04:18:25",
+        "question": "Have you had little interest or pleasure in doing things?",
+        "response": 1
+    },
+    {
+        "timestamp": "2025-06-01 04:18:25",
+        "question": "Have you ever felt like hurting yourself or others?",
+        "response": 1
+    },
+    {
+        "timestamp": "2025-06-01 04:18:25",
+        "question": "Does your life ever feel as if it doesn't matter?",
+        "response": 1
+    },
+    {
+        "timestamp": "2025-06-01 04:18:26",
+        "question": "Selected mode: 1",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:18:26",
+        "question": "",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:18:26",
+        "question": "",
+        "response": "Checked name recognition"
+    },
+    {
+        "timestamp": "2025-06-01 04:18:53",
+        "question": "Selected mode: 1",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:19:00",
+        "question": "Shacarion Wrencher",
+        "response": ""
+    },
+    {
+        "timestamp": "2025-06-01 04:19:00",
+        "question": "Shacarion Wrencher",
+        "response": "Checked name recognition"
+    },
+    {
+        "timestamp": "2025-06-01 04:19:08",
+        "question": "Selected mode: modes",
+        "response": ""
+    }
+]

@@ -31,11 +31,12 @@ This AI Companion is built to help humans and AI co-exist in a supportive, ethic
 
 ## 🖥️ How to Run
 
-1. Clone the repo
+1. Clone the repo  (```bash git clone https://github.com/yourusername/V1-chatbot.gitcd V1-chatbot)
 2. Navigate to the project directory
 3. Install required dependencies (see `requirements.txt`)
-4. Run `main.py --cli`(for terminal based version)
-5. Introduce yourself and enter 'modes' to begin!
+4. pip install -r requirements.txt
+5. Run `main.py --cli`(for terminal based version)
+6. Introduce yourself and enter 'modes' to begin!
 
 ```bash
 git clone https://github.com/your-username/V1-chatbot.git

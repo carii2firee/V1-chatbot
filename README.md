@@ -34,7 +34,7 @@ This AI Companion is built to help humans and AI co-exist in a supportive, ethic
 1. Clone the repo
 2. Navigate to the project directory
 3. Install required dependencies (see `requirements.txt`)
-4. Run `main.py`
+4. Run `main.py --cli`(for terminal based version)
 5. Introduce yourself and enter 'modes' to begin!
 
 ```bash

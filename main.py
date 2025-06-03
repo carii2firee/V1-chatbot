@@ -83,7 +83,7 @@ def handle_math_processing(user_name, memory_logger):
 
 def handle_book_recommendation(user_name, memory_logger):
     print("\n=== Book Recommendation and Storytelling Experience ===")
-    topic = input("Enter a topic or genre (e.g., fantasy, science, adventure): ").strip()
+    topic = input("Enter a topic or genre (e.g., fantasy, science, adventure, romance, comedy, action, psychological horror): ").strip()
     memory_logger.log_interaction(topic, "")
     if youtube_api_key:
         book_and_storytelling_experience(youtube_api_key)
@@ -93,43 +93,70 @@ def handle_book_recommendation(user_name, memory_logger):
 
 
 def handle_depression_screening(user_name, memory_logger):
-    print("\n=== Depression Screening ===")
+    print("\n=== PHQ-9 Depression Screening ===")
+    
     questions = [
-        "Over the last two weeks, how often have you felt down, depressed, or hopeless?",
-        "Have you had little interest or pleasure in doing things?",
-        "Have you ever felt like hurting yourself or others?",
-        "Does your life ever feel as if it doesn't matter?",
+        "Little interest or pleasure in doing things?",
+        "Feeling down, depressed, or hopeless?",
+        "Trouble falling or staying asleep, or sleeping too much?",
+        "Feeling tired or having little energy?",
+        "Poor appetite or overeating?",
+        "Feeling bad about yourself — or that you are a failure or have let yourself or your family down?",
+        "Trouble concentrating on things, such as reading the newspaper or watching television?",
+        "Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving a lot more than usual?",
+        "Thoughts that you would be better off dead or of hurting yourself in some way?"
     ]
 
     options_text = (
-        "Please answer each question with:\n"
-        "1 = Very little or rarely\n"
-        "2 = Not that much\n"
-        "3 = This happens a lot\n"
+        "\nPlease answer each question based on the past 2 weeks:\n"
+        "0 = Not at all\n"
+        "1 = Several days\n"
+        "2 = More than half the days\n"
+        "3 = Nearly every day"
     )
     print(options_text)
 
     total_score = 0
-    for question in questions:
+    responses = []
+
+    for idx, question in enumerate(questions, 1):
         while True:
-            answer = input(f"{question}\nYour answer (1-3): ").strip()
-            if answer in ('1', '2', '3'):
-                answer_int = int(answer)
-                total_score += answer_int
-                memory_logger.log_interaction(question, answer_int)
-                break
-            else:
-                print("Invalid input. Please enter 1, 2, or 3.")
+            try:
+                answer = input(f"\n{idx}. Over the last 2 weeks, how often have you experienced the following:\n{question}\nYour answer (0-3): ").strip()
+                if answer in ('0', '1', '2', '3'):
+                    answer_int = int(answer)
+                    responses.append(answer_int)
+                    total_score += answer_int
+                    memory_logger.log_interaction(question, answer_int)
+                    break
+                else:
+                    print("Invalid input. Please enter a number from 0 to 3.")
+            except Exception as e:
+                print(f"An error occurred: {e}")
 
     print("\n=== Screening Results ===")
-    if total_score <= 4:
-        print("It seems you are experiencing very little to mild symptoms. Keep taking care of yourself!")
-    elif 5 <= total_score <= 8:
-        print("You might be experiencing some moderate symptoms. It could help to talk with someone you trust.")
-    else:
-        print("Your answers suggest more severe symptoms. Please consider reaching out to a mental health professional for support.")
+    print(f"Total Score: {total_score} out of 27")
 
-    print("\nRemember, this screening is not a diagnosis. If you’re struggling, don’t hesitate to seek help.")
+    # PHQ-9 score interpretation
+    if total_score <= 4:
+        severity = "Minimal depression"
+    elif 5 <= total_score <= 9:
+        severity = "Mild depression"
+    elif 10 <= total_score <= 14:
+        severity = "Moderate depression"
+    elif 15 <= total_score <= 19:
+        severity = "Moderately severe depression"
+    else:
+        severity = "Severe depression"
+
+    print(f"Depression Severity: {severity}")
+
+    # Safety check for question 9 (suicidal thoughts)
+    if responses[8] > 0:
+        print("\n!! Your response indicates thoughts of self-harm or suicide.")
+        print("Please consider talking to a mental health professional immediately or calling a helpline.")
+
+    print("\nThis screening is not a diagnosis. Please consult a professional for a full evaluation.")
 
 def handle_house_assistance(user_name, memory_logger):
     print("\n=== House Assistance ===")
@@ -499,14 +526,51 @@ def check_name(user_name):
 # ============= House Tidying Function (API Integration) =============
 def house_tidying(topic):
     tips = {
-        "cleaning": "Tip: Remember to take out the trash and do laundry. Oh, and one more thing: Check to see if there are dishes waiting for you. These are important tasks to maintain that cozy home feeling!",     
-        "energy": "Tip: Make sure to turn off or unplug any electricity appliances throughout your home.",
-        "security": "Tip: Install smart locks and motion-sensor lights for added security.",
-        "organization": "Tip: Label storage bins and use vertical shelving to maximize space.",
-        "automation": "Tip: Use a smart home hub to control lights and temperature efficiently."
-
+        "cleaning": [
+            "Start with a 10-minute tidy-up: Set a timer and focus on one room.",
+            "Break cleaning into zones: kitchen, bathroom, living areas, bedroom.",
+            "Keep a caddy with basic supplies (spray, cloths, gloves) in each bathroom.",
+            "Do one laundry load a day to avoid overwhelming piles.",
+            "Always clean as you go — especially in the kitchen to stay ahead of messes."
+        ],
+        "energy": [
+            "Unplug unused electronics — they still draw power in standby mode.",
+            "Switch to LED bulbs to reduce energy consumption.",
+            "Set your thermostat 1–2 degrees lower in winter and higher in summer to save energy.",
+            "Use natural light during the day whenever possible.",
+            "Install a smart power strip to manage multiple devices efficiently."
+        ],
+        "security": [
+            "Install motion-sensor lights at entrances and around the backyard.",
+            "Use a smart doorbell to monitor activity at your front door.",
+            "Keep bushes and trees trimmed to remove hiding spots near windows.",
+            "Lock windows and sliding doors at night and when away.",
+            "Create a daily routine to check locks and lights before bed."
+        ],
+        "organization": [
+            "Declutter one drawer or shelf a day — small steps build momentum.",
+            "Use clear bins so you can see what’s stored inside without opening everything.",
+            "Add hooks by the front door for keys, bags, and coats.",
+            "Label everything — it helps everyone in the household stay organized.",
+            "Use the ‘one in, one out’ rule: for every new item, donate or toss an old one."
+        ],
+        "automation": [
+            "Set routines with your smart assistant (e.g., ‘Good Morning’ to start lights and coffee).",
+            "Use smart plugs to schedule appliances like humidifiers or lamps.",
+            "Automate vacuuming with a robot vacuum — it saves time every day.",
+            "Enable geofencing so lights and thermostats adjust when you leave/arrive.",
+            "Use sensors to turn off lights in empty rooms automatically."
+        ]
     }
-    return tips.get(topic.lower(), "I can help with cleaning, energy saving, security, organization, or automation tips!")
+
+    topic_key = topic.lower()
+    if topic_key in tips:
+        print(f"\n=== {topic.capitalize()} Tips ===")
+        for i, tip in enumerate(tips[topic_key], 1):
+            print(f"{i}. {tip}")
+    else:
+        print("\nI happen to be very knowledgble in these specific styles so please ask away! ")
+        print("- Cleaning\n- Energy\n- Security\n- Organization\n- Automation")
 
 
 
@@ -753,18 +817,63 @@ def start_budget_tracking(user_name):
 
 # ============= Budget Advice Sub-System =============
 def generate_custom_response(question):
-    question = question.lower()
+    question = question.lower().strip()
 
-    if "save" in question or "goal" in question:
-        return "Start with a SMART goal (Specific, Measurable, Achievable, Relevant, Time-bound). Break it into weekly targets."
-    elif "track" in question or "habit" in question:
-        return "Use visual progress (charts or meters) and reward small milestones. This reinforces good habits."
-    elif "spending" in question:
-        return "List your top 3 spending categories and challenge yourself to reduce just one by 10% this week."
-    elif "debt" in question:
-        return "Tackle the smallest debt first (snowball method) or the highest interest one (avalanche method)."
+    if any(word in question for word in ["invest", "investment", "stocks", "portfolio"]):
+        return (
+            "Smart move thinking about investing. Before diving in, ask yourself: "
+            "Do I have an emergency fund set aside? Start with index funds or ETFs — they’re low-risk and great for beginners. "
+            "Remember, investing is a long-term game, not a get-rich-quick scheme."
+        )
+
+    elif any(word in question for word in ["save", "goal", "savings", "set aside"]):
+        return (
+            "Great! Start with a SMART goal — Specific, Measurable, Achievable, Relevant, Time-bound. "
+            "For example, instead of 'I want to save money', try 'I’ll save $50/week for 6 months to build a $1200 emergency fund.' "
+            "Clarity fuels discipline."
+        )
+
+    elif any(word in question for word in ["track", "habit", "monitor", "routine"]):
+        return (
+            "Tracking is key. Start small: list your expenses daily for just one week. "
+            "Patterns will emerge. Pair that with a visual tracker — like a habit app or spreadsheet. "
+            "The goal? Make progress visible and addictive."
+        )
+
+    elif any(word in question for word in ["spending", "expenses", "bills", "cost"]):
+        return (
+            "Challenge yourself: write down your top 3 spending categories. "
+            "Then cut back just 10% in one of them this week. No shame — just insight. "
+            "Spend with intention, not impulse."
+        )
+
+    elif any(word in question for word in ["debt", "owe", "loan", "credit card"]):
+        return (
+            "Debt can feel heavy, but there’s a path out. Use the snowball method (smallest balance first) for momentum, "
+            "or the avalanche method (highest interest first) to save more long term. "
+            "Either way — pay *more than the minimum*. Every dollar over counts more than you think."
+        )
+
+    elif any(word in question for word in ["budget", "plan", "allocate", "money management"]):
+        return (
+            "Think of your budget like a map — it tells your money where to go instead of wondering where it went. "
+            "Try the 50/30/20 rule: 50% needs, 30% wants, 20% savings/debt. "
+            "Tweak it to fit your life — the point is to be *intentional* with every dollar."
+        )
+
+    elif any(word in question for word in ["emergency", "rainy day", "unexpected", "backup"]):
+        return (
+            "Emergencies happen. That’s why even setting aside $500 is powerful. "
+            "It gives you breathing room — and peace of mind. Start small: automate $10–$20 weekly into a separate account. "
+            "Your future self will thank you."
+        )
+
     else:
-        return "Stuck? Try tracking every dollar for a week. You'll be surprised where your money goes!"
+        return (
+            "Good question. When in doubt, do this: for the next 7 days, write down *every* dollar you spend. "
+            "Don’t judge it, just log it. Awareness is the first step to control. "
+            "You don’t need more money, you need a stricter mindset with how your money is being spent. 💪"
+        )
 
 # ============= MAIN EXECUTION =============
 def main():
@@ -820,87 +929,149 @@ def main():
 
 
 # ============= Book + Storytelling User Experience ==============
+# --- Book Lookup ---
 def get_book_from_openlibrary(query="science fiction"):
-    url = f"https://openlibrary.org/search.json?q={query}&language=eng&has_fulltext=true"
+    """
+    Fetches a book from Open Library based on the given query.
+    """
+    base_url = "https://openlibrary.org"
+    search_url = f"{base_url}/search.json?q={query}&language=eng&has_fulltext=true"
+
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(search_url, timeout=10)
         response.raise_for_status()
         data = response.json()
+
         if not data["docs"]:
-            return f"Sorry, I couldn't find any books for '{query}'. Try another topic?"
+            return f"📚 Sorry, I couldn't find any books for '{query}'. Try another topic?"
+
         book = data["docs"][0]
         title = book.get("title", "Unknown Title")
         author = book.get("author_name", ["Unknown Author"])[0]
         ol_id = book.get("key", "")
-        book_url = f"https://openlibrary.org{ol_id}"
+        book_url = f"{base_url}{ol_id}"
+
         return f"📘 **{title}** by {author}\n🔗 Read or borrow here: {book_url}"
+
     except requests.exceptions.RequestException as e:
-        return f"Error: Couldn't connect to Open Library API. Details: {str(e)}"
+        return f"⚠️ Error: Couldn't connect to Open Library. Details: {str(e)}"
 
-def get_book_and_story_video(topic, use_openlibrary=True, max_videos=5):
-    # Use Open Library API if requested
-    if use_openlibrary:
-        book_info = get_book_from_openlibrary(topic)
-    else:
-        book_info = f"Here is a recommended book on {topic}."
 
-    video_list = [
-        ("Video 1 Chronicles of Narnia", "https://www.youtube.com/watch?v=smx1sn_BfaA"), 
-        ("Video 2 The Hobbit", "https://www.youtube.com/watch?v=fFU3_vohIOs"),
-        ("Video 3 Harry Potter","https://www.youtube.com/watch?v=FsByOCWSkvM"),
-        ("Video 4 The Lord of the Rings", "https://www.youtube.com/watch?v=V75dMMIW2B4"),
-        ("Video 5 Mrs Peregrine's Home for Peculiar Children","https://www.youtube.com/watch?v=2rhnt5rWgOM"),
-    ]
+def get_video_lists():
+    """
+    Returns the dictionary of video lists by genre.
+    """
+    return {
+        "fantasy": [
+            ("Chronicles of Narnia", "https://www.youtube.com/watch?v=smx1sn_BfaA"),
+            ("The Hobbit", "https://www.youtube.com/watch?v=fFU3_vohIOs"),
+            ("Harry Potter", "https://www.youtube.com/watch?v=FsByOCWSkvM"),
+            ("The Lord of the Rings", "https://www.youtube.com/watch?v=V75dMMIW2B4"),
+            ("Miss Peregrine's Home for Peculiar Children", "https://www.youtube.com/watch?v=2rhnt5rWgOM"),
+            ("Forsaken Prince: Kilenya Chronicles Book One", "https://www.youtube.com/watch?v=gYohVoi_m_A&list=PL6kepgWUZXmp-el3a0z0IoqDhUDn4kyUg"),
+            ("Ember Gods: Kilenya Chronicles Book Two", "https://www.youtube.com/watch?v=OrQugg3zYAI"),
+            ("The Eyes of the Dragon by Stephen King", "https://www.youtube.com/watch?v=ycxRUnmG5ZE"),
+        ],
+        "science": [
+            ("A Voyage to Arcturus by David Lindsay", "https://www.youtube.com/watch?v=90hLehiXM8g"),
+            ("Supermind by Laurence M. Janifer & Randall Garrett", "https://www.youtube.com/watch?v=20of1yvGh5Y"),
+            ("The Last Question", "https://www.youtube.com/watch?v=h4M3nL_Vb9w"),
+            ("Pacific Rim by Travis Beacham", "https://www.youtube.com/watch?v=0IxQ4KLmcA0"),
+            ("Hyperion by Dan Simmons", "https://www.youtube.com/watch?v=0uEBG98-bcY"),
+            ("Worlds Within by Rog Phillips", "https://www.youtube.com/watch?v=NZKWTDEzRL4"),
+            ("The Alchemy of Happiness by Al-Ghazali", "https://www.youtube.com/watch?v=0Ox_XcrBO0c"),
+        ],
+        "adventure": [
+            ("The maze runner by Robert Daschner", "https://www.youtube.com/watch?v=sKJ1ktsVq-k&list=PLq5SGWgwX4FZt88QFxL_IDtvJd46Mtwgy"),
+            ("The Dark Tower: The Gunslinger by Stephen King", "https://www.youtube.com/watch?v=ybvVLVaGiUM"),
+            ("The Dark Tower: The Drawing of the Three by Stephen King", "https://www.youtube.com/watch?v=CWt5DFbGSyI"),
+            ("The Dark Tower: The Waste Lands by Stephen King", "https://www.youtube.com/watch?v=vl8UK2wwBg0"),
+            ("The Dark Tower: Wizard and Glass by Stephen King", "https://www.youtube.com/watch?v=Dy6kqY45csc"),
+            ("The Dark Tower: The Dark Tower by Stephen King", "https://www.youtube.com/watch?v=cIkq1dKqfL0"),
+        ],
+        "romance": [
+            ("Falling for the Movie Star by Jean Oram", "https://www.youtube.com/watch?v=rvUqJWb6FJs"),
+            ("Gone With The Wind by Margaret Mitchell", "https://www.youtube.com/watch?v=pI__6gL21Co"),
+            ("To all the boys I have loved before by Jenny Han ", "https://www.youtube.com/watch?v=Ac_fbiCvWDk, or https://www.youtube.com/watch?v=qdEcvQ5P0g4"),
+            ("Pride and Prejudice by Jane Austen", "https://www.youtube.com/watch?v=eVHu5-n69qQ"),
+            ("Outlander by Diana Gabaldon", "https://www.youtube.com/watch?v=cY-L5pqCCrU"),
+            ("A Walk to Remember by Nicholas Sparks", "https://www.youtube.com/watch?v=ekX1c-y6xJQ"),
+            ("The Fault in Our Stars by John Green", "https://www.youtube.com/watch?v=ht94ebGbScs"),
+            ("The Time Traveler’s Wife by Audrey Niffenegger", "https://www.youtube.com/watch?v=uZNRMHAWl9w"),
+        ],
+        "comedy": [
+            ("under the dome by Stephen King", "https://www.youtube.com/watch?v=UvYyzTQVy4w"),
+            ("Oliver twist by Charles Dickens", "https://www.youtube.com/watch?v=cUVyaRJhKwc"),
+            ("UNCLE toms Cabin by Harriet Beecher Stowe", "https://www.youtube.com/watch?v=hJUr-vS29dU"),
+            ("Good Omens by Neil Gaiman & Terry Pratchett", "https://www.youtube.com/watch?v=h2GPXnANyGk"),
+            ("The Hitchhiker's Guide to the Galaxy by Douglas Adams", "https://www.youtube.com/watch?v=33WOUNcAas4"),
+            ("Bossypants by Tina Fey", "https://www.youtube.com/watch?v=Gzs5-C9Hu14"),
+            ("Yes Please by Amy Poehler", "https://www.youtube.com/watch?v=IqVcHwKhr1Y"),
+        ],
+    }
+
+
+def get_book_and_story_video(topic, max_videos=5):
+    """
+    Returns a book recommendation and up to `max_videos` related videos for the genre.
+    """
+    book_info = get_book_from_openlibrary(topic.lower())
+    video_lists = get_video_lists()
+    video_list = [item for item in video_lists.get(topic.lower(), []) if item[0] and item[1]]
     return book_info, video_list[:max_videos]
 
-def book_and_storytelling_experience(youtube_api_key=None):
-    print("\nWould you like to:")
-    print("1. Discover some classic books guaranteed to bring you excitement.")
-    print("2. Hear audiobooks from some classic books recommended by yours truly!")
-    print("3. Do both (recommended read & watch experience!)")
-    choice = input("Enter 1, 2, or 3: ").strip()
-
-    if choice not in ["1", "2", "3"]:
-        print("Invalid option. Please choose 1, 2, or 3.")
-        return
-
-    topic = input("Enter a topic or genre (e.g., fantasy, science, adventure): ")
-
-    # Always use Open Library
-    book_info, video_list = get_book_and_story_video(topic, use_openlibrary=True, max_videos=5)
-
-    if choice == "1":
-        print(f"\n📚 Book Recommendation:\n{book_info}\n")
-    elif choice == "2":
-        run_video_loop(video_list)
-    elif choice == "3":
-        print(f"\n📚 Book Recommendation:\n{book_info}\n")
-        run_video_loop(video_list)
 
 def run_video_loop(video_list):
+    """
+    Iterates through the video list, letting the user move through or exit.
+    """
     print("\n🎥 Storytelling Videos:\n")
     current = 0
-    while True:
-        if current < len(video_list):
-            title, link = video_list[current]
-            print(f"🎥 Video {current + 1}: {title}\nWatch here: {link}\n")
-        else:
-            print("No more videos available.")
+    while current < len(video_list):
+        title, link = video_list[current]
+        print(f"🎬 Video {current + 1} of {len(video_list)}: {title}\n🔗 Watch here: {link}\n")
+        next_step = input("Type 'next' to continue or 'exit' to stop: ").strip().lower()
+        if next_step != "next":
+            print("👋 Exiting video loop.")
             break
+        current += 1
+    if current >= len(video_list):
+        print("🎉 Congratulations you've reached the end of the video list!")
 
-        next_step = input("Type 'next' to see another video, or 'exit' to quit: ").strip().lower()
-        if next_step == "next":
-            current += 1
-        elif next_step == "exit":
-            print("👋 I hope you come back to explore more interesting stories!")
-            break
+
+def book_and_storytelling_experience():
+    """
+    Interactive CLI for choosing a book, video, or both based on a genre.
+    """
+    print("\nChoose your literary journey:")
+    print("1. Discover a great book 📖")
+    print("2. Watch audiobooks or storytelling videos 🎧")
+    print("3. Get both reading & video experiences 💡")
+
+    choice = input("Enter 1, 2, or 3: ").strip()
+    if choice not in {"1", "2", "3"}:
+        print("❌ Invalid option. Please choose 1, 2, or 3.")
+        return
+
+    topic = input("\nEnter a topic or genre (e.g., fantasy, science, adventure, romance, comedy): ").strip().lower()
+    book_info, video_list = get_book_and_story_video(topic)
+
+    if choice == "1":
+        print(f"\n📚 Book Recommendation:\n{book_info}")
+    elif choice == "2":
+        if video_list:
+            run_video_loop(video_list)
         else:
-            print("Please type 'next' or 'exit'.")
-    
-    def run_flask():
-        app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+            print(f"😕 Sorry, no videos found for genre '{topic}'.")
+    elif choice == "3":
+        print(f"\n📚 Book Recommendation:\n{book_info}")
+        if video_list:
+            run_video_loop(video_list)
+        else:
+            print(f"😕 Sorry, no videos found for genre '{topic}'.")
+
 
 if __name__ == '__main__':
     if '--cli' in sys.argv:
-        main()  
+        main()
 

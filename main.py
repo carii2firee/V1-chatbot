@@ -9,7 +9,7 @@
 #- House tidying advice
 #- Budget tracking and advice
 #- Book recommendation and storytelling
-#- Casual chat system
+#- Casual chat + voice assistant GUI system
 #- Name recognition system
 #- Flask server for API extensions
 #- Language translation system

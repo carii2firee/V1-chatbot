@@ -34,6 +34,7 @@ from textblob import TextBlob # This is the light weight NLP for semantic memory
 
 import re
 import nltk
+import uuid
 import requests
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv

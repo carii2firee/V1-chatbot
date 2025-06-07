@@ -25,18 +25,17 @@ This AI Companion is built to help humans and AI co-exist in a supportive, ethic
 - 🧑‍💻 **User Recognition** – Stores and recalls names and conversation history
 - 🌍 **Language Translation Mode** – Multi-language support (early-stage)
 - 🧾 **Task Reminder Mode** – Persistent monthly task storage with gentle reminders
+- 👾 **GUI assistant** - Chat with the user using TTS(text to speech) based language
+- 💛 **Emotion-Aware Belief Engine** – Analyzes interactions for emotional tone and semantic meaning, reinforcing adaptive beliefs that shape AI responses over time
 - 🌐 **Flask API Integration** – Designed for web-based or mobile expansion
 
 ---
 
 ## 🖥️ How to Run
 
-1. Clone the repo  (```bash git clone https://github.com/yourusername/V1-chatbot.gitcd V1-chatbot)
-2. Navigate to the project directory
-3. Install required dependencies (see `requirements.txt`)
-4. pip install -r requirements.txt
-5. Run `main.py --cli`(for terminal based version)
-6. Introduce yourself and enter 'modes' to begin!
+1. Get the directory for the folder which is ("cd "C:\Users\carii\Downloads\voice_assistant folder")
+2. Type into the terminal 'py main.py --cli' to activate the mode successfully
+3. Introduce yourself to the AI companion and watch the magic unfold
 
 ```bash
 git clone https://github.com/your-username/V1-chatbot.git

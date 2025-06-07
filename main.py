@@ -13,6 +13,7 @@
 #- Name recognition system
 #- Flask server for API extensions
 #- Language translation system
+#- GUI interpase chet voice assitant with automatic reply system.
 #- Task reminder system
 
 
@@ -21,29 +22,49 @@
 #- Ensure .env file is in .gitignore to keep secrets safe.
 
 
-import nltk
-import random
-import requests
+
 import os
-from xml.etree import ElementTree as ET
-from flask import Flask, request, jsonify
+import sys
+import json
+import random
 import threading
-import wolframalpha
+from datetime import datetime
+from xml.etree import ElementTree as ET
+from textblob import TextBlob # This is the light weight NLP for semantic memory option integrated within my memory logger function.
+
+import re
+import nltk
+import requests
+from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from datetime import datetime
-import json
-import sys
-from datetime import datetime 
 from deep_translator import GoogleTranslator
 from googletrans import Translator
 from llama_cpp import Llama
+from sympy import init_printing
+from belief_system import BeliefModel
+
+from voice_gui_assistant import run_voice_assistant_gui
+
+
+from sympy import (
+    symbols, Eq, Symbol, S,
+    simplify, integrate, diff, solve, latex
+)
+from sympy.parsing.sympy_parser import (
+    parse_expr,
+    standard_transformations,
+    implicit_multiplication_application,
+    convert_xor
+)
+
 load_dotenv()
 datetime.now()
 
-
 youtube_api_key = os.getenv('YT_IFYKYK')
 WOLFRAM_API_KEY = os.getenv('WOLF_IFYKYK')
+
+
 # ======= Translate_text function =========
 def translate_text(text, target_lang):
     try:
@@ -51,7 +72,7 @@ def translate_text(text, target_lang):
         return translated
     except Exception as e:
         return f"Error: {e}"
-    
+
 
 # ======== Check if my API keys are functional =========
 
@@ -60,12 +81,10 @@ if youtube_api_key:
 else:
     print("❌ YouTube API key missing.")
 
-if WOLFRAM_API_KEY:
-    print("✅ Wolfram Alpha API key loaded.")
-else:
-    print("❌ Wolfram Alpha API key missing.")
+
 
 # ============ Handler functions =======
+# === Handle Name Recognition ===
 def handle_name_recognition(user_name, memory_logger):
     print("\n=== Name Recognition System ===")
     name = input("Enter a name to check: ").strip()
@@ -73,28 +92,96 @@ def handle_name_recognition(user_name, memory_logger):
     check_name(name)
     memory_logger.log_interaction(name, "Checked name recognition")
 
-def handle_math_processing(user_name, memory_logger):
-    print("\n=== Math Processing System ===")
-    question = input("Enter any math question: ").strip()
-    memory_logger.log_interaction(question, "")
-    result = handle_math_question(question)
-    print(f"Result: {result}")
-    memory_logger.log_interaction(question, result)
 
+# === Voice Assistant GUI Launcher ===
+def handle_voice_assistant_gui(user_name, memory_logger):
+    print("🪟 Launching the Voice Assistant GUI...")
+    memory_logger.log_interaction("Launched Voice Assistant GUI", "")
+    try:
+        run_voice_assistant_gui()
+    except Exception as e:
+        print(f"❌ An error occurred while running the GUI: {e}")
+        memory_logger.log_interaction("GUI error", str(e))
+    print("🪟 GUI closed. Returning to mode selector...")
+
+
+# === Math Processing ===
+def handle_math_processing(user_name, memory_logger):
+    print("=== Math Processing Mode ===")
+    print("Choose mode: 'simple' or 'advanced'")
+    print("Type 'back' anytime to exit or switch modes.\n")
+
+    while True:
+        mode = input("Select mode ('simple'/'advanced') or type 'exit' to leave the set mode.: ").strip().lower()
+
+        if mode == "exit":
+            print("📤 Exiting Math Mode...")
+            break
+
+        if mode not in ['simple', 'advanced']:
+            print("⚠️ Invalid mode. Please enter 'simple' or 'advanced'.")
+            continue
+
+        # Provide friendly reminder depending on mode
+        if mode == 'simple':
+            print("✅ Simple mode activated. Just enter basic math or algebra (e.g., 2x + 4 = 8)")
+        else:
+            print("✅ Advanced mode activated. Start with keywords like 'solve', 'integrate', or 'differentiate'")
+
+        # Loop for solving problems in the selected mode
+        while True:
+            question = input("➗ Math Input: ").strip()
+            if question.lower() == "back":
+                print("🔁 Switching modes...\n")
+                break  # go back to mode selection
+
+            # Process based on selected mode
+            if mode == 'simple':
+                result = handle_math_question_simple(question)
+            else:
+                result = handle_math_question_advanced(question)
+
+            print(f"\n🧠 Result:\n{result}\n")
+            memory_logger.log_interaction(f"Math Q: {question} (mode: {mode})", f"Math A: {result}")
+
+# === Book Recommendation ===
 def handle_book_recommendation(user_name, memory_logger):
     print("\n=== Book Recommendation and Storytelling Experience ===")
     topic = input("Enter a topic or genre (e.g., fantasy, science, adventure, romance, comedy, action, psychological horror): ").strip()
     memory_logger.log_interaction(topic, "")
     if youtube_api_key:
         book_and_storytelling_experience(youtube_api_key)
+
+    elif question.startswith("solve"):
+        expr_str = question.replace("solve", "").strip()
+
+        # Handle equations like "2x + 4 = 12"
+        if "=" in expr_str:
+            lhs, rhs = expr_str.split("=")
+            lhs_expr = parse_expr(lhs.strip(), transformations=transformations)
+            rhs_expr = parse_expr(rhs.strip(), transformations=transformations)
+            eq = lhs_expr - rhs_expr
+        else:
+            eq = parse_expr(expr_str, transformations=transformations)
+
+        sol = solve(eq, x)
+
+        response_parts += [
+            f"Interpretation:\nSolve `{expr_str}` for `x`",
+            f"Step-by-step:",
+            f"1. Rearranged equation: {eq} = 0",
+            f"2. Solve symbolically",
+            f"3. Solutions:\n{sol}"
+        ]
+
     else:
         print("❌ YouTube API key not found.")
         memory_logger.log_interaction(topic, "YouTube API key missing")
 
 
+# === Depression Screening ===
 def handle_depression_screening(user_name, memory_logger):
     print("\n=== PHQ-9 Depression Screening ===")
-    
     questions = [
         "Little interest or pleasure in doing things?",
         "Feeling down, depressed, or hopeless?",
@@ -106,13 +193,9 @@ def handle_depression_screening(user_name, memory_logger):
         "Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving a lot more than usual?",
         "Thoughts that you would be better off dead or of hurting yourself in some way?"
     ]
-
     options_text = (
         "\nPlease answer each question based on the past 2 weeks:\n"
-        "0 = Not at all\n"
-        "1 = Several days\n"
-        "2 = More than half the days\n"
-        "3 = Nearly every day"
+        "0 = Not at all\n1 = Several days\n2 = More than half the days\n3 = Nearly every day"
     )
     print(options_text)
 
@@ -122,12 +205,12 @@ def handle_depression_screening(user_name, memory_logger):
     for idx, question in enumerate(questions, 1):
         while True:
             try:
-                answer = input(f"\n{idx}. Over the last 2 weeks, how often have you experienced the following:\n{question}\nYour answer (0-3): ").strip()
+                answer = input(f"\n{idx}. {question}\nYour answer (0-3): ").strip()
                 if answer in ('0', '1', '2', '3'):
-                    answer_int = int(answer)
-                    responses.append(answer_int)
-                    total_score += answer_int
-                    memory_logger.log_interaction(question, answer_int)
+                    score = int(answer)
+                    responses.append(score)
+                    total_score += score
+                    memory_logger.log_interaction(question, score)
                     break
                 else:
                     print("Invalid input. Please enter a number from 0 to 3.")
@@ -137,7 +220,6 @@ def handle_depression_screening(user_name, memory_logger):
     print("\n=== Screening Results ===")
     print(f"Total Score: {total_score} out of 27")
 
-    # PHQ-9 score interpretation
     if total_score <= 4:
         severity = "Minimal depression"
     elif 5 <= total_score <= 9:
@@ -151,13 +233,14 @@ def handle_depression_screening(user_name, memory_logger):
 
     print(f"Depression Severity: {severity}")
 
-    # Safety check for question 9 (suicidal thoughts)
     if responses[8] > 0:
         print("\n!! Your response indicates thoughts of self-harm or suicide.")
         print("Please consider talking to a mental health professional immediately or calling a helpline.")
 
     print("\nThis screening is not a diagnosis. Please consult a professional for a full evaluation.")
 
+
+# === House Assistance ===
 def handle_house_assistance(user_name, memory_logger):
     print("\n=== House Assistance ===")
     print("Available topics: cleaning, energy, security, organization, automation")
@@ -167,6 +250,8 @@ def handle_house_assistance(user_name, memory_logger):
     print(f"Advice: {advice}")
     memory_logger.log_interaction(topic, advice)
 
+
+# === Casual Chat ===
 def handle_casual_chat(user_name, memory_logger):
     print("\n=== Casual Chat ===")
     memory_logger.log_interaction("Entered casual chat mode", "")
@@ -174,7 +259,7 @@ def handle_casual_chat(user_name, memory_logger):
     memory_logger.log_interaction("Exited casual chat mode", "")
 
 
-# === Reminder Manager === (same as before) ...
+# === Reminder Manager ===
 class ReminderManager:
     def __init__(self, user_name):
         self.user_name = user_name
@@ -209,6 +294,8 @@ class ReminderManager:
             json.dump([], f)
         print("✅ All reminders cleared.")
 
+
+# === Handle Reminder Mode ===
 def handle_reminder_mode(user_name, memory_logger=None):
     reminder_manager = ReminderManager(user_name)
     print("\n📬 Your current reminders (if any):")
@@ -261,9 +348,9 @@ def handle_reminder_mode(user_name, memory_logger=None):
 user_language_preferences = {}
 translator = Translator()
 
-
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
 HF_API_URL = "https://api-inference.huggingface.co/models/gpt2"  # Or your preferred model endpoint
+
 
 def generate_ai_response(prompt):
     headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
@@ -282,6 +369,7 @@ def generate_ai_response(prompt):
         print(f"❌ HuggingFace API error: {e}")
         return "Sorry, I couldn't generate a response right now."
 
+
 def translate_text(text, target_lang_code):
     try:
         result = translator.translate(text, dest=target_lang_code)
@@ -289,48 +377,102 @@ def translate_text(text, target_lang_code):
     except Exception as e:
         print(f"❌ Translation error: {e}")
         return text
+
+
 # =========== Language translation + switch languuage option ===========
 
 translator = Translator()
 llm = Llama(
-    model_path="./llama.cpp/build/models/tinyllama/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
+    model_path="./llama.cpp/build/models/tinyllama/tinyllama-1.1b-chat-v1.0.Q2_K.gguf",
     n_ctx=512
 )
 
+
 class MemoryLogger:
-    def __init__(self, user_name):
+    def __init__(self, user_name, belief_model: BeliefModel):
         self.user_name = user_name
         self.file_path = f"{user_name}_memory_log.json"
+        self.belief_model = belief_model
         if not os.path.exists(self.file_path):
             with open(self.file_path, 'w') as f:
                 json.dump([], f)
 
-    def log_interaction(self, question, response):
+    def analyze_emotion(self, text):
+        polarity = TextBlob(text).sentiment.polarity
+        if polarity > 0.3:
+            return "positive"
+        elif polarity < -0.3:
+            return "negative"
+        return "neutral"
+
+    def extract_belief_tags(self, text):
+        belief_keywords = {
+            "legacy": "legacy_creation",
+            "discipline": "discipline",
+            "trust": "loyal_collaboration",
+            "independence": "creative_independence",
+            "purpose": "shared_purpose"
+        }
+        return [tag for keyword, tag in belief_keywords.items() if keyword in text.lower()]
+
+    def log_interaction(self, question, response, tags=None):
+        emotion = self.analyze_emotion(response)
+        belief_tags = self.extract_belief_tags(f"{question} {response}")
+
         entry = {
+            "id": str(uuid.uuid4()),
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "question": question,
-            "response": response
+            "response": response,
+            "emotion": emotion,
+            "tags": tags or [],
+            "belief_tags": belief_tags
         }
-        with open(self.file_path, 'r+') as f:
-            data = json.load(f)
-            data.append(entry)
-            f.seek(0)
+
+        data = self._read_log()
+        data.append(entry)
+        self._write_log(data)
+
+        if belief_tags:
+            self.belief_model.reinforce_beliefs(belief_tags, emotion=emotion)
+
+    def _read_log(self):
+        with open(self.file_path, 'r') as f:
+            return json.load(f)
+
+    def _write_log(self, data):
+        with open(self.file_path, 'w') as f:
             json.dump(data, f, indent=4)
 
     def view_log(self):
-        with open(self.file_path, 'r') as f:
-            data = json.load(f)
-            if not data:
-                print("Memory log is empty!")
-                return
-            print("\n--- Memory Log ---")
-            for i, entry in enumerate(data):
-                print(f"\n[{i+1}] {entry['timestamp']}")
-                print(f"User: {entry['question']}")
-                print(f"AI:   {entry['response']}")
-            print("\n--- End of Log ---\n")
+        data = self._read_log()
+        if not data:
+            print("Memory log is empty!")
+            return
+
+        print("\n--- Memory Log ---")
+        for i, entry in enumerate(data):
+            print(f"\n[{i + 1}] {entry['timestamp']} (ID: {entry['id']})")
+            print(f"User: {entry['question']}")
+            print(f"AI:   {entry['response']}")
+            print(f"Emotion: {entry['emotion']}")
+            if entry['tags']:
+                print(f"Tags: {entry['tags']}")
+            if entry['belief_tags']:
+                print(f"Beliefs: {entry['belief_tags']}")
+        print("\n--- End of Log ---\n")
+
+    def get_entries_by_tag(self, tag):
+        return [entry for entry in self._read_log() if tag in (entry.get("tags") or [])]
+
+    def get_entries_by_emotion(self, emotion):
+        return [entry for entry in self._read_log() if entry.get("emotion") == emotion]
+
+    def get_entries_by_belief_tag(self, belief_tag):
+        return [entry for entry in self._read_log() if belief_tag in (entry.get("belief_tags") or [])]
 
 
+# End of memory logger function  ==========
 def language_translation_mode(user_name, memory_logger):
     translator = Translator()
 
@@ -387,10 +529,7 @@ def language_translation_mode(user_name, memory_logger):
         memory_logger.log_interaction(original_user_input, translated_response)
 
 
-
-
-
-#================================ Memory reminder function ==============================
+# ================================ Memory reminder function ==============================
 
 class ReminderManager:
     def __init__(self, user_name):
@@ -424,12 +563,16 @@ class ReminderManager:
         with open(self.file_path, 'w') as f:
             json.dump([], f)
         print("✅ All reminders cleared.")
-2.# 🔟 Add Mode 10 Handler
+
+
+2.  # 🔟 Add Mode 10 Handler
+
+
 # Somewhere near your other handlers:
 
-#python
-#Copy
-#Edit
+# python
+# Copy
+# Edit
 def handle_reminder_mode(user_name, memory_logger):
     reminder_manager = ReminderManager(user_name)
     print("\n=== 🧠 Reminder Mode ===")
@@ -468,11 +611,12 @@ def handle_reminder_mode(user_name, memory_logger):
         else:
             print("❌ Invalid choice. Please select 1-4.")
 
+
 # ========== Ensure safe gitignore ==============
 def ensure_safe_gitignore():
     gitignore_path = '.gitignore'
     safe_ignore_content = """
-    
+
     # Ignore environment variables
 .env
 
@@ -497,30 +641,26 @@ __pycache__/
     else:
         print(".gitignore file already exists.")
 
+
 # Call the function early in your main script or setup process
 ensure_safe_gitignore()
- 
 
 youtube_api_key = os.getenv('YT_IFYKYK')
 nltk.download('vader_lexicon')
 
-# Configuration constants
-WOLFRAM_API_KEY = os.getenv("WOLF_IFYKYK")
-WOLFRAM_API_URL = "http://api.wolframalpha.com/v2/query"
 
-# Initialize Flask app and Wolfram client
-app = Flask(__name__)
-wolfram_client = wolframalpha.Client(WOLFRAM_API_KEY)
+
 
 # ============= NAME RECOGNITION SYSTEM =============
 known_names = ["Shacarion Wrencher", "Juleena Pham", "Win Giang ", "Suri Situmorang"]
 
+
 def check_name(user_name):
     if user_name in known_names:
-        print(f"Chatbot: Hello, {user_name}, It's nice to see a familiar face, since you just told me your lovely name...")
+        print(
+            f"Chatbot: Hello, {user_name}, It's nice to see a familiar face, since you just told me your lovely name...")
     else:
         print(f"Chatbot: Nice to meet you, {user_name}, you look wonderful today!")
-
 
 
 # ============= House Tidying Function (API Integration) =============
@@ -573,77 +713,190 @@ def house_tidying(topic):
         print("- Cleaning\n- Energy\n- Security\n- Organization\n- Automation")
 
 
+transformations = standard_transformations + (implicit_multiplication_application,)
+x, y, z = symbols('x y z')
+init_printing()
 
 
-# ============= Math Processing System (Wolfram Alpha API Integration to allow for easier math processing) =============
+transformations = standard_transformations + (
+    implicit_multiplication_application,
+    convert_xor
+)
+# ====== Start of Math processing system =====================
+# Math mode simple version
 
-def handle_math_question(question):
+
+x = symbols('x')
+transformations = standard_transformations + (implicit_multiplication_application, convert_xor)
+
+def insert_multiplication_symbols(expr_str):
+    expr_str = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', expr_str)
+    expr_str = re.sub(r'([a-zA-Z])([a-zA-Z])', r'\1*\2', expr_str)
+    expr_str = re.sub(r'([a-zA-Z])(\d)', r'\1*\2', expr_str)
+    return expr_str
+
+# === SIMPLE MODE HANDLER ===
+def handle_math_question_simple(question):
+    question = question.lower().strip()
+    question = question.replace('^', '**')
+    question = insert_multiplication_symbols(question)
+
     try:
-        params = {
-            "input": question,
-            "appid": WOLFRAM_API_KEY,
-            "output": "XML",
-            "podstate": "Step-by-step solution",  # request step-by-step if available
-            "format": "plaintext"
-        }
-        response = requests.get(WOLFRAM_API_URL, params=params)
-        response.raise_for_status()
+        if '=' in question:
+            lhs_str, rhs_str = map(str.strip, question.split('=', 1))
+            lhs = parse_expr(lhs_str, transformations=transformations)
+            rhs = parse_expr(rhs_str, transformations=transformations)
+            eq = Eq(lhs, rhs)
 
-        root = ET.fromstring(response.text)
+            vars_to_solve = list(eq.free_symbols) or [x]
+            sol = solve(eq, *vars_to_solve)
 
-        # To store sections of the response
-        interpretation = None
-        steps = []
-        result = None
+            # Friendly explanation
+            explanation = (
+                f"Let's solve the equation: `{question}`\n"
+                f"Step 1: Write down the equation.\n"
+                f"Step 2: Find the value(s) of {', '.join(map(str, vars_to_solve))} that make it true.\n"
+                f"Answer: "
+            )
 
-        for pod in root.findall(".//pod"):
-            title = pod.get("title", "").lower()
+            if len(vars_to_solve) == 1 and len(sol) == 1:
+                explanation += f"{vars_to_solve[0]} = {sol[0]}"
+            else:
+                explanation += f"{sol}"
 
-            plaintext_elem = pod.find(".//plaintext")
-            text = plaintext_elem.text if plaintext_elem is not None else None
+            return explanation
 
-            if not text:
-                continue
+        else:
+            expr = parse_expr(question, transformations=transformations)
+            simplified = simplify(expr)
+            return f"Simplified expression:\n{simplified}"
 
-            # Capture interpretation of the input
-            if "input" in title and not interpretation:
-                interpretation = text.strip()
-
-            # Collect step-by-step solution(s)
-            elif "step-by-step solution" in title or "steps" in title:
-                steps.append(text.strip())
-
-            # Capture final result or solution
-            elif "result" in title or "solution" in title:
-                result = text.strip()
-
-        # Build a clear, user-friendly explanation
-        response_parts = []
-        if interpretation:
-            response_parts.append(f"Interpretation:\n{interpretation}\n")
-
-        if steps:
-            response_parts.append("Step-by-step solution:")
-            for i, step_text in enumerate(steps, 1):
-                response_parts.append(f"Step {i}:\n{step_text}\n")
-
-        if result:
-            response_parts.append(f"Final Result:\n{result}")
-
-        if response_parts:
-            return "\n".join(response_parts)
-
-        return "Sorry, I couldn't find a detailed answer to your question."
-
-    except requests.exceptions.RequestException as e:
-        return f"Error with the Wolfram Alpha request: {e}"
-    except ET.ParseError:
-        return "Error parsing the Wolfram Alpha response."
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"⚠️ Error: {str(e)}"
+
+# === ADVANCED MODE HANDLER ===
+
+def parse_wrt_variables(question):
+    match = re.search(r'(?:w\.?r\.?t\.?|with respect to)\s+([a-zA-Z,\s]+)', question)
+    if match:
+        vars_str = match.group(1)
+        vars_list = [v.strip() for v in vars_str.split(',') if v.strip()]
+        syms = symbols(vars_list)
+        question_clean = question[:match.start()].strip()
+        return question_clean, syms
+    return question, None
+
+def parse_limits(question):
+    match = re.search(r'from\s+(.+?)\s+to\s+(.+)', question)
+    if match:
+        lower_str = match.group(1)
+        upper_str = match.group(2)
+        lower = parse_expr(lower_str, transformations=transformations)
+        upper = parse_expr(upper_str, transformations=transformations)
+        question_clean = question[:match.start()] + question[match.end():]
+        return question_clean.strip(), (lower, upper)
+    return question, None
+
+def handle_math_question_advanced(question):
+    question = question.lower().strip()
+    question = question.replace('^', '**')
+    response_parts = []
+
+    try:
+        # === INTEGRATE ===
+        if question.startswith("integrate"):
+            content = question[len("integrate"):].strip()
+            content, vars_specified = parse_wrt_variables(content)
+            content, limits = parse_limits(content)
+            expr = parse_expr(content, transformations=transformations)
+
+            vars_to_integrate = vars_specified if vars_specified else list(expr.free_symbols) or [x]
+
+            result = expr
+            steps = []
+            for v in vars_to_integrate:
+                if limits:
+                    lower, upper = limits
+                    steps.append(f"Integrate with respect to `{v}` from `{lower}` to `{upper}`")
+                    result = integrate(result, (v, lower, upper))
+                else:
+                    steps.append(f"Integrate with respect to `{v}` without limits")
+                    result = integrate(result, v)
+
+            response_parts += [
+                f"Let's integrate `{content}` with respect to {', '.join(map(str, vars_to_integrate))}" +
+                (f" from {limits[0]} to {limits[1]}" if limits else ""),
+                "Steps:"
+            ] + steps + [
+                f"Result: {result}" + (" + C" if not limits else "")
+            ]
+
+        # === DIFFERENTIATE ===
+        elif question.startswith("differentiate") or question.startswith("derivative"):
+            content = question.replace("differentiate", "").replace("derivative", "").strip()
+            content, vars_specified = parse_wrt_variables(content)
+            expr = parse_expr(content, transformations=transformations)
+
+            vars_to_diff = vars_specified if vars_specified else list(expr.free_symbols) or [x]
+
+            result = expr
+            steps = []
+            for v in vars_to_diff:
+                steps.append(f"Differentiate with respect to `{v}`")
+                result = diff(result, v)
+
+            response_parts += [
+                f"Let's differentiate `{content}` with respect to {', '.join(map(str, vars_to_diff))}",
+                "Steps:"
+            ] + steps + [
+                f"Result: {result}"
+            ]
+
+        # === SOLVE EQUATION ===
+        elif question.startswith("solve"):
+            content = question[len("solve"):].strip()
+
+            if '=' in content:
+                parts = content.split('=', 1)
+                if len(parts) != 2:
+                    raise ValueError("Invalid equation format.")
+                lhs_str, rhs_str = parts
+                lhs = parse_expr(lhs_str.strip(), transformations=transformations)
+                rhs = parse_expr(rhs_str.strip(), transformations=transformations)
+                eq = Eq(lhs, rhs)
+            else:
+                expr = parse_expr(content, transformations=transformations)
+                eq = Eq(expr, 0)
+
+            vars_to_solve = list(eq.free_symbols) or [x]
+            sol = solve(eq, *vars_to_solve)
+
+            response_parts += [
+                f"Let's solve the equation: `{content}` for {', '.join(map(str, vars_to_solve))}",
+                "Steps:",
+                "1. Start with the equation you gave me.",
+                "2. Solve for the unknown value(s).",
+                f"3. Answer: {sol}"
+            ]
+
+        # === JUST SIMPLIFY ===
+        else:
+            expr = parse_expr(question, transformations=transformations)
+            simplified = simplify(expr)
+
+            response_parts += [
+                f"Expression: {expr}",
+                f"Simplified Result: {simplified}"
+            ]
+
+    except Exception as e:
+        response_parts = [f"⚠️ Error processing the math question:\n{str(e)}"]
+
+    return "\n".join(response_parts)
 
 # ============= Casual Chat System =============
 sid = SentimentIntensityAnalyzer()
+
 
 def detect_emotion(text):
     scores = sid.polarity_scores(text)
@@ -654,6 +907,7 @@ def detect_emotion(text):
         return "negative"
     else:
         return "neutral"
+
 
 def casual_chat(user_name):
     print(f"Friend: Hey {user_name}! I'm excited to chat today. Mind if I ask you a few things?")
@@ -708,9 +962,25 @@ def casual_chat(user_name):
 
         print("Friend:", random.choice(followups[mood]))
         chat_round += 1
+
+
 # ============= Mode Selector =============
 def mode_selector(user_name, memory_logger):
     while True:
+        print("\n📋 Available Modes:")
+        print("  1. 🤖 Name Recognition")
+        print("  2. ➗ Math Processing")
+        print("  3. 📚 Book Recommendations & Storytelling")
+        print("  4. 💰 Budget Tracking + Financial Advice")
+        print("  5. 🧠 Depression Screening")
+        print("  6. 🏡 House Tidying & Smart Home Tips")
+        print("  7. 💬 Casual Chat")
+        print("  8. 🧠 Memory Log Viewer")
+        print("  9. 🌍 Language & Translation Mode")
+        print(" 10. ⏰ Task handler/Reminder Mode")
+        print(" 11. 🪟 Launch GUI Voice Assistant (Casual Chat)")
+        print("  0. EXIT THE MODE SELECTOR")
+
         mode_choice = input("\nEnter the number of the mode you want to activate (or 'exit' to quit): ").strip()
 
         if mode_choice.lower() == 'exit':
@@ -741,14 +1011,19 @@ def mode_selector(user_name, memory_logger):
             language_translation_mode(user_name, memory_logger)
         elif mode_choice == "10":
             handle_reminder_mode(user_name, memory_logger)
+        elif mode_choice == "11":
+            print("🪟 Launching the Voice Assistant GUI...")
+            handle_voice_assistant_gui(user_name, memory_logger)
         elif mode_choice == "0":
-            break 
+            break
         else:
             print("❌ Invalid mode choice. Please enter a valid number.")
+
 
 # =============( Personal add on) Budget Tracker + budget  Advice System =============
 
 user_budget_data = {}
+
 
 def start_budget_tracking(user_name):
     if user_name not in user_budget_data:
@@ -787,7 +1062,8 @@ def start_budget_tracking(user_name):
 
                 if current >= goal:
                     print(f"\n🎉 Congratulations, {user_name}! You’ve reached your goal of ${goal:.2f}!")
-                    print("The discipline you're building will changing your future. You are one step closer to financial freedom!.\n")
+                    print(
+                        "The discipline you're building will changing your future. You are one step closer to financial freedom!.\n")
                 else:
                     remaining = goal - current
                     print(f"You’ve saved ${current:.2f}. Only ${remaining:.2f} to go! Keep going, you're doing great!")
@@ -814,6 +1090,7 @@ def start_budget_tracking(user_name):
 
         else:
             print("Invalid option. Please select 1-4.")
+
 
 # ============= Budget Advice Sub-System =============
 def generate_custom_response(question):
@@ -875,31 +1152,40 @@ def generate_custom_response(question):
             "You don’t need more money, you need a stricter mindset with how your money is being spent. 💪"
         )
 
+
 # ============= MAIN EXECUTION =============
-def main():
-    print("Hello, I am your personal AI companion! Fun fact: AI stands for artificial intelligence..\n")
-    
+
+def run_cli_assistant():
+    print("👋 Hello, I am your personal AI companion!")
+    print("💡 Fun fact: AI stands for Artificial Intelligence.\n")
+
     user_name = input("📝 Enter your name here: ").strip()
     print(f"\nNice to meet you, {user_name}! How can I help you today?")
     print("💡 Type 'modes' to see what I can do, or 'bye' to exit.\n")
 
+    # Show reminders before entering the assistant
     reminder_manager = ReminderManager(user_name)
-    print("\n📬 Before we begin, here are your current reminders (if any):")
+    print("\n📬 Here are your current reminders (if any):")
     reminder_manager.view_reminders()
 
-    memory_logger = MemoryLogger(user_name)
+    # Create the belief model before activating the memoy logger
+    belief_model = BeliefModel(user_name)
 
+    # Pass belief_model into MemoryLogger
+    memory_logger = MemoryLogger(user_name, belief_model)
+
+    # Main interaction loop
     while True:
         user_input = input(f"{user_name}: ").strip().lower()
 
-        if user_input in [
+        if user_input in {
             "modes",
             "bring me to the modes",
             "go to modes",
             "take me to the modes",
             "take me to the mode selector",
             "i request the mode selector"
-        ]:
+        }:
             print("\n📋 Available Modes:")
             print("  1. 🤖 Name Recognition")
             print("  2. ➗ Math Processing")
@@ -910,23 +1196,23 @@ def main():
             print("  7. 💬 Casual Chat")
             print("  8. 🧠 Memory Log Viewer")
             print("  9. 🌍 Language & Translation Mode")
-            print(" 10. ⏰ Task handler/Reminder Mode")
-            print("  0. EXIT THE MODE SELECTOR")
+            print(" 10. ⏰ Task Handler / Reminder Mode")
+            print(" 11. 🪟 Launch GUI Voice Assistant (Casual Chat)")
+            print("  0. 🚪 Exit the Mode Selector")
 
             memory_logger.log_interaction(user_input, "Viewed modes and entered mode selector")
             mode_selector(user_name, memory_logger)
 
         elif user_input == "bye":
-            print(f"Chatbot: Goodbye {user_name}! Have a great day!")
-            memory_logger.log_interaction(user_input, f"Goodbye {user_name}!")
+            farewell = f"Goodbye {user_name}! Have a great day!"
+            print(f"Chatbot: {farewell}")
+            memory_logger.log_interaction(user_input, farewell)
             break
 
         else:
-            response = "Sorry, please type 'modes' to open the mode selector or 'bye' to exit."
+            response = "❌ Sorry, please type 'modes' to open the mode selector or 'bye' to exit."
             print(f"Chatbot: {response}")
             memory_logger.log_interaction(user_input, response)
-
-
 
 # ============= Book + Storytelling User Experience ==============
 # --- Book Lookup ---
@@ -968,7 +1254,8 @@ def get_video_lists():
             ("Harry Potter", "https://www.youtube.com/watch?v=FsByOCWSkvM"),
             ("The Lord of the Rings", "https://www.youtube.com/watch?v=V75dMMIW2B4"),
             ("Miss Peregrine's Home for Peculiar Children", "https://www.youtube.com/watch?v=2rhnt5rWgOM"),
-            ("Forsaken Prince: Kilenya Chronicles Book One", "https://www.youtube.com/watch?v=gYohVoi_m_A&list=PL6kepgWUZXmp-el3a0z0IoqDhUDn4kyUg"),
+            ("Forsaken Prince: Kilenya Chronicles Book One",
+             "https://www.youtube.com/watch?v=gYohVoi_m_A&list=PL6kepgWUZXmp-el3a0z0IoqDhUDn4kyUg"),
             ("Ember Gods: Kilenya Chronicles Book Two", "https://www.youtube.com/watch?v=OrQugg3zYAI"),
             ("The Eyes of the Dragon by Stephen King", "https://www.youtube.com/watch?v=ycxRUnmG5ZE"),
         ],
@@ -982,7 +1269,8 @@ def get_video_lists():
             ("The Alchemy of Happiness by Al-Ghazali", "https://www.youtube.com/watch?v=0Ox_XcrBO0c"),
         ],
         "adventure": [
-            ("The maze runner by Robert Daschner", "https://www.youtube.com/watch?v=sKJ1ktsVq-k&list=PLq5SGWgwX4FZt88QFxL_IDtvJd46Mtwgy"),
+            ("The maze runner by Robert Daschner",
+             "https://www.youtube.com/watch?v=sKJ1ktsVq-k&list=PLq5SGWgwX4FZt88QFxL_IDtvJd46Mtwgy"),
             ("The Dark Tower: The Gunslinger by Stephen King", "https://www.youtube.com/watch?v=ybvVLVaGiUM"),
             ("The Dark Tower: The Drawing of the Three by Stephen King", "https://www.youtube.com/watch?v=CWt5DFbGSyI"),
             ("The Dark Tower: The Waste Lands by Stephen King", "https://www.youtube.com/watch?v=vl8UK2wwBg0"),
@@ -992,7 +1280,8 @@ def get_video_lists():
         "romance": [
             ("Falling for the Movie Star by Jean Oram", "https://www.youtube.com/watch?v=rvUqJWb6FJs"),
             ("Gone With The Wind by Margaret Mitchell", "https://www.youtube.com/watch?v=pI__6gL21Co"),
-            ("To all the boys I have loved before by Jenny Han ", "https://www.youtube.com/watch?v=Ac_fbiCvWDk, or https://www.youtube.com/watch?v=qdEcvQ5P0g4"),
+            ("To all the boys I have loved before by Jenny Han ",
+             "https://www.youtube.com/watch?v=Ac_fbiCvWDk, or https://www.youtube.com/watch?v=qdEcvQ5P0g4"),
             ("Pride and Prejudice by Jane Austen", "https://www.youtube.com/watch?v=eVHu5-n69qQ"),
             ("Outlander by Diana Gabaldon", "https://www.youtube.com/watch?v=cY-L5pqCCrU"),
             ("A Walk to Remember by Nicholas Sparks", "https://www.youtube.com/watch?v=ekX1c-y6xJQ"),
@@ -1073,5 +1362,4 @@ def book_and_storytelling_experience():
 
 if __name__ == '__main__':
     if '--cli' in sys.argv:
-        main()
-
+        run_cli_assistant()

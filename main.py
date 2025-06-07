@@ -445,7 +445,7 @@ class MemoryLogger:
         with open(self.file_path, 'w') as f:
             json.dump(data, f, indent=4)
 
-    def view_log(self):
+    def view_logs(self):
         data = self._read_log()
         if not data:
             print("Memory log is empty!")
@@ -1006,8 +1006,9 @@ def mode_selector(user_name, memory_logger):
         elif mode_choice == "7":
             handle_casual_chat(user_name, memory_logger)
         elif mode_choice == "8":
-            memory_logger.view_log()
+            memory_logger.view_logs()
             memory_logger.log_interaction("Viewed memory log", "")
+            input("\n🔍 Press Enter to return to the mode selector...")
         elif mode_choice == "9":
             language_translation_mode(user_name, memory_logger)
         elif mode_choice == "10":

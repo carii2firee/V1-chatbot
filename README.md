@@ -35,7 +35,7 @@ This AI Companion is built to help humans and AI co-exist in a supportive, ethic
 
 1. Get the directory for the folder which is ("cd "C:\Users\carii\Downloads\voice_assistant folder")
 2. Type into the terminal 'py main.py --cli' to activate the mode successfully
-3. Introduce yourself to the AI companion and watch the magic unfold
+3. Introduce yourself to the AI companion and explore its capabilities!
 
 ```bash
 git clone https://github.com/your-username/V1-chatbot.git

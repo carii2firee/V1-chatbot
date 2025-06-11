@@ -17,7 +17,7 @@ This AI Companion is built to help humans and AI co-exist in a supportive, ethic
 ## 🎯 Key Features (V1)
 
 - ✅ **Mode Selector UI** – Switch between 10+ intelligent modes
-- 🧮 **Math Solver** – Uses WolframAlpha API for advanced calculations
+- 🧮 **Math mode + subject selction (eg. BIO, chem, programming)** – Uses WolframAlpha API and Sympy for advanced calculations, as well as WOLFRAMS API for specified information based on the subject you choose.
 - 🧹 **House Tidying Assistant** – Offers customized suggestions to improve your space
 - 💰 **Budget Mode** – Tracks income/spending and offers financial advice
 - 📚 **Book Recommendations & Storytelling Mode** – Includes ambient sound and narrative flow (WIP)
@@ -36,6 +36,8 @@ This AI Companion is built to help humans and AI co-exist in a supportive, ethic
 1. Get the directory for the folder which is ("cd "C:\Users\carii\Downloads\voice_assistant folder")
 2. Type into the terminal 'py main.py --cli' to activate the mode successfully
 3. Introduce yourself to the AI companion and explore its capabilities!
+
+📌 [MATH-INTEGRATION] June 10, 2025 — Integrated simple & advanced math modes with subject mode (bio, chem, etc.)
 
 ```bash
 git clone https://github.com/your-username/V1-chatbot.git

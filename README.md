@@ -1,34 +1,43 @@
-# 🤖 AI Companion - V1 Chatbot
+🚀 Current Version
+V1 – Local CLI & GUI chatbot with Flask integration and 10+ intelligent modes
 
-Welcome to my first full-stack AI companion project — a modular system designed to support users emotionally, academically, and functionally throughout their day. This is a **work-in-progress**, and I welcome any feedback or constructive criticism as I continue to develop it.
+🧠 Project Purpose
+This AI Companion is built to help humans and AI co-exist in a supportive, ethical, and intelligent way — starting with everyday assistance: managing loneliness, daily tasks, studying, budgeting, and more.
 
----
+Future versions aim to integrate:
 
-## 🚀 Current Version
-**V1** – Local CLI chatbot with Flask integration and 10+ core modes
+📡 Voice-first mobile/web interfaces
 
----
+🧠 Emotional intelligence
 
-## 🧠 Project Purpose
-This AI Companion is built to help humans and AI co-exist in a supportive, ethical, and intelligent way — starting by helping individuals manage loneliness, daily tasks, budgeting, and more. Future versions aim to integrate holographic displays and emotional intelligence modules.
+🌌 Holographic projection interfaces
 
----
+🤝 Socially intelligent behavior and values
 
-## 🎯 Key Features (V1)
+🎯 Key Features (V1)
+✅ Mode Selector UI – Switch between 10+ intelligent, real-world-use modes
 
-- ✅ **Mode Selector UI** – Switch between 10+ intelligent modes
-- 🧮 **Math mode + subject selction (eg. BIO, chem, programming)** – Uses WolframAlpha API and Sympy for advanced calculations, as well as WOLFRAMS API for specified information based on the subject you choose.
-- 🧹 **House Tidying Assistant** – Offers customized suggestions to improve your space
-- 💰 **Budget Mode** – Tracks income/spending and offers financial advice
-- 📚 **Book Recommendations & Storytelling Mode** – Includes ambient sound and narrative flow (WIP)
-- 🗣️ **Casual Chat System** – Conversational AI for companionship
-- 🧑‍💻 **User Recognition** – Stores and recalls names and conversation history
-- 🌍 **Language Translation Mode** – Multi-language support (early-stage)
-- 🧾 **Task Reminder Mode** – Persistent monthly task storage with gentle reminders
-- 👾 **GUI assistant** - Chat with the user using TTS(text to speech) based language
-- 💛 **Emotion-Aware Belief Engine** – Analyzes interactions for emotional tone and semantic meaning, reinforcing adaptive beliefs that shape AI responses over time
-- 🌐 **Flask API Integration** – Designed for web-based or mobile expansion
+🧮 Smart Study Mode – Solve math problems (simple → advanced) or ask about biology, chemistry, physics, history, and programming using WolframAlpha API + SymPy
 
+🧹 House Tidying Assistant – Custom tips to improve your space
+
+💰 Budget Mode – Track expenses, calculate income, and offer advice
+
+📚 Book Recommender & Storytelling Mode – Narration with ambient sound (WIP)
+
+🗣️ Casual Chat Companion – Conversations with emotional tone tracking
+
+🧑‍💻 User Memory – Remembers name, history, and preferences
+
+🌍 Language Mode – Translate across multiple languages with voice output
+
+🧾 Task Reminder – Persistent reminders with spoken output
+
+👾 Voice-Enabled GUI – Includes mic button and TTS engine
+
+💛 Emotion-Aware Belief Engine – Learns and adapts based on user tone and intent
+
+🌐 Flask Integration – API-ready for future mobile/web deployment
 ---
 
 ## 🖥️ How to Run

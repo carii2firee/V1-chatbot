@@ -1,5 +1,4 @@
 
-# What to run through terminal *Note for myself* (cd "C:\Users\carii\Downloads\voice_assistant folder")
 import tkinter as tk
 from tkinter import scrolledtext, simpledialog
 import threading
@@ -9,34 +8,18 @@ from random import choice
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from dotenv import load_dotenv
 import pygame
-import hashlib
-import uuid
 
 # --- Setup ---
 load_dotenv()
 ELEVENLABS_API_KEY = os.getenv("EL_API_KEY")
-
 if not ELEVENLABS_API_KEY:
     print("⚠️ ElevenLabs API key not found in environment variables.")
 
 pygame.mixer.init()
 sid = SentimentIntensityAnalyzer()
 
-# --- Cache Helper ---
-def get_cache_path(text):
-    cache_dir = "cache"
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    hashed_name = hashlib.md5(text.encode()).hexdigest()
-    return os.path.join(cache_dir, f"{hashed_name}.mp3")
-
-# --- ElevenLabs Voice with Caching ---
+# --- ElevenLabs Voice ---
 def speak_with_elevenlabs(text, voice_id):
-    audio_path = get_cache_path(text)
-    if os.path.exists(audio_path):
-        print("Using cached audio for:", text)
-        return audio_path
-
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     headers = {
         "Accept": "audio/mpeg",
@@ -53,31 +36,27 @@ def speak_with_elevenlabs(text, voice_id):
     }
     response = requests.post(url, json=data, headers=headers)
     if response.status_code == 200:
-        try:
-            with open(audio_path, "wb") as f:
-                f.write(response.content)
-            return audio_path
-        except PermissionError:
-            alt_path = "voice_output_temp.mp3"
-            with open(alt_path, "wb") as f:
-                f.write(response.content)
-            return alt_path
+        file_path = "output.mp3"
+        with open(file_path, "wb") as f:
+            f.write(response.content)
+        return file_path
     else:
         print("❌ ElevenLabs error:", response.status_code, response.text)
         return None
 
-# --- Emotion Detection ---
+# --- Emotion/Intent ---
 def detect_emotion(text):
-    compound = sid.polarity_scores(text)['compound']
+    scores = sid.polarity_scores(text)
+    compound = scores['compound']
     if compound >= 0.1:
         return "positive"
     elif compound <= -0.1:
         return "negative"
-    return "neutral"
+    else:
+        return "neutral"
 
-# --- Intent-based Response ---
-def get_intent_based_response(text):
-    text = text.lower()
+def get_intent_based_response(user_input):
+    text = user_input.lower()
     if any(word in text for word in ["hello", "hi", "hey"]):
         return "Hey there! 👋 It’s always nice to hear a friendly hello."
     elif "how are you" in text:
@@ -88,12 +67,14 @@ def get_intent_based_response(text):
         return "It’s always a pleasure chatting with you. Let’s catch up again soon!"
     return None
 
-# --- GUI App Class ---
+# --- GUI ---
 class VisualAssistantApp:
     def __init__(self, root):
         self.root = root
         self.root.title("🎙️ AI Voice Assistant")
-        self.voice_id = "VR6AewLTigWG4xSOukaG"  # Default to Male Voice
+        self.MALE_VOICE_ID = "VR6AewLTigWG4xSOukaG"
+        self.FEMALE_VOICE_ID = "9BWtsMINqrJLrRacOk9x"
+        self.voice_id = self.MALE_VOICE_ID
 
         self.chat_area = scrolledtext.ScrolledText(
             root, state=tk.DISABLED, wrap=tk.WORD,
@@ -108,9 +89,11 @@ class VisualAssistantApp:
         self.send_button = tk.Button(root, text="Send", command=self.handle_input, font=("Helvetica", 12))
         self.send_button.pack(side=tk.LEFT, padx=10, pady=(0, 10))
 
-        self.user_name = simpledialog.askstring("Welcome!", "👋 What's your name?", parent=root) or "Friend"
+        self.user_name = simpledialog.askstring("Welcome!", "👋 What's your name?", parent=root)
+        if not self.user_name:
+            self.user_name = "Friend"
 
-        greeting = f"Hey {self.user_name}! Hello there friend, how are you feeling today?)"
+        greeting = f"Hey {self.user_name}! I'm excited to chat today. Mind if I ask you a few things?"
         self.display_response(greeting)
         self.play_response(greeting)
 
@@ -120,12 +103,12 @@ class VisualAssistantApp:
         self.chat_area.config(state=tk.DISABLED)
         self.chat_area.see(tk.END)
 
-    def handle_input(self, event=None):
+  def handle_input(self, event=None):
         user_text = self.entry.get().strip()
         if not user_text:
             return
         self.display_message(self.user_name, user_text)
-        self.play_response(user_text)
+        self.play_response(user_text)  # <-- 👈 This makes it speak what the user types
         self.entry.delete(0, tk.END)
 
         if user_text.lower() in ["bye", "exit", "quit"]:
@@ -135,10 +118,13 @@ class VisualAssistantApp:
             self.root.after(2500, self.root.quit)
             return
 
-        response = get_intent_based_response(user_text)
-        if not response:
+        intent_response = get_intent_based_response(user_text)
+        if intent_response:
+            self.display_response(intent_response)
+            self.play_response(intent_response)
+        else:
             mood = detect_emotion(user_text)
-            mood_responses = {
+            responses = {
                 "positive": [
                     "That’s really great to hear! 😄 Got anything else exciting going on?",
                     "That energy is contagious — keep it up!"
@@ -152,10 +138,9 @@ class VisualAssistantApp:
                     "Even slow days can be meaningful — want to share more?"
                 ]
             }
-            response = choice(mood_responses[mood])
-
-        self.display_response(response)
-        self.play_response(response)
+            reply = choice(responses[mood])
+            self.display_response(reply)
+            self.play_response(reply)
 
     def display_response(self, text):
         self.display_message("Friend", text)
@@ -169,14 +154,16 @@ class VisualAssistantApp:
             try:
                 pygame.mixer.music.load(audio_path)
                 pygame.mixer.music.play()
+                # Wait for the audio to finish playing
                 while pygame.mixer.music.get_busy():
                     pygame.time.Clock().tick(10)
             except Exception as e:
                 print("🎧 Playback error:", e)
 
-# --- Run GUI function ---
-def run_voice_assistant_gui():
+# --- Run App ---
+if __name__ == "__main__":
     root = tk.Tk()
-    app = VisualAssistantApp(root)
+    app = VisualCompanionApp(root)
     root.mainloop()
+
 

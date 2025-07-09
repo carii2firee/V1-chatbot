@@ -73,4 +73,7 @@ Installed seamless speaker voice integration in the GUI assistant allowing users
 July 8, 2025 - 12:34 AM 
 Came up with the name WREN for the AI companion that is used to establish the core name and foudation for the AI companion built on the acronym (Work, Reach, Explore, Navigate) 
 
+July 8 2025 - 8:35 PM
+Officially added a joke function within the GUI interface to display jokes every 600 seconds or 10 minutes to the user to allow WREN to engage and feel connected to the user.
+
 

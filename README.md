@@ -1,3 +1,6 @@
+
+Hello, WREN is a full stack multi-modular AI companion  with UI, API integration, TTS and other amazing features built by me personally to counter act loniliness within the world and bring a new network effect, which is the  human to AI network effect.
+
 🚀 Current Version
 V1 – Local CLI & GUI chatbot with Flask integration and 10+ intelligent modes
 

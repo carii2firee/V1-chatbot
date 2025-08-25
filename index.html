@@ -190,7 +190,7 @@
       padding: 20px;
       border-radius: 12px;
       box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
-      white-space: pre-wrap;
+      white-space: normal;
       min-height: 2.2em;
       font-size: 1rem;
       color: #222;
@@ -205,6 +205,8 @@
       display: none;
       margin-top: 18px;
     }
+
+
     #modeInstructions {
       margin-top: 8px;
       font-size: 0.9rem;
@@ -281,6 +283,8 @@
     <button id="startBtn" type="button">Start</button>
 
     <div id="response" aria-live="polite"></div>
+    <div id="video-info"></div>	
+
 
     <section id="modeSection" aria-label="Mode Selection and Interaction">
       <label for="modeInput" id="modeLabel">🎯 Choose a Mode:</label>
@@ -309,6 +313,13 @@
     <!-- Categories will be dynamically inserted here -->
   </select>
 </div>
+
+      <div id="bookTypeGroup" style="margin-top: 16px;">
+  <label id="bookTypeLabel">What kind of recommendation do you want?</label><br />
+  <label><input type="radio" name="bookType" value="1" /> 📖 Book</label><br />
+  <label><input type="radio" name="bookType" value="2" /> 🎧 Audiobook/Video</label><br />
+  <label><input type="radio" name="bookType" value="3" checked /> 📚 + 🎧 Both</label>
+</div>	
 
       <div id="translationOptions">
         <label for="translateFrom" id="translateFromLabel">From:</label>
@@ -381,18 +392,17 @@
     modeResponse.textContent = '';
     sendBtn.disabled = !selected;
 
-    if (selected === '3') {
-      bookCategoryGroup.style.display = 'block';
-    } else {
-      bookCategoryGroup.style.display = 'none';
-      bookCategorySelect.value = '';
-    }
 
-    if (selected === 'translate') {
-      translationOptions.style.display = 'block';
-    } else {
-      translationOptions.style.display = 'none';
-    }
+    const bookTypeGroup = document.getElementById('bookTypeGroup');
+
+if (selected === '3') {
+  bookCategoryGroup.style.display = 'block';
+  bookTypeGroup.style.display = 'block';
+} else {
+  bookCategoryGroup.style.display = 'none';
+  bookCategorySelect.value = '';
+  bookTypeGroup.style.display = 'none';
+}
 
     const instructionsMap = {
       '1': 'Enter text related to names for recognition.',
@@ -448,82 +458,129 @@
 
   // ===== Send button handler =====
   sendBtn.addEventListener('click', async () => {
-    const mode = modeInput.value;
-    const userId = nameInput.value.trim();
-    if (!mode) {
-      modeResponse.textContent = 'Please select a mode.';
-      return;
-    }
-    if (!userId) {
-      modeResponse.textContent = 'Please enter your name and start first.';
-      return;
-    }
-    if (mode === '3' && !bookCategorySelect.value) {
-      modeResponse.textContent = 'Please select a book category.';
-      return;
-    }
+  const mode = modeInput.value;
+  const userId = nameInput.value.trim();
 
-    sendBtn.disabled = true;
-    modeResponse.textContent = 'Loading...';
+  if (!mode) {
+    modeResponse.textContent = '⚠️ Please select a mode.';
+    return;
+  }
 
-    try {
-      let inputPrompt = mode === '3'
-  ? 'Enter a topic or theme for book recommendations:'
-  : 'Enter input for the selected mode:';
+  if (!userId) {
+    modeResponse.textContent = '⚠️ Please enter your name and start first.';
+    return;
+  }
 
-let input = prompt(inputPrompt, '');
-      if (input === null) {
-        modeResponse.textContent = 'Input cancelled.';
-        sendBtn.disabled = false;
-        return;
-      }
+  // Prepare payload
+  const payload = { userId, mode };
+  sendBtn.disabled = true;
+  modeResponse.textContent = 'Loading...';
 
-      const payload = {
-        userId,
-        mode,
-        topic: input,
-      };
+  // Book Recommender Mode
+  if (mode === '3') {
+    const selectedCategory = bookCategorySelect.value;
+    const selectedType = document.querySelector('input[name="bookType"]:checked');
 
-      if (mode === '3') {
-        payload.choice = bookCategorySelect.value;
-      }
-
-      if (mode === 'translate') {
-        payload.translateFrom = document.getElementById('translateFrom').value;
-        payload.translateTo = document.getElementById('translateTo').value;
-      }
-
-      const res = await fetch('/mode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        modeResponse.textContent = data.response || 'No response.';
-       
-
-      if (data.books && Array.isArray(data.books)) {
-  modeResponse.textContent += '\n\nBook recommendations:\n' + data.books.join('\n');
-}
-
-if (data.audiobooks && Array.isArray(data.audiobooks) && data.audiobooks.length > 0) {
-  modeResponse.textContent += '\n\nAudiobooks:\n' + data.audiobooks.map(a => `${a.title}: ${a.link}`).join('\n');
-}
-
-
-       
-      } else {
-        modeResponse.textContent = `Error: ${data.error || 'Failed to get response.'}`;
-      }
-    } catch (err) {
-      modeResponse.textContent = 'Network error fetching mode response.';
-      console.error(err);
-    } finally {
+    if (!selectedCategory) {
+      modeResponse.textContent = '⚠️ Please select a book category.';
       sendBtn.disabled = false;
+      return;
     }
-  });
+
+    if (!selectedType) {
+      modeResponse.textContent = '⚠️ Please select what kind of recommendation you want.';
+      sendBtn.disabled = false;
+      return;
+    }
+
+    payload.choice = selectedCategory;
+    payload.bookType = selectedType.value;
+    payload.topic = selectedCategory;
+  }
+
+  // Translation Mode
+  if (mode === 'translate') {
+    payload.translateFrom = document.getElementById('translateFrom').value;
+    payload.translateTo = document.getElementById('translateTo').value;
+
+    const textToTranslate = prompt('Enter the text you want to translate:', '');
+    if (textToTranslate === null || textToTranslate.trim() === '') {
+      modeResponse.textContent = 'Translation cancelled.';
+      sendBtn.disabled = false;
+      return;
+    }
+
+    payload.topic = textToTranslate.trim();
+  }
+
+  // Other Modes (require prompt input)
+  if (mode !== '3' && mode !== 'translate') {
+    const userInput = prompt('Enter input for the selected mode:', '');
+    if (userInput === null || userInput.trim() === '') {
+      modeResponse.textContent = 'Input cancelled.';
+      sendBtn.disabled = false;
+      return;
+    }
+
+    payload.topic = userInput.trim();
+  }
+
+  // Send payload to backend
+  try {
+    const res = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      modeResponse.textContent = data.response || '✅ Success.';
+
+      if (Array.isArray(data.books)) {
+        modeResponse.textContent += '\n\n📚 Book recommendations:\n' + data.books.join('\n');
+      }
+
+    
+
+      if (Array.isArray(data.audiobooks) && data.audiobooks.length > 0) {
+  const audiobooksHtml = data.audiobooks.map(book => {
+    const url = book?.url || '';
+    const videoIdMatch = url.match(/(?:v=|\.be\/)([\w-]{11})/);
+    const videoId = videoIdMatch ? videoIdMatch[1] : null;
+    const linkId = videoId ? `yt-link-${videoId}` : `yt-link-${Math.random().toString(36).substr(2, 5)}`;
+
+    return `
+      <p>
+        <strong>${book.title || 'Untitled'}</strong>: 
+        <a href="${url}" 
+           target="_blank" 
+           id="${linkId}"
+           ${videoId ? `onclick="getYouTubeVideoInfo('${videoId}'); return false;"` : ''}
+        >
+           ${url || 'Link not available'}
+        </a>
+      </p>`;
+  }).join('');
+
+  modeResponse.innerHTML += '<h3>🎧 Audiobooks:</h3>' + audiobooksHtml;
+}  
+ else {
+  modeResponse.innerHTML += '<h3>🎧 Audiobooks:</h3><p>No audiobooks found.</p>';
+}
+
+    } else {
+      modeResponse.textContent = `❌ Error: ${data.error || 'Unknown error.'}`;
+    }
+
+  } catch (err) {
+    console.error(err);
+    modeResponse.textContent = '❌ Network error fetching mode response.';
+  } finally {
+    sendBtn.disabled = false;
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   fetch('/api/book-categories')
@@ -542,6 +599,22 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to load categories:', err);
     });
 });
+
+ 
+
+async function getYouTubeVideoInfo(videoId) {
+  try {
+    const response = await fetch(`/api/youtube-video-info/${videoId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch video info');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
 
 
   </script>

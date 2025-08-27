@@ -300,6 +300,19 @@ body.dark-mode #video-info {
       color: #ccc;
     }
 
+    @font-face {
+  font-family: 'Squartiqa 4F';
+  src: url('/static/fonts/Squartiqa4F.woff2') format('woff2'),
+       url('/static/fonts/Squartiqa4F.woff') format('woff'),
+       url('/static/fonts/Squartiqa4F.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+.squartiqa {
+  font-family: 'Squartiqa 4F', sans-serif;
+}
+
 
   </style>
 </head>
@@ -312,7 +325,7 @@ body.dark-mode #video-info {
     </div>
     <div id="introText">
       <div id="introLine1">Hello there, friend</div>
-      <div id="introLine2">I'm WREN</div>
+      <div id="introLine2">I'm <span class="squartiqa">WREN</span></div>
       <!-- Star SVG -->
       <svg id="introStar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60" aria-hidden="true" focusable="false">
         <polygon points="32,4 39,24 60,24 42,38 48,60 32,46 16,60 22,38 4,24 25,24" fill="#1e88e5"/>
@@ -332,7 +345,7 @@ body.dark-mode #video-info {
     <div id="startContainer">
   <label for="nameInput" id="nameLabel">📝 Enter your name:</label>
   <input type="text" id="nameInput" placeholder="Your name here..." autocomplete="off" aria-describedby="nameLabel" />
-  <button id="startBtn" type="button">Start</button>
+  <button id="sendBtn"><span class="icon">➤</span> Send</button>
 </div>
 
     <div id="response" aria-live="polite"></div>
@@ -371,7 +384,7 @@ body.dark-mode #video-info {
         <label for="bookCategory" id="bookCategoryLabel">Choose a book category:</label>
         <select id="bookCategory" aria-describedby="bookCategoryLabel">
           <option value="">-- Select a Category --</option>
-          <!-- Categories will be dynamically inserted here -->
+
         </select>
       </div>
 
@@ -405,11 +418,17 @@ body.dark-mode #video-info {
         </select>
       </div>
 
-      <button id="sendBtn" style="display:none; margin-top: 20px;">Send</button>
+       <div id="budgetChatContainer" style="display:none; border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; margin-top: 20px; background: #f9f9f9;">
 
-      <div id="output" style="white-space: pre-wrap; margin-top: 20px;"></div>
+  </div>
 
-      <div id="modeResponse" aria-live="polite" aria-atomic="true" style="margin-top: 20px;"></div>
+
+  <button id="sendBtn" style="display:none; margin-top: 20px;">Send</button>
+
+  <div id="output" style="white-space: pre-wrap; margin-top: 20px;"></div>
+
+  <div id="modeResponse" aria-live="polite" aria-atomic="true" style="margin-top: 20px;"></div>
+
     </section>
   </main>
 
@@ -455,47 +474,56 @@ body.dark-mode #video-info {
 
     // Update UI based on mode selection
     function updateModeUI() {
-      const selected = modeInput.value;
+  const selected = modeInput.value;
 
-      // Hide all optional UI elements
-      document.getElementById('queryInputGroup').style.display = 'none';
-      document.getElementById('modeTextInputGroup').style.display = 'none';
-      bookCategoryGroup.style.display = 'none';
-      bookTypeGroup.style.display = 'none';
-      translationOptions.style.display = 'none';
+  const modeSection = document.getElementById('modeSection');
 
+  if (!selected) {
+    modeSection.style.display = 'none';  // hide if no mode selected
+  } else {
+    modeSection.style.display = 'block'; // show when mode selected
+  }
+
+  // hide all optional UI elements as before
+  document.getElementById('queryInputGroup').style.display = 'none';
+  document.getElementById('modeTextInputGroup').style.display = 'none';
+  bookCategoryGroup.style.display = 'none';
+  bookTypeGroup.style.display = 'none';
+  translationOptions.style.display = 'none';
+
+  modeInstructions.textContent = '';
+
+  switch (selected) {
+    case 'math':
+    case 'science':
+      document.getElementById('queryInputGroup').style.display = 'block';
+      modeInstructions.textContent = `Enter your ${selected === 'math' ? 'math problem' : 'science question'} above and click Send.`;
+      break;
+    case 'book':
+      bookCategoryGroup.style.display = 'block';
+      bookTypeGroup.style.display = 'block';
+      modeInstructions.textContent = 'Select a book category and type, then click Send.';
+      break;
+    case 'translate':
+      translationOptions.style.display = 'block';
+      modeInstructions.textContent = 'Select languages and click Send to translate.';
+      break;
+    case '1': // Name Recognition
+    case 'budget':
+    case 'depression':
+    case 'tidy':
+    case 'voice':
+    case 'logs':
+    case 'reminder':
+      document.getElementById('modeTextInputGroup').style.display = 'block';
+      modeInstructions.textContent = 'Enter your in and click Send.';
+      break;
+    default:
       modeInstructions.textContent = '';
+      break;
+  }
+}
 
-      switch (selected) {
-        case 'math':
-        case 'science':
-          document.getElementById('queryInputGroup').style.display = 'block';
-          modeInstructions.textContent = `Enter your ${selected === 'math' ? 'math problem' : 'science question'} above and click Send.`;
-          break;
-        case 'book':
-          bookCategoryGroup.style.display = 'block';
-          bookTypeGroup.style.display = 'block';
-          modeInstructions.textContent = 'Select a book category and type, then click Send.';
-          break;
-        case 'translate':
-          translationOptions.style.display = 'block';
-          modeInstructions.textContent = 'Select languages and click Send to translate.';
-          break;
-        case '1': // Name Recognition
-        case 'budget':
-        case 'depression':
-        case 'tidy':
-        case 'voice':
-        case 'logs':
-        case 'reminder':
-          document.getElementById('modeTextInputGroup').style.display = 'block';
-          modeInstructions.textContent = 'Enter your input above and click Send.';
-          break;
-        default:
-          modeInstructions.textContent = '';
-          break;
-      }
-    }
 
     modeInput.addEventListener('change', updateModeUI);
 
@@ -548,33 +576,167 @@ body.dark-mode #video-info {
     return;
   }
 
-  let modeToSend = mode;
-  if (mode === 'science') {
-    modeToSend = 'auto';
-  } else if (mode === 'math') {
-    modeToSend = 'math';
-  }
-
-  // Prepare payload with userId and mode
-  const payload = { userId: currentUserId, mode: modeToSend };
-
+  // Handle 'book' mode separately to call /api/audiobooks endpoint
   if (mode === 'book') {
     const selectedCategory = bookCategorySelect.value;
-    const selectedType = document.querySelector('input[name="bookType"]:checked');
+    const selectedType = document.querySelector('input[name="bookType"]:checked')?.value || "3";
 
     if (!selectedCategory) {
       modeResponse.textContent = '⚠️ Please select a book category.';
       return;
     }
 
-    if (!selectedType) {
-      modeResponse.textContent = '⚠️ Please select what kind of recommendation you want.';
+    modeResponse.textContent = 'Loading book recommendations...';
+    sendBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/book-recommendation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUserId,
+          category: selectedCategory.toLowerCase(),
+          topic: selectedCategory.toLowerCase(), // Using category as topic for simplicity
+          choice: selectedType
+        }),
+      });
+
+      const data = await res.json();
+      console.log("✅ Raw backend response:", data);
+
+      if (res.ok && data.success) {
+        const parts = [];
+
+        if (data.book) {
+          const book = data.book;
+          parts.push(`📖 **Book Recommendation:**\n<strong>${book.title}</strong> by ${book.author}`);
+        }
+
+        if (data.audiobooks && data.audiobooks.length > 0) {
+          parts.push(`🎧 **Audiobooks:**`);
+          parts.push(
+            data.audiobooks
+              .map(book => `<p><a href="${book.url}" target="_blank" rel="noopener noreferrer">${book.title}</a></p>`)
+              .join('')
+          );
+        }
+
+        if (!data.book && (!data.audiobooks || data.audiobooks.length === 0)) {
+          parts.push('⚠️ No book or audiobook recommendations found.');
+        }
+
+        modeResponse.innerHTML = parts.join('<br><br>');
+      } else {
+        modeResponse.textContent = data.error || '⚠️ Failed to fetch recommendations.';
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      modeResponse.textContent = '❌ Network error fetching recommendations.';
+    } finally {
+      sendBtn.disabled = false;
+    }
+
+    return; // Skip rest of the handler
+  }
+
+  // Handle 'budget' mode with chat-like UI
+  if (mode === 'budget') {
+  const userInput = document.getElementById('modeTextInput').value.trim();
+  if (!userInput) {
+    modeResponse.textContent = '⚠️ Please enter your input above.';
+    return;
+  }
+
+  const chatContainer = document.getElementById('budgetChatContainer');
+
+  // Append user message
+  const userMessage = document.createElement('div');
+  userMessage.textContent = `You: ${userInput}`;
+  userMessage.style.fontWeight = 'bold';
+  userMessage.style.marginBottom = '8px';
+  chatContainer.appendChild(userMessage);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+
+  // Clear input box
+  document.getElementById('modeTextInput').value = '';
+
+  // Show bot "typing..." indicator
+  const botMessage = document.createElement('div');
+  botMessage.textContent = 'WREN is typing...';
+  botMessage.style.fontStyle = 'italic';
+  chatContainer.appendChild(botMessage);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+
+  try {
+    sendBtn.disabled = true;
+
+    // Prepare payload for budget mode
+    const payload = {
+      userId: currentUserId,
+      mode: mode,
+      input: userInput
+    };
+
+    const res = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Server error response:', errorText);
+      modeResponse.textContent = `❌ Server error: ${res.status} ${res.statusText}`;
+      chatContainer.removeChild(botMessage);
       return;
     }
 
-    payload.input = selectedCategory; // Use input here, not topic
-    payload.bookType = selectedType.value;
-  } else if (mode === 'translate') {
+    const data = await res.json();
+    console.log('Backend response:', data);
+
+    // Remove "typing..." message
+    chatContainer.removeChild(botMessage);
+
+    if (data && data.success === false) {
+      const errorDiv = document.createElement('div');
+      errorDiv.textContent = `⚠️ ${data.error || 'Request failed.'}`;
+      chatContainer.appendChild(errorDiv);
+    } else if (data && data.response) {
+      const botReply = document.createElement('div');
+      botReply.innerHTML = markdownToHtml(data.response);
+      chatContainer.appendChild(botReply);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    } else {
+      const warnDiv = document.createElement('div');
+      warnDiv.textContent = '⚠️ No response from backend.';
+      chatContainer.appendChild(warnDiv);
+    }
+
+  } catch (error) {
+    console.error('Fetch error:', error);
+    modeResponse.textContent = '❌ Network or parsing error.';
+    chatContainer.removeChild(botMessage);
+  } finally {
+    sendBtn.disabled = false;
+  }
+
+  return; // no further processing
+}
+
+  // All other modes handled here as before
+  let modeToSend;
+  if (mode === 'science') {
+    modeToSend = 'science';
+  } else if (mode === 'math') {
+    modeToSend = 'math';
+  } else {
+    modeToSend = mode;
+  }
+
+  // Prepare payload with userId and mode
+  const payload = { userId: currentUserId, mode: modeToSend };
+
+  if (mode === 'translate') {
     payload.translateFrom = document.getElementById('translateFrom').value;
     payload.translateTo = document.getElementById('translateTo').value;
 
@@ -584,7 +746,7 @@ body.dark-mode #video-info {
       return;
     }
 
-    payload.input = textToTranslate.trim(); // Use input here
+    payload.input = textToTranslate.trim();
   } else {
     // Other modes
     let userInput = '';
@@ -603,37 +765,46 @@ body.dark-mode #video-info {
       return;
     }
 
-    payload.input = userInput; // Always set input property here
+    payload.input = userInput;
   }
 
   console.log("Sending to backend:", payload);
 
   try {
-    sendBtn.disabled = true;
-    modeResponse.textContent = 'Loading...';
+  sendBtn.disabled = true;
+  modeResponse.textContent = 'Loading...';
 
-    const res = await fetch('/mode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+  console.log('Sending payload:', payload);
 
-    const data = await res.json();
+  const res = await fetch('/mode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 
-    if (data.success) {
-      modeResponse.innerHTML = markdownToHtml(data.response || '✅ Success.');
+  const data = await res.json();
 
-      // Book and audiobook display code here (unchanged)...
-
+  if (res.ok) {
+    if (mode === 'math') {
+      // Extract the first number or decimal from the response text
+      const answerMatch = data.response.match(/[-+]?\d*\.?\d+/);
+      if (answerMatch) {
+        modeResponse.textContent = answerMatch[0];
+      } else {
+        modeResponse.textContent = data.response && data.response.trim() !== '' ? data.response : 'No answer received.';
+      }
     } else {
-      modeResponse.textContent = `❌ Error: ${data.error || 'Unknown error.'}`;
+      modeResponse.textContent = data.response || '✅ Done.';
     }
-  } catch (err) {
-    console.error(err);
-    modeResponse.textContent = '❌ Network error fetching mode response.';
-  } finally {
-    sendBtn.disabled = false;
+  } else {
+    modeResponse.textContent = data.error || '⚠️ Something went wrong.';
   }
+} catch (error) {
+  console.error('Fetch error:', error);
+  modeResponse.textContent = '❌ Network error.';
+} finally {
+  sendBtn.disabled = false;
+}
 });
 
     // Simple markdown to HTML converter for bold and italics
@@ -674,7 +845,29 @@ body.dark-mode #video-info {
     modeSection.style.display = 'none';
     sendBtn.style.display = 'none';
 
-    // CSS classes for fade effects and dark mode
+    document.addEventListener('DOMContentLoaded', () => {
+  const bookCategoryDropdown = document.getElementById('bookCategory');
+
+  if (bookCategoryDropdown) {
+    fetch('/api/book-categories')
+      .then(response => response.json())
+      .then(categories => {
+        bookCategoryDropdown.innerHTML = '<option value="">-- Select a Category --</option>';
+        categories.forEach(category => {
+          const option = document.createElement('option');
+          option.value = category;
+          option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+          bookCategoryDropdown.appendChild(option);
+        });
+      })
+      .catch(error => {
+        console.error('Failed to load book categories:', error);
+        bookCategoryDropdown.innerHTML = '<option value="">⚠️ Failed to load</option>';
+      });
+  }
+});
+
+
   </script>
 
   <style>

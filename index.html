@@ -256,6 +256,34 @@ body.dark-mode #video-info {
       margin-top: 18px;
     }
 
+    #modeUIContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 32px;
+}
+
+#modeSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+#modeTextInput,
+#user-input {
+  width: 300px;
+  max-width: 90%;
+  margin-top: 8px;
+}
+
+#modeTextInputGroup,
+#queryInputGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
 
     #modeInstructions {
       margin-top: 8px;
@@ -267,35 +295,41 @@ body.dark-mode #video-info {
       transition: color 0.5s ease;
     }
     #translationOptions {
-      margin-top: 18px;
-      padding: 12px 15px;
-      background: #f0f4f8;
-      border-radius: 10px;
-      display: none;
-      user-select: none;
-      transition: background 0.5s ease, color 0.5s ease;
-    }
-    #translationOptions label {
-      font-weight: normal;
-      margin-right: 20px;
-      cursor: pointer;
-    }
-    #translationOptions select {
-      width: auto;
-      display: inline-block;
-      margin-left: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    body.dark-mode input,
-    body.dark-mode select,
-    body.dark-mode #response,
-    body.dark-mode #modeResponse,
-    body.dark-mode #translationOptions {
-      background: #222;
-      color: #ddd;
-      border-color: #555;
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+    max-width: 400px;
+    font-family: Arial, sans-serif;
+  }
+  label {
+    font-weight: bold;
+  }
+  select, input[type="text"], button {
+    padding: 8px;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    width: 100%;
+  }
+  #translateBtn {
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
+  }
+  #translateBtn:hover {
+    background-color: #45a049;
+  }
+  #translatedText {
+    margin-top: 16px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    min-height: 40px;
+    white-space: pre-wrap;
+  }
     body.dark-mode #modeInstructions {
       color: #ccc;
     }
@@ -345,40 +379,43 @@ body.dark-mode #video-info {
     <div id="startContainer">
   <label for="nameInput" id="nameLabel">📝 Enter your name:</label>
   <input type="text" id="nameInput" placeholder="Your name here..." autocomplete="off" aria-describedby="nameLabel" />
-  <button id="sendBtn"><span class="icon">➤</span> Send</button>
+  <button id="startBtn"><span class="icon">➤</span> Send</button>
 </div>
 
     <div id="response" aria-live="polite"></div>
     <div id="video-info"></div>
 
-    <section id="modeSection" aria-label="Mode Selection and Interaction" style="display:none;">
-      <label for="modeInput" id="modeLabel">🎯 Choose a Mode:</label>
-      <select id="modeInput" aria-describedby="modeInstructions" aria-required="true">
-        <option value="">-- Select a Mode --</option>
-        <option value="1">🤖 Name Recognition</option>
-        <option value="math">🧮 Math Problem Solver</option>
-        <option value="science">🔬 Science Explainer</option>
-        <option value="book">📚 Book Recommender</option>
-        <option value="budget">💰 Budget Tracker</option>
-        <option value="depression">🩺 Depression Screening</option>
-        <option value="tidy">🏠 House Tidying</option>
-        <option value="voice">🎙 Voice GUI Assistant</option>
-        <option value="logs">📜 Memory Logs</option>
-        <option value="translate">🌐 Translate</option>
-        <option value="reminder">⏰ Task Reminder</option>
-      </select>
+    <div id="modeUIContainer">
+  <section id="modeSection" aria-label="Mode Selection and Interaction" style="display: none;">
+    <label for="modeInput" id="modeLabel">🎯 Choose a Mode:</label>
+    <select id="modeInput" aria-describedby="modeInstructions" aria-required="true">
+      <option value="">-- Select a Mode --</option>
+      <option value="1">🤖 Name Recognition</option>
+      <option value="math">🧮 Math Problem Solver</option>
+      <option value="science">🔬 Science Explainer</option>
+      <option value="book">📚 Book Recommender</option>
+      <option value="budget">💰 Budget Tracker</option>
+      <option value="depression">🩺 Depression Screening</option>
+      <option value="tidy">🏠 House Tidying</option>
+      <option value="voice">🎙 Voice GUI Assistant</option>
+      <option value="logs">📜 Memory Logs</option>
+      <option value="translate">🌐 Translate</option>
+      <option value="reminder">⏰ Task Reminder</option>
+    </select>
 
-      <div id="modeInstructions" aria-live="polite" aria-atomic="true" style="margin-top:10px;"></div>
+    <div id="modeInstructions" aria-live="polite" aria-atomic="true" style="margin-top: 10px;"></div>
 
-      <div id="modeTextInputGroup" style="margin-top: 20px; display: none;">
-        <label for="modeTextInput">Your input:</label>
-        <input type="text" id="modeTextInput" placeholder="Enter your question or info..." />
-      </div>
+    <div id="modeTextInputGroup" style="margin-top: 20px; display: none;">
+      <label for="modeTextInput">Your input:</label><br />
+      <input type="text" id="modeTextInput" placeholder="Enter your question or info..." />
+    </div>
 
-      <div id="queryInputGroup" style="margin-top: 20px; display: none;">
-        <label for="user-input">Ask a question:</label>
-        <input type="text" id="user-input" placeholder="Ask a question..." autocomplete="off" />
-      </div>
+    <div id="queryInputGroup" style="margin-top: 20px; display: none;">
+      <label for="user-input">Ask a question:</label><br />
+      <input type="text" id="user-input" placeholder="Ask a question..." autocomplete="off" />
+    </div>
+  </section>
+</div>
 
       <div id="bookCategoryGroup" style="margin-top: 20px; display: none;">
         <label for="bookCategory" id="bookCategoryLabel">Choose a book category:</label>
@@ -395,32 +432,30 @@ body.dark-mode #video-info {
         <label><input type="radio" name="bookType" value="3" checked /> 📚 + 🎧 Both</label>
       </div>
 
-      <div id="translationOptions" style="margin-top: 20px; display: none;">
-        <label for="translateFrom" id="translateFromLabel">From:</label>
-        <select id="translateFrom">
-          <option value="auto">Auto Detect</option>
-          <option value="en">English</option>
-          <option value="es">Spanish</option>
-          <option value="fr">French</option>
-          <option value="de">German</option>
-          <option value="zh">Chinese</option>
-          <option value="ja">Japanese</option>
-        </select>
 
-        <label for="translateTo" id="translateToLabel" style="margin-left: 10px;">To:</label>
-        <select id="translateTo">
-          <option value="en">English</option>
-          <option value="es">Spanish</option>
-          <option value="fr">French</option>
-          <option value="de">German</option>
-          <option value="zh">Chinese</option>
-          <option value="ja">Japanese</option>
-        </select>
-      </div>
+<div id="translationOptions" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+  <label for="textToTranslate">Text to Translate:</label>
+  <input type="text" id="textToTranslate" placeholder="Enter text here..." autocomplete="off" />
 
-       <div id="budgetChatContainer" style="display:none; border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; margin-top: 20px; background: #f9f9f9;">
+  <label for="translateFrom">Translate From:</label>
+  <select id="translateFrom"></select>
 
-  </div>
+  <label for="translateTo">Translate To:</label>
+  <select id="translateTo"></select>
+
+  <button id="translateBtn">Translate</button>
+
+  <div id="translatedText"></div>
+</div>
+
+
+  <div id="loadingIndicator" style="display: none;">🔄 Translating...</div>
+  <div id="translationOutput" style="margin-top: 10px; white-space: pre-wrap;"></div>
+</div>
+
+<div id="budgetChatContainer" style="display:none; border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; margin-top: 20px; background: #f9f9f9;">
+  <div id="finalScoreDisplay" style="display: none; font-weight: bold; margin-top: 10px;"></div>
+</div>
 
 
   <button id="sendBtn" style="display:none; margin-top: 20px;">Send</button>
@@ -429,28 +464,15 @@ body.dark-mode #video-info {
 
   <div id="modeResponse" aria-live="polite" aria-atomic="true" style="margin-top: 20px;"></div>
 
-    </section>
+
   </main>
 
   <script>
     let currentUserId = null;
+    let depressionScore = 0;
 
-    window.addEventListener('load', () => {
-      const intro = document.getElementById('introScreen');
-      const main = document.querySelector('main');
 
-      setTimeout(() => {
-        intro.classList.add('fade-out');
-        intro.addEventListener('transitionend', () => {
-          intro.style.display = 'none';
-          main.style.display = 'block';
-          requestAnimationFrame(() => {
-            main.classList.add('fade-in');
-            document.getElementById('nameInput').focus();
-          });
-        }, { once: true });
-      }, 9000);
-    });
+
 
     // Dark mode toggle
     const darkModeToggle = document.getElementById('darkModeToggle');
@@ -471,53 +493,369 @@ body.dark-mode #video-info {
     const bookTypeGroup = document.getElementById('bookTypeGroup');
     const modeInstructions = document.getElementById('modeInstructions');
     const translationOptions = document.getElementById('translationOptions');
+    async function startSession(username) {
+  try {
+    const response = await fetch('/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: username }),
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to start session.');
+    }
+
+    // Store the userId (which is the sanitized name from backend)
+    localStorage.setItem('userId', data.userId);
+    return data.userId;
+  } catch (error) {
+    alert('Error starting session: ' + error.message);
+    return null;
+  }
+}
+
+window.addEventListener('load', async () => {
+  // You need to define username here or fetch it from somewhere
+  // For example, from an input or localStorage:
+  const username = localStorage.getItem('username') || ''; // or get from input
+
+  if (username) {
+    const userId = await startSession(username);
+    if (!userId) {
+      // handle error if session didn't start properly
+      return;
+    }
+  }
+
+  const intro = document.getElementById('introScreen');
+  const main = document.querySelector('main');
+
+  setTimeout(() => {
+    intro.classList.add('fade-out');
+    intro.addEventListener(
+      'transitionend',
+      () => {
+        intro.style.display = 'none';
+        main.style.display = 'block';
+        requestAnimationFrame(() => {
+          main.classList.add('fade-in');
+          document.getElementById('nameInput').focus();
+        });
+      },
+      { once: true }
+    );
+  }, 9000);
+});
+
+
+    const languages = {
+    auto: "Auto Detect",
+    en: "English",
+    es: "Spanish",
+    fr: "French",
+    de: "German",
+    zh: "Chinese",
+    ja: "Japanese",
+    ru: "Russian",
+    ar: "Arabic",
+    hi: "Hindi"
+    // add more as needed
+  };
+
+
+    const translateFrom = document.getElementById('translateFrom');
+  const translateTo = document.getElementById('translateTo');
+
+  // Populate translateFrom dropdown with Auto Detect + all languages
+  function populateTranslateFrom() {
+    for (const [code, name] of Object.entries(languages)) {
+      const option = document.createElement('option');
+      option.value = code;
+      option.textContent = name;
+      translateFrom.appendChild(option);
+    }
+    translateFrom.value = 'auto'; // default
+  }
+
+  // Populate translateTo dropdown (exclude Auto Detect)
+  function populateTranslateTo() {
+    for (const [code, name] of Object.entries(languages)) {
+      if (code === 'auto') continue; // skip auto for target language
+      const option = document.createElement('option');
+      option.value = code;
+      option.textContent = name;
+      translateTo.appendChild(option);
+    }
+    translateTo.value = 'en'; // default target language
+  }
+
+  populateTranslateFrom();
+  populateTranslateTo();
+
+  async function translate() {
+  // Get text and trim
+  const text = document.getElementById('textToTranslate').value.trim();
+  if (!text) {
+    alert('Please enter some text to translate.');
+    return;
+  }
+
+  // Get source and target languages
+  const source_lang = document.getElementById('translateFrom').value; // make sure IDs match your HTML
+  const target_lang = document.getElementById('translateTo').value;
+
+  // Output div and loading indicator
+  const outputDiv = document.getElementById('translatedText'); // or translationOutput — pick one and keep consistent
+  const loading = document.getElementById('loadingIndicator'); // optional, if you have a loading spinner div
+
+  // Get userId or prompt
+  let userId = localStorage.getItem('userId');
+  if (!userId) {
+    userId = prompt("Enter your username:");
+    if (!userId) {
+      alert("Username is required!");
+      return;
+    }
+    localStorage.setItem('userId', userId);
+  }
+
+  outputDiv.textContent = '';
+  if (loading) loading.style.display = 'block';
+
+  try {
+    const response = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: userId,
+        mode: 'translate',
+        input: text,
+        user_translate: true,
+        ai_translate: false,
+        target_lang: target_lang,
+        source_lang: source_lang,
+        user_name: userId,
+        memory_logger: null
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      outputDiv.textContent = data.ai_response || data.translated_input || 'No response';
+    } else {
+      outputDiv.textContent = 'Error: ' + (data.error || 'Unknown error');
+    }
+  } catch (error) {
+    outputDiv.textContent = 'Network error: ' + error.message;
+  } finally {
+    if (loading) loading.style.display = 'none';
+  }
+}
+    
+
+async function ensureSession(userId) {
+  const response = await fetch('/create_session', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ userId }),
+  });
+  const data = await response.json();
+  if (!data.success) {
+    alert('Failed to create user session: ' + (data.error || 'Unknown error'));
+  }
+}
+
+async function startApp() {
+    const userId = localStorage.getItem('userId') || prompt("Enter your username:");
+    if (!userId) {
+      alert("Username is required!");
+      return;
+    }
+
+    localStorage.setItem('userId', userId);
+    await ensureSession(userId);
+  }
+
+  document.addEventListener('DOMContentLoaded', startApp);
+
+
+    async function handleTidyMode() {
+  const userId = currentUserId;
+  const outputDiv = document.getElementById('modeResponse');
+
+  if (!userId) {
+    outputDiv.textContent = '⚠️ Please start the assistant first.';
+    return;
+  }
+
+  const topic = document.getElementById('modeTextInput').value.trim();
+  if (!topic) {
+    outputDiv.textContent = '⚠️ Please enter a tidying topic.';
+    return;
+  }
+
+  try {
+    outputDiv.textContent = 'Loading...';
+
+    const response = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: userId,
+        mode: 'tidy',
+        input: topic,
+        topic: topic
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      outputDiv.textContent = data.response;
+    } else {
+      outputDiv.textContent = `Error: ${data.error || 'Unknown error'}`;
+    }
+  } catch (error) {
+    outputDiv.textContent = '⚠️ Error calling the tidy mode API.';
+    console.error(error);
+  }
+}
+
+    function updateDepressionScoreDisplay() {
+  const scoreDiv = document.getElementById('finalScoreDisplay');
+  if (!scoreDiv) return;
+
+  scoreDiv.textContent = `🧠 Screening Score: ${depressionScore}`;
+  scoreDiv.style.display = 'block';
+}
 
     // Update UI based on mode selection
     function updateModeUI() {
   const selected = modeInput.value;
-
   const modeSection = document.getElementById('modeSection');
+  const queryInputGroup = document.getElementById('queryInputGroup');
+  const modeTextInputGroup = document.getElementById('modeTextInputGroup');
+  const chatContainer = document.getElementById('budgetChatContainer');
 
-  if (!selected) {
-    modeSection.style.display = 'none';  // hide if no mode selected
-  } else {
-    modeSection.style.display = 'block'; // show when mode selected
-  }
+  // Show or hide mode section
+  modeSection.style.display = selected ? 'block' : 'none';
 
-  // hide all optional UI elements as before
-  document.getElementById('queryInputGroup').style.display = 'none';
-  document.getElementById('modeTextInputGroup').style.display = 'none';
+  // Show or hide budget chat container
+  chatContainer.style.display = selected === 'budget' ? 'block' : 'none';
+
+  // Hide all optional UI elements
+  queryInputGroup.style.display = 'none';
+  modeTextInputGroup.style.display = 'none';
   bookCategoryGroup.style.display = 'none';
   bookTypeGroup.style.display = 'none';
   translationOptions.style.display = 'none';
 
+  // Clear instructions
   modeInstructions.textContent = '';
 
   switch (selected) {
     case 'math':
     case 'science':
-      document.getElementById('queryInputGroup').style.display = 'block';
+      queryInputGroup.style.display = 'block';
       modeInstructions.textContent = `Enter your ${selected === 'math' ? 'math problem' : 'science question'} above and click Send.`;
       break;
+
     case 'book':
       bookCategoryGroup.style.display = 'block';
       bookTypeGroup.style.display = 'block';
       modeInstructions.textContent = 'Select a book category and type, then click Send.';
       break;
+
     case 'translate':
-      translationOptions.style.display = 'block';
-      modeInstructions.textContent = 'Select languages and click Send to translate.';
-      break;
-    case '1': // Name Recognition
+  translationOptions.style.display = 'block';
+  modeInstructions.textContent = 'Select languages and click Translate.';
+
+  sendBtn.style.display = 'none';
+  document.getElementById('translateBtn').style.display = 'inline-block';
+  break;
+
     case 'budget':
+      modeTextInputGroup.style.display = 'block';
+      modeInstructions.textContent = 'Enter your savings goal and click Send.';
+
+      // Clear previous chat
+      chatContainer.innerHTML = '';
+
+      // Show bot "typing..." indicator
+      const botMessage = document.createElement('div');
+      botMessage.textContent = 'WREN is typing...';
+      botMessage.style.fontStyle = 'italic';
+      chatContainer.appendChild(botMessage);
+
+      // Trigger backend welcome message
+      fetch('/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUserId,
+          mode: 'budget',
+          input: '' // empty input triggers welcome
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          chatContainer.removeChild(botMessage);
+
+          if (data && typeof data.response === 'string' && data.response.trim() !== '') {
+            const botReply = document.createElement('div');
+            botReply.innerHTML = typeof markdownToHtml === 'function'
+              ? markdownToHtml(data.response)
+              : data.response;
+            chatContainer.appendChild(botReply);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+          }
+        })
+        .catch(error => {
+          console.error('Budget welcome error:', error);
+          chatContainer.removeChild(botMessage);
+          const errorDiv = document.createElement('div');
+          errorDiv.textContent = '❌ Failed to load budget intro.';
+          chatContainer.appendChild(errorDiv);
+        });
+      break;
+
+    case '1': // Name Recognition
     case 'depression':
+  modeTextInputGroup.style.display = 'block';
+  modeInstructions.textContent = 'Loading instructions...';
+
+  // Fetch greeting/instructions from backend
+        depressionScore = 0;
+updateDepressionScoreDisplay();
+  fetch('/mode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: currentUserId, mode: 'depression', input: '' }) // empty input to trigger greeting
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data && data.response) {
+  updateDepressionScoreDisplay();
+  modeInstructions.innerHTML = data.response.replace(/\n/g, '<br>');
+} else {
+  modeInstructions.textContent = 'Please enter your input and click Send.';
+}
+  })
+  .catch(() => {
+    modeInstructions.textContent = 'Please enter your input and click Send.';
+  });
+  break;
     case 'tidy':
     case 'voice':
     case 'logs':
     case 'reminder':
-      document.getElementById('modeTextInputGroup').style.display = 'block';
-      modeInstructions.textContent = 'Enter your in and click Send.';
+      modeTextInputGroup.style.display = 'block';
+      modeInstructions.textContent = 'Enter your input and click Send.';
       break;
+
     default:
       modeInstructions.textContent = '';
       break;
@@ -526,42 +864,49 @@ body.dark-mode #video-info {
 
 
     modeInput.addEventListener('change', updateModeUI);
+   startBtn.addEventListener("click", async () => {
+  const name = nameInput.value.trim();
 
-    startBtn.addEventListener("click", async () => {
-      const name = nameInput.value.trim();
+  if (!name) {
+    responseDiv.innerText = "⚠️ Please enter your name first.";
+    return;
+  }
 
-      if (!name) {
-        responseDiv.innerText = "⚠️ Please enter your name first.";
-        return;
-      }
-
-      try {
-        const response = await fetch("/start", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ name })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          currentUserId = result.userId;
-          responseDiv.innerText = result.response || `✅ Hello, ${name}! Please interact below to see what I can do for you!`;
-          modeSection.style.display = 'block';
-          modeInput.focus();
-          startBtn.disabled = true;
-          nameInput.disabled = true;
-          sendBtn.style.display = 'inline-block';
-        } else {
-          responseDiv.innerText = `❌ ${result.error}`;
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        responseDiv.innerText = "❌ Something went wrong. Try again.";
-      }
+  try {
+    // Send name to backend to start session or register user
+    const response = await fetch("/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name })
     });
+
+    const result = await response.json();
+
+    if (result.success) {
+      currentUserId = result.userId;
+
+      responseDiv.innerText = result.response || `👋 Hello, ${name}! Please interact below to see what I can do for you!`;
+
+      // Show mode selection section, focus input
+      modeSection.style.display = 'block';
+      modeInput.focus();
+
+      // Disable start inputs & button to prevent re-submission
+      startBtn.disabled = true;
+      nameInput.disabled = true;
+
+      // Show send button for further interactions
+      sendBtn.style.display = 'inline-block';
+    } else {
+      responseDiv.innerText = `❌ ${result.error || 'Unknown error'}`;
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    responseDiv.innerText = "❌ Something went wrong. Try again.";
+  }
+});
 
     sendBtn.addEventListener('click', async () => {
   const mode = modeInput.value;
@@ -575,6 +920,59 @@ body.dark-mode #video-info {
     modeResponse.textContent = '⚠️ Please enter your name and start first.';
     return;
   }
+
+
+   if (mode === 'tidy') {
+  await handleTidyMode();
+  return;
+}
+
+  if (mode === 'depression') {
+  const userInput = document.getElementById('modeTextInput').value.trim();
+
+  if (!userInput) {
+    modeResponse.textContent = '⚠️ Please enter your input above.';
+    return;
+  }
+
+  try {
+    sendBtn.disabled = true;
+    modeResponse.textContent = 'Loading...';
+
+    const res = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUserId,
+        mode,
+        input: userInput
+      }),
+    });
+
+    if (!res.ok) {
+      modeResponse.textContent = `❌ Server error: ${res.status} ${res.statusText}`;
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data && data.response) {
+      depressionScore += 1;
+      updateDepressionScoreDisplay();
+      modeResponse.innerHTML = data.response.replace(/\n/g, '<br>');
+    } else {
+      modeResponse.textContent = '⚠️ No response from backend.';
+    }
+  } catch (error) {
+    console.error('Fetch error:', error);
+    modeResponse.textContent = '❌ Network error.';
+  } finally {
+    sendBtn.disabled = false;
+  }
+
+  return; // stop further processing
+}
+
 
   // Handle 'book' mode separately to call /api/audiobooks endpoint
   if (mode === 'book') {
@@ -698,19 +1096,21 @@ body.dark-mode #video-info {
     chatContainer.removeChild(botMessage);
 
     if (data && data.success === false) {
-      const errorDiv = document.createElement('div');
-      errorDiv.textContent = `⚠️ ${data.error || 'Request failed.'}`;
-      chatContainer.appendChild(errorDiv);
-    } else if (data && data.response) {
-      const botReply = document.createElement('div');
-      botReply.innerHTML = markdownToHtml(data.response);
-      chatContainer.appendChild(botReply);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    } else {
-      const warnDiv = document.createElement('div');
-      warnDiv.textContent = '⚠️ No response from backend.';
-      chatContainer.appendChild(warnDiv);
-    }
+  const errorDiv = document.createElement('div');
+  errorDiv.textContent = `⚠️ ${data.error || 'Request failed.'}`;
+  chatContainer.appendChild(errorDiv);
+} else if (data && typeof data.response === 'string' && data.response.trim() !== '') {
+  const botReply = document.createElement('div');
+  botReply.innerHTML = typeof markdownToHtml === 'function'
+    ? markdownToHtml(data.response)
+    : data.response;
+  chatContainer.appendChild(botReply);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+} else {
+  const warnDiv = document.createElement('div');
+  warnDiv.textContent = '⚠️ No response from backend.';
+  chatContainer.appendChild(warnDiv);
+}
 
   } catch (error) {
     console.error('Fetch error:', error);
@@ -737,17 +1137,21 @@ body.dark-mode #video-info {
   const payload = { userId: currentUserId, mode: modeToSend };
 
   if (mode === 'translate') {
-    payload.translateFrom = document.getElementById('translateFrom').value;
-    payload.translateTo = document.getElementById('translateTo').value;
+  const from = document.getElementById('translateFrom').value;
+  const to = document.getElementById('translateTo').value;
+  const inputText = document.getElementById('modeTextInput').value.trim(); // or another input if different
 
-    const textToTranslate = prompt('Enter the text you want to translate:', '');
-    if (textToTranslate === null || textToTranslate.trim() === '') {
-      modeResponse.textContent = 'Translation cancelled.';
-      return;
-    }
+  if (!inputText) {
+    modeResponse.textContent = '⚠️ Please enter text to translate.';
+    return;
+  }
 
-    payload.input = textToTranslate.trim();
-  } else {
+  payload.translateFrom = from;
+  payload.translateTo = to;
+  payload.input = inputText;
+}
+
+  else {
     // Other modes
     let userInput = '';
     if (mode === 'math' || mode === 'science') {
@@ -816,36 +1220,14 @@ body.dark-mode #video-info {
       return html;
     }
 
-    // Fetch YouTube video info
-    async function getYouTubeVideoInfo(videoId) {
-      const videoInfoDiv = document.getElementById('video-info');
-      videoInfoDiv.innerHTML = 'Loading video info...';
-
-      try {
-        const res = await fetch(`/video-info?id=${encodeURIComponent(videoId)}`);
-        if (!res.ok) throw new Error('Failed to fetch video info');
-        const data = await res.json();
-
-        if (data && data.title && data.description) {
-          videoInfoDiv.innerHTML = `
-            <h2>${data.title}</h2>
-            <p>${data.description}</p>
-            <p><a href="https://youtu.be/${videoId}" target="_blank" rel="noopener">Watch on YouTube</a></p>
-          `;
-        } else {
-          videoInfoDiv.innerHTML = 'Video information not available.';
-        }
-      } catch (error) {
-        console.error(error);
-        videoInfoDiv.innerHTML = 'Error fetching video info.';
-      }
-    }
 
     // Initial UI setup: hide modeSection and sendBtn
     modeSection.style.display = 'none';
     sendBtn.style.display = 'none';
 
     document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('translateBtn').addEventListener('click', translate);
+// --------- Book Category Dropdown Logic (your original) ---------
   const bookCategoryDropdown = document.getElementById('bookCategory');
 
   if (bookCategoryDropdown) {
@@ -865,7 +1247,33 @@ body.dark-mode #video-info {
         bookCategoryDropdown.innerHTML = '<option value="">⚠️ Failed to load</option>';
       });
   }
+
+  // --------- New: Start Session Button Logic ---------
+  const startSessionBtn = document.getElementById('startSessionBtn');
+  const usernameInput = document.getElementById('usernameInput');
+
+  if (startSessionBtn && usernameInput) {
+    startSessionBtn.addEventListener('click', async () => {
+      const username = usernameInput.value.trim();
+      if (!username) {
+        alert('Please enter your name.');
+        return;
+      }
+
+      const userId = await startSession(username);
+      if (userId) {
+        alert(`Session started for ${username}`);
+        // Optionally store or display the userId
+        localStorage.setItem('userId', userId);
+      }
+    });
+  }
 });
+
+
+
+
+
 
 
   </script>

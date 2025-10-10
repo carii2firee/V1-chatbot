@@ -1240,23 +1240,25 @@ async function startApp() {
     body: JSON.stringify(payload),
   });
 
-  const data = await res.json();
 
   if (res.ok) {
+    if (mode === 'science') {
+    const responseText = await res.text();
+    modeResponse.textContent = responseText || '✅ Done.';
+  } else {
+    const data = await res.json();
+
     if (mode === 'math') {
-      // Extract the first number or decimal from the response text
-      const answerMatch = data.response.match(/[-+]?\d*\.?\d+/);
-      if (answerMatch) {
-        modeResponse.textContent = answerMatch[0];
-      } else {
-        modeResponse.textContent = data.response && data.response.trim() !== '' ? data.response : 'No answer received.';
-      }
+      const answerMatch = data.response?.match(/[-+]?\d*\.?\d+/);
+      modeResponse.textContent = answerMatch?.[0] || data.response?.trim() || 'No answer received.';
     } else {
       modeResponse.textContent = data.response || '✅ Done.';
     }
-  } else {
-    modeResponse.textContent = data.error || '⚠️ Something went wrong.';
   }
+} else {
+  const errorText = await res.text(); // fallback for non-JSON error
+  modeResponse.textContent = errorText || '⚠️ Something went wrong.';
+}
 } catch (error) {
   console.error('Fetch error:', error);
   modeResponse.textContent = '❌ Network error.';

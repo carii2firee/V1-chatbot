@@ -1,528 +1,535 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>WREN AI Companion</title>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-    /* ===== Global Styles ===== */
+    <meta charset="UTF-8"/>
+    <title>WREN AI Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet"/>
+    <style>
+        /* ===== Global Styles ===== */
 
 
 
-    #startContainer {
-  max-width: 320px;
-  margin: 40px auto 30px auto; /* centers horizontally and adds vertical spacing */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px; /* space between elements */
-}
-
-#startContainer label {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #444;
-  user-select: none;
-  text-align: center;
-  width: 100%;
-}
-
-    html, body {
-      margin: 0; padding: 0;
-      font-family: 'Quicksand', sans-serif;
-      background: #f9f9f9;
-      height: 100%;
-      color: #333;
-      transition: background-color 0.5s ease, color 0.5s ease;
-      user-select: none;
-    }
-    body.dark-mode {
-      background: #121212;
-      color: #ddd;
-    }
-    body.dark-mode main {
-      background: linear-gradient(to right, #222, #333);
-      color: #eee;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-    }
-
-         #video-info {
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-  pointer-events: none;
-}
-
-#video-info.show {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-body.dark-mode #video-info {
-  background: #1e1e1e;
-  color: #ddd;
-}
-
-    /* ===== Intro Screen ===== */
-    #introScreen {
-      position: fixed;
-      z-index: 9999;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: black;
-      color: white;
+        #startContainer {
+      max-width: 320px;
+      margin: 40px auto 30px auto; /* centers horizontally and adds vertical spacing */
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      transition: opacity 1.5s ease;
-    }
-    #introScreen.fade-out {
-      opacity: 0 !important;
-      pointer-events: none;
-    }
-    .eyes {
-      position: absolute;
-      top: calc(50% - 80px);
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 24px;
-      animation: fadeIn 2s forwards 1.5s;
-      pointer-events: none;
-      width: 80px;
-      justify-content: center;
-    }
-    .eye {
-      width: 20px; height: 20px;
-      background: white;
-      border-radius: 50%;
-      animation: blink 4s infinite;
-    }
-    .eye:nth-child(2) {
-      animation-delay: 2s;
-    }
-    @keyframes blink {
-      0%, 90%, 100% { height: 20px; }
-      95% { height: 2px; }
+      gap: 12px; /* space between elements */
     }
 
-    #introText {
-      text-align: center;
-      position: relative;
-      margin-top: 40px;
-    }
-    #introLine1 {
-      font-size: 1.4rem;
-      margin: 0 0 8px 0;
-      opacity: 0;
-      animation: fadeIn 2s forwards 0.5s;
-      line-height: 1.2;
-      font-weight: 400;
-      color: #ccc;
-    }
-    #introLine2 {
-      font-size: 2.2rem;
-      font-weight: 900;
-      color: white;
-      text-shadow: 0 0 5px white, 0 0 10px white, 0 0 20px white, 0 0 30px white;
-      opacity: 0;
-      animation: fadeIn 2s forwards 2.5s, wrenGlow 3s infinite ease-in-out 4.5s;
-      line-height: 1.1;
-      letter-spacing: 0.06em;
-    }
-    #introStar {
-      display: block;
-      margin: 20px auto 0;
-      width: 60px; height: 60px;
-      opacity: 0;
-      animation: fadeIn 2s forwards 3.5s, starPulse 3s infinite ease-in-out 5s;
-    }
-    @keyframes starPulse {
-      0%, 100% { fill: #1e88e5; opacity: 1; }
-      50% { fill: #1e88e5; opacity: 0.7; }
-    }
-    @keyframes wrenGlow {
-      0%, 100% {
-        text-shadow: 0 0 5px white, 0 0 10px white, 0 0 20px white, 0 0 30px white;
-        color: white;
-      }
-      50% {
-        text-shadow: 0 0 2px white, 0 0 6px white, 0 0 10px white;
-        color: white;
-      }
-    }
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
-
-.fade-in {
-  opacity: 0;
-  animation: fadeInMain 1.5s forwards;
-}
-
-@keyframes fadeInMain {
-  to {
-    opacity: 1;
-  }
-}
-
-    /* ===== Main App Styles ===== */
-    main {
-      display: none;
-      max-width: 700px;
-      margin: 40px auto 60px auto;
-      padding: 30px 25px;
-      background: linear-gradient(to right, #e3f2fd, #fbe9e7);
-      border-radius: 16px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      color: #333;
-      box-sizing: border-box;
-      min-height: 300px;
-      transition: background 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
-    }
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-      margin-bottom: 25px;
-      user-select: none;
-    }
-    label {
-      margin-top: 18px;
-      display: block;
+    #startContainer label {
       font-weight: 600;
       font-size: 1rem;
       color: #444;
       user-select: none;
-    }
-    input, select {
-      padding: 12px 15px;
-      margin-top: 8px;
+      text-align: center;
       width: 100%;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease;
-      background: white;
-      color: #333;
     }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #4caf50;
-      box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+
+        html, body {
+          margin: 0; padding: 0;
+          font-family: 'Quicksand', sans-serif;
+          background: #f9f9f9;
+          height: 100%;
+          color: #333;
+          transition: background-color 0.5s ease, color 0.5s ease;
+          user-select: none;
+        }
+        body.dark-mode {
+          background: #121212;
+          color: #ddd;
+        }
+        body.dark-mode main {
+          background: linear-gradient(to right, #222, #333);
+          color: #eee;
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+             #video-info {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      pointer-events: none;
     }
-    button {
-      padding: 14px 0;
-      font-size: 1.1rem;
-      width: 100%;
-      margin-top: 22px;
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
-      user-select: none;
+
+    #video-info.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
-    button:hover:not(:disabled) {
-      background-color: #388e3c;
+
+    body.dark-mode #video-info {
+      background: #1e1e1e;
+      color: #ddd;
     }
-    button:disabled {
-      background-color: #a5d6a7;
-      cursor: wait;
+
+        /* ===== Intro Screen ===== */
+        #introScreen {
+          position: fixed;
+          z-index: 9999;
+          top: 0; left: 0;
+          width: 100vw; height: 100vh;
+          background: black;
+          color: white;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          transition: opacity 1.5s ease;
+        }
+        #introScreen.fade-out {
+          opacity: 0 !important;
+          pointer-events: none;
+        }
+        .eyes {
+          position: absolute;
+          top: calc(50% - 80px);
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 24px;
+          animation: fadeIn 2s forwards 1.5s;
+          pointer-events: none;
+          width: 80px;
+          justify-content: center;
+        }
+        .eye {
+          width: 20px; height: 20px;
+          background: white;
+          border-radius: 50%;
+          animation: blink 4s infinite;
+        }
+        .eye:nth-child(2) {
+          animation-delay: 2s;
+        }
+        @keyframes blink {
+          0%, 90%, 100% { height: 20px; }
+          95% { height: 2px; }
+        }
+
+        #introText {
+          text-align: center;
+          position: relative;
+          margin-top: 40px;
+        }
+        #introLine1 {
+          font-size: 1.4rem;
+          margin: 0 0 8px 0;
+          opacity: 0;
+          animation: fadeIn 2s forwards 0.5s;
+          line-height: 1.2;
+          font-weight: 400;
+          color: #ccc;
+        }
+        #introLine2 {
+          font-size: 2.2rem;
+          font-weight: 900;
+          color: white;
+          text-shadow: 0 0 5px white, 0 0 10px white, 0 0 20px white, 0 0 30px white;
+          opacity: 0;
+          animation: fadeIn 2s forwards 2.5s, wrenGlow 3s infinite ease-in-out 4.5s;
+          line-height: 1.1;
+          letter-spacing: 0.06em;
+        }
+        #introStar {
+          display: block;
+          margin: 20px auto 0;
+          width: 60px; height: 60px;
+          opacity: 0;
+          animation: fadeIn 2s forwards 3.5s, starPulse 3s infinite ease-in-out 5s;
+        }
+        @keyframes starPulse {
+          0%, 100% { fill: #1e88e5; opacity: 1; }
+          50% { fill: #1e88e5; opacity: 0.7; }
+        }
+        @keyframes wrenGlow {
+          0%, 100% {
+            text-shadow: 0 0 5px white, 0 0 10px white, 0 0 20px white, 0 0 30px white;
+            color: white;
+          }
+          50% {
+            text-shadow: 0 0 2px white, 0 0 6px white, 0 0 10px white;
+            color: white;
+          }
+        }
+        @keyframes fadeIn {
+          to { opacity: 1; }
+        }
+
+    .fade-in {
+      opacity: 0;
+      animation: fadeInMain 1.5s forwards;
     }
-    #response, #modeResponse {
-      margin-top: 22px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
-      white-space: normal;
-      min-height: 2.2em;
-      font-size: 1rem;
-      color: #222;
-      user-select: text;
-      transition: background 0.5s ease, color 0.5s ease;
+
+    @keyframes fadeInMain {
+      to {
+        opacity: 1;
+      }
     }
-    #modeSection {
-      display: none;
+
+        /* ===== Main App Styles ===== */
+        main {
+          display: none;
+          max-width: 700px;
+          margin: 40px auto 60px auto;
+          padding: 30px 25px;
+          background: linear-gradient(to right, #e3f2fd, #fbe9e7);
+          border-radius: 16px;
+          box-shadow: 0 0 20px rgba(0,0,0,0.1);
+          color: #333;
+          box-sizing: border-box;
+          min-height: 300px;
+          transition: background 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+        }
+        h1 {
+          text-align: center;
+          color: #2c3e50;
+          margin-bottom: 25px;
+          user-select: none;
+        }
+        label {
+          margin-top: 18px;
+          display: block;
+          font-weight: 600;
+          font-size: 1rem;
+          color: #444;
+          user-select: none;
+        }
+        input, select {
+          padding: 12px 15px;
+          margin-top: 8px;
+          width: 100%;
+          font-size: 1rem;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          box-sizing: border-box;
+          transition: border-color 0.3s ease;
+          background: white;
+          color: #333;
+        }
+        input:focus, select:focus {
+          outline: none;
+          border-color: #4caf50;
+          box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+        }
+        button {
+          padding: 14px 0;
+          font-size: 1.1rem;
+          width: 100%;
+          margin-top: 22px;
+          background-color: #4caf50;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: background-color 0.3s ease;
+          user-select: none;
+        }
+        button:hover:not(:disabled) {
+          background-color: #388e3c;
+        }
+        button:disabled {
+          background-color: #a5d6a7;
+          cursor: wait;
+        }
+        #response, #modeResponse {
+          margin-top: 22px;
+          background: #fff;
+          padding: 20px;
+          border-radius: 12px;
+          box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+          white-space: normal;
+          min-height: 2.2em;
+          font-size: 1rem;
+          color: #222;
+          user-select: text;
+          transition: background 0.5s ease, color 0.5s ease;
+        }
+        #modeSection {
+          display: none;
+          margin-top: 32px;
+        }
+        #bookCategoryGroup {
+          display: none;
+          margin-top: 18px;
+        }
+
+        #modeUIContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       margin-top: 32px;
     }
-    #bookCategoryGroup {
-      display: none;
-      margin-top: 18px;
+
+    #modeSection {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
     }
 
-    #modeUIContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 32px;
-}
-
-#modeSection {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-#modeTextInput,
-#user-input {
-  width: 300px;
-  max-width: 90%;
-  margin-top: 8px;
-}
-
-#modeTextInputGroup,
-#queryInputGroup {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-    #modeInstructions {
+    #modeTextInput,
+    #user-input {
+      width: 300px;
+      max-width: 90%;
       margin-top: 8px;
-      font-size: 0.9rem;
-      color: #555;
-      min-height: 10em;
-      font-style: italic;
-      white-space: pre-wrap;
-      transition: color 0.5s ease;
-    }
-    #translationOptions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
-    max-width: 400px;
-    font-family: Arial, sans-serif;
-  }
-  label {
-    font-weight: bold;
-  }
-  select, input[type="text"], button {
-    padding: 8px;
-    font-size: 1rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    width: 100%;
-  }
-  #translateBtn {
-    background-color: #4CAF50;
-    color: white;
-    cursor: pointer;
-    border: none;
-    font-weight: bold;
-  }
-  #translateBtn:hover {
-    background-color: #45a049;
-  }
-  #translatedText {
-    margin-top: 16px;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #f2f2f2;
-    min-height: 40px;
-    white-space: pre-wrap;
-  }
-    body.dark-mode #modeInstructions {
-      color: #ccc;
     }
 
-    @font-face {
-  font-family: 'Squartiqa 4F';
-  src: url('/static/fonts/Squartiqa4F.woff2') format('woff2'),
-       url('/static/fonts/Squartiqa4F.woff') format('woff'),
-       url('/static/fonts/Squartiqa4F.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-}
+    #modeTextInputGroup,
+    #queryInputGroup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
 
-.squartiqa {
-  font-family: 'Squartiqa 4F', sans-serif;
-}
+        #modeInstructions {
+          margin-top: 8px;
+          font-size: 0.9rem;
+          color: #555;
+          min-height: 10em;
+          font-style: italic;
+          white-space: pre-wrap;
+          transition: color 0.5s ease;
+        }
+        #translationOptions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 20px;
+        max-width: 400px;
+        font-family: Arial, sans-serif;
+      }
+      label {
+        font-weight: bold;
+      }
+      select, input[type="text"], button {
+        padding: 8px;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        width: 100%;
+      }
+      #translateBtn {
+        background-color: #4CAF50;
+        color: white;
+        cursor: pointer;
+        border: none;
+        font-weight: bold;
+      }
+      #translateBtn:hover {
+        background-color: #45a049;
+      }
+      #translatedText {
+        margin-top: 16px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f2f2f2;
+        min-height: 40px;
+        white-space: pre-wrap;
+      }
+        body.dark-mode #modeInstructions {
+          color: #ccc;
+        }
+
+        @font-face {
+      font-family: 'Squartiqa 4F';
+      src: url('/static/fonts/Squartiqa4F.woff2') format('woff2'),
+           url('/static/fonts/Squartiqa4F.woff') format('woff'),
+           url('/static/fonts/Squartiqa4F.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    .squartiqa {
+      font-family: 'Squartiqa 4F', sans-serif;
+    }
 
 
-  </style>
+    </style>
 </head>
 <body>
-  <!-- ========== INTRO SCREEN ========== -->
-  <div id="introScreen" aria-label="Welcome Screen" role="dialog" aria-modal="true">
+<!-- ========== INTRO SCREEN ========== -->
+<div id="introScreen" aria-label="Welcome Screen" role="dialog" aria-modal="true">
     <div class="eyes" aria-hidden="true">
-      <div class="eye"></div>
-      <div class="eye"></div>
+        <div class="eye"></div>
+        <div class="eye"></div>
     </div>
     <div id="introText">
-      <div id="introLine1">Hello there, friend</div>
-      <div id="introLine2">I'm <span class="squartiqa">WREN</span></div>
-      <!-- Star SVG -->
-      <svg id="introStar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60" aria-hidden="true" focusable="false">
-        <polygon points="32,4 39,24 60,24 42,38 48,60 32,46 16,60 22,38 4,24 25,24" fill="#1e88e5"/>
-      </svg>
+        <div id="introLine1">Hello there, friend</div>
+        <div id="introLine2">I'm <span class="squartiqa">WREN</span></div>
+        <!-- Star SVG -->
+        <svg id="introStar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60"
+             aria-hidden="true" focusable="false">
+            <polygon points="32,4 39,24 60,24 42,38 48,60 32,46 16,60 22,38 4,24 25,24" fill="#1e88e5"/>
+        </svg>
     </div>
-  </div>
+</div>
 
-  <!-- ========== MAIN APP ========== -->
-  <main role="main" aria-live="polite" style="display:none;">
+<!-- ========== MAIN APP ========== -->
+<main role="main" aria-live="polite" style="display:none;">
     <h1 id="mainTitle">👋 Meet WREN — Your AI Companion</h1>
 
     <!-- Dark Mode Toggle -->
     <label for="darkModeToggle" id="darkModeLabel" style="user-select:none; margin-bottom: 10px; cursor:pointer;">
-      <input type="checkbox" id="darkModeToggle" /> Toggle Dark Mode
+        <input type="checkbox" id="darkModeToggle"/> Toggle Dark Mode
     </label>
 
     <div id="startContainer" class="input-group">
-  <label for="nameInput" id="nameLabel">📝 Enter your name:</label>
-  <input
-    type="text"
-    id="nameInput"
-    placeholder="Your name here..."
-    autocomplete="off"
-    aria-describedby="nameLabel"
-  />
-  <button id="startBtn">
-    <span class="icon">➤</span> Send
-  </button>
-</div>
-
-<!-- ========== RESPONSE + VIDEO INFO ========== -->
-<div id="response" aria-live="polite"></div>
-<div id="video-info"></div>
-
-<!-- ========== MODE UI CONTAINER ========== -->
-<div id="modeUIContainer">
-  <section
-    id="modeSection"
-    aria-label="Mode Selection and Interaction"
-    style="display: none;"
-  >
-    <!-- Mode Selector -->
-    <label for="modeInput" id="modeLabel">🎯 Choose a Mode:</label>
-    <select
-      id="modeInput"
-      aria-describedby="modeInstructions"
-      aria-required="true"
-    >
-      <option value="">-- Select a Mode --</option>
-      <option value="1">🤖 Name Recognition</option>
-      <option value="math">🧮 Math Problem Solver</option>
-      <option value="science">🔬 Science Explainer</option>
-      <option value="book">📚 Book Recommender</option>
-      <option value="budget">💰 Budget Tracker</option>
-      <option value="depression">🩺 Depression Screening</option>
-      <option value="tidy">🏠 House Tidying</option>
-      <option value="voice">🎙 Voice GUI Assistant</option>
-      <option value="logs">📜 Memory Logs</option>
-      <option value="translate">🌐 Translate</option>
-      <option value="reminder">⏰ Task Reminder</option>
-    </select>
-
-    <!-- Mode Instructions -->
-    <div
-      id="modeInstructions"
-      aria-live="polite"
-      aria-atomic="true"
-      style="margin-top: 10px;"
-    ></div>
-
-    <!-- General Input Group -->
-    <div id="modeTextInputGroup" class="input-group" style="display: none;">
-      <label for="modeTextInput">Your input:</label>
-      <input
-        type="text"
-        id="modeTextInput"
-        placeholder="Enter your question or info..."
-      />
+        <label for="nameInput" id="nameLabel">📝 Enter your name:</label>
+        <input
+                type="text"
+                id="nameInput"
+                placeholder="Your name here..."
+                autocomplete="off"
+                aria-describedby="nameLabel"
+        />
+        <button id="startBtn">
+            <span class="icon">➤</span> Send
+        </button>
     </div>
 
-    <!-- Query Input Group -->
-    <div id="queryInputGroup" class="input-group" style="display: none;">
-      <label for="user-input">Ask a question:</label>
-      <input
-        type="text"
-        id="user-input"
-        placeholder="Ask a question..."
-        autocomplete="off"
-      />
-    </div>
+    <!-- ========== RESPONSE + VIDEO INFO ========== -->
+    <div id="response" aria-live="polite"></div>
+    <div id="video-info"></div>
 
-    <!-- House Tidying Input Group -->
-    <div id="tidyingInstructions" style="margin-top: 10px; display: none;">
-  <label for="tidyingTopic" id="tidyingTopicLabel">
-    🏠 What area would you like help tidying?
-    <span style="display: block; font-size: 0.9em; color: #666; margin-top: 4px;">
+    <!-- ========== MODE UI CONTAINER ========== -->
+    <div id="modeUIContainer">
+        <section
+                id="modeSection"
+                aria-label="Mode Selection and Interaction"
+                style="display: none;"
+        >
+            <!-- Mode Selector -->
+            <label for="modeInput" id="modeLabel">🎯 Choose a Mode:</label>
+            <select
+                    id="modeInput"
+                    aria-describedby="modeInstructions"
+                    aria-required="true"
+            >
+                <option value="">-- Select a Mode --</option>
+                <option value="1">🤖 Name Recognition</option>
+                <option value="math">🧮 Math Problem Solver</option>
+                <option value="science">🔬 Science Explainer</option>
+                <option value="book">📚 Book Recommender</option>
+                <option value="budget">💰 Budget Tracker</option>
+                <option value="depression">🩺 Depression Screening</option>
+                <option value="tidy">🏠 House Tidying</option>
+                <option value="voice">🎙 Voice GUI Assistant</option>
+                <option value="logs">📜 Memory Logs</option>
+                <option value="translate">🌐 Translate</option>
+                <option value="reminder">⏰ Task Reminder</option>
+            </select>
+
+            <!-- Mode Instructions -->
+            <div
+                    id="modeInstructions"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    style="margin-top: 10px;"
+            ></div>
+
+            <!-- General Input Group -->
+            <div id="modeTextInputGroup" class="input-group" style="display: none;">
+                <label for="modeTextInput">Your input:</label>
+                <input
+                        type="text"
+                        id="modeTextInput"
+                        placeholder="Enter your question or info..."
+                />
+            </div>
+
+            <!-- Query Input Group -->
+            <div id="queryInputGroup" class="input-group" style="display: none;">
+                <label for="user-input">Ask a question:</label>
+                <input
+                        type="text"
+                        id="user-input"
+                        placeholder="Ask a question..."
+                        autocomplete="off"
+                />
+            </div>
+
+            <!-- House Tidying Input Group -->
+            <div id="tidyingInstructions" style="margin-top: 10px; display: none;">
+                <label for="tidyingTopic" id="tidyingTopicLabel">
+                    🏠 What area would you like help tidying?
+                    <span style="display: block; font-size: 0.9em; color: #666; margin-top: 4px;">
       Try one of these: <strong>cleaning</strong>, <strong>energy</strong>,
       <strong>security</strong>, <strong>organization</strong>,
       <strong>automation</strong>
     </span>
-  </label>
-  <input
-    type="text"
-    id="tidyingTopic"
-    placeholder="e.g., cleaning, organization, energy..."
-    autocomplete="off"
-    style="margin-top: 8px;"
-  />
-</div>
-  </section>
-</div>
+                </label>
+                <input
+                        type="text"
+                        id="tidyingTopic"
+                        placeholder="e.g., cleaning, organization, energy..."
+                        autocomplete="off"
+                        style="margin-top: 8px;"
+                />
+            </div>
+        </section>
+    </div>
 
-      <div id="bookCategoryGroup" style="margin-top: 20px; display: none;">
+    <div id="bookCategoryGroup" style="margin-top: 20px; display: none;">
         <label for="bookCategory" id="bookCategoryLabel">Choose a book category:</label>
         <select id="bookCategory" aria-describedby="bookCategoryLabel">
-          <option value="">-- Select a Category --</option>
-
+            <option value="">-- Select a Category --</option>
+            <option value="fantasy">fantasy</option>
+            <option value="science">science</option>
+            <option value="adventure">adventure</option>
+            <option value="romance">romance</option>
+            <option value="comedy">comedy</option>
         </select>
-      </div>
+    </div>
 
-      <div id="bookTypeGroup" style="margin-top: 16px; display: none;">
-        <label id="bookTypeLabel">What kind of recommendation do you want?</label><br />
-        <label><input type="radio" name="bookType" value="1" /> 📖 Book</label><br />
-        <label><input type="radio" name="bookType" value="2" /> 🎧 Audiobook/Video</label><br />
-        <label><input type="radio" name="bookType" value="3" checked /> 📚 + 🎧 Both</label>
-      </div>
-
-
-<div id="translationOptions" style="display: none; flex-direction: column; gap: 12px; margin-top: 20px;">
-  <label for="textToTranslate">Text to Translate:</label>
-  <input type="text" id="textToTranslate" placeholder="Enter text here..." autocomplete="off" />
-
-  <label for="translateFrom">Translate From:</label>
-  <select id="translateFrom"></select>
-
-  <label for="translateTo">Translate To:</label>
-  <select id="translateTo"></select>
-
-  <button id="translateBtn">Translate</button>
-
-  <!-- Loading + Output wrapped in the same section -->
-  <div id="loadingIndicator" style="display: none;">🔄 Translating...</div>
-  <div id="translatedText" style="margin-top: 10px; white-space: pre-wrap;"></div>
-</div>
+    <div id="bookTypeGroup" style="margin-top: 16px; display: none;">
+        <label id="bookTypeLabel">What kind of recommendation do you want?</label><br/>
+        <label><input type="radio" name="bookType" value="1"/> 📖 Book</label><br/>
+        <label><input type="radio" name="bookType" value="2"/> 🎧 Audiobook/Video</label><br/>
+        <label><input type="radio" name="bookType" value="3" checked/> 📚 + 🎧 Both</label>
+    </div>
 
 
-<div id="budgetChatContainer" style="display:none; border: 1px solid #2b6be6; padding: 10px; height: 300px; overflow-y: auto; margin-top: 20px; background: #f9f9f9;">
-  <div id="finalScoreDisplay" style="display: none; font-weight: bold; margin-top: 10px;"></div>
-</div>
+    <div id="translationOptions" style="display: none; flex-direction: column; gap: 12px; margin-top: 20px;">
+        <label for="textToTranslate">Text to Translate:</label>
+        <input type="text" id="textToTranslate" placeholder="Enter text here..." autocomplete="off"/>
+
+        <label for="translateFrom">Translate From:</label>
+        <select id="translateFrom"></select>
+
+        <label for="translateTo">Translate To:</label>
+        <select id="translateTo"></select>
+
+        <button id="translateBtn">Translate</button>
+
+        <!-- Loading + Output wrapped in the same section -->
+        <div id="loadingIndicator" style="display: none;">🔄 Translating...</div>
+        <div id="translatedText" style="margin-top: 10px; white-space: pre-wrap;"></div>
+    </div>
 
 
-  <button id="sendBtn" style="display:none; margin-top: 20px;">Send</button>
+    <div id="budgetChatContainer"
+         style="display:none; border: 1px solid #2b6be6; padding: 10px; height: 300px; overflow-y: auto; margin-top: 20px; background: #f9f9f9;">
+        <div id="finalScoreDisplay" style="display: none; font-weight: bold; margin-top: 10px;"></div>
+    </div>
 
-  <div id="output" style="white-space: pre-wrap; margin-top: 20px;"></div>
 
-  <div id="modeResponse" aria-live="polite" aria-atomic="true" style="margin-top: 20px;"></div>
+    <button id="sendBtn" style="display:none; margin-top: 20px;">Send</button>
+
+    <div id="output" style="white-space: pre-wrap; margin-top: 20px;"></div>
+
+    <div id="modeResponse" aria-live="polite" aria-atomic="true" style="margin-top: 20px;"></div>
 
 
-  </main>
+</main>
 
-  <script>
+<script>
     let currentUserId = null;
     let depressionScore = 0;
+    let userInput = '';
 
 
 
@@ -776,7 +783,12 @@ async function startApp() {
 
   scoreDiv.textContent = `🧠 Screening Score: ${depressionScore}`;
   scoreDiv.style.display = 'block';
+
+
 }
+
+
+   
 
     // Update UI based on mode selection
     function updateModeUI() {
@@ -840,6 +852,8 @@ async function startApp() {
     bookTypeGroup.style.display = 'block';
     modeInstructions.textContent = 'Select a book category and type, then click Send.';
     break;
+
+
 
   case 'translate':
     translationOptions.style.display = 'block';
@@ -939,8 +953,6 @@ async function startApp() {
 }
 
 
-
-
     modeInput.addEventListener('change', updateModeUI);
    startBtn.addEventListener("click", async () => {
   const name = nameInput.value.trim();
@@ -988,304 +1000,243 @@ async function startApp() {
 
     sendBtn.addEventListener('click', async () => {
   const mode = modeInput.value;
-
-  if (!mode) {
-    modeResponse.textContent = '⚠️ Please select a mode.';
-    return;
-  }
-
-  if (!currentUserId) {
-    modeResponse.textContent = '⚠️ Please enter your name and start first.';
-    return;
-  }
-
-
-   if (mode === 'tidy') {
-  const topicInput = document.getElementById('tidyingTopic');
-  const outputDiv = document.getElementById('modeResponse');
-
-  if (!topicInput || !outputDiv) {
-    console.warn('Missing DOM elements for tidying mode.');
-    return;
-  }
-
-  const tidyingTopic = topicInput.value.trim();
-
-  if (!tidyingTopic) {
-    outputDiv.textContent = '⚠️ Please enter a tidying topic.';
-    return;
-  }
+  if (!validateMode(mode)) return;
+  if (!validateSession()) return;
 
   try {
     sendBtn.disabled = true;
-    outputDiv.textContent = 'Tidying up...';
+    modeResponse.textContent = '⏳ Processing...';
 
-    const response = await fetch('/mode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUserId,
-        mode: 'tidy',
-        input: tidyingTopic
-      }),
-    });
-
-    const data = await response.json();
-
-    if (data?.response) {
-      outputDiv.innerHTML = data.response.replace(/\n/g, '<br>');
-    } else {
-      outputDiv.textContent = '⚠️ No response received.';
+    switch (mode) {
+      case 'book':
+        await handleBookMode();
+        break;
+      case 'budget':
+        await handleBudgetMode();
+        break;
+      case 'logs':
+        await fetchLogs();
+        break;
+      case 'tidy':
+        await handleTidyMode();
+        break;
+      case 'translate':
+        await handleTranslateMode();
+        break;
+      default:
+        await handleGenericMode(mode);
+        break;
     }
-
-  } catch (error) {
-    console.error('[tidy fetch error]', error);
-    outputDiv.textContent = '⚠️ Something went wrong while tidying.';
+  } catch (err) {
+    console.error('Error in mode handler:', err);
+    modeResponse.textContent = `❌ ${err.message || 'Unexpected error.'}`;
   } finally {
     sendBtn.disabled = false;
   }
+});
 
-  return;
+// ======= VALIDATION HELPERS =======
+function validateMode(mode) {
+  if (!mode) {
+    modeResponse.textContent = '⚠️ Please select a mode.';
+    return false;
+  }
+  return true;
 }
 
+function validateSession() {
+  if (!currentUserId) {
+    modeResponse.textContent = '⚠️ Please enter your name and start first.';
+    return false;
+  }
+  return true;
+}
 
-  // Handle 'book' mode separately to call /api/audiobooks endpoint
-  if (mode === 'tidy') {
-  const topicInput = document.getElementById('tidyingTopic');
-  const tidyingTopic = topicInput?.value.trim();
+// ======= SHARED UTILS =======
+async function postMode(payload) {
+  const res = await fetch('/mode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+  return res.json();
+}
 
-  if (!tidyingTopic) {
+function markdownToHtml(markdown = '') {
+  return markdown
+    .replace(/(?:\*\*|__)(.*?)\1/g, '<strong>$1</strong>')
+    .replace(/(?:\*|_)(.*?)\1/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
+// ======= MODE HANDLERS =======
+
+// ---- BOOK ----
+async function handleBookMode() {
+  const selectedCategory = bookCategorySelect.value.toLowerCase();
+  const selectedType = document.querySelector('input[name="bookType"]:checked')?.value;
+  const topic = document.getElementById('modeTextInput').value.trim();
+
+  if (!selectedCategory || !selectedType) {
+    modeResponse.textContent = '⚠️ Please select both a book category and type.';
+    return;
+  }
+
+  const payload = {
+    userId: currentUserId,
+    mode: 'book',
+    bookCategory: selectedCategory,
+    bookType: selectedType,
+    topic
+  };
+
+  modeResponse.textContent = '📚 Fetching recommendations...';
+  const data = await postMode(payload);
+
+  if (!data.success) {
+    modeResponse.textContent = `⚠️ ${data.error || 'Failed to get recommendations.'}`;
+    return;
+  }
+
+  let html = `<p>Here are some recommendations:</p>`;
+  if (data.book) {
+    const { title, author } = data.book;
+    html += `<p>📖 <strong>${title || 'Unknown Title'}</strong> by ${author || 'Unknown Author'}</p>`;
+  }
+
+  if (Array.isArray(data.audiobooks) && data.audiobooks.length) {
+    const links = data.audiobooks
+      .map(a => `<a href="${a.url}" target="_blank">${a.title}</a>`)
+      .join(', ');
+    html += `<p>🎧 Audiobooks: ${links}</p>`;
+  }
+
+  modeResponse.innerHTML = html;
+}
+
+// ---- TIDY ----
+async function handleTidyMode() {
+  const topic = document.getElementById('tidyingTopic')?.value.trim();
+  if (!topic) {
     modeResponse.textContent = '⚠️ Please enter a tidying topic.';
     return;
   }
 
-  try {
-    sendBtn.disabled = true;
-    modeResponse.textContent = 'Tidying up...';
+  modeResponse.textContent = 'Tidying up...';
+  const data = await postMode({
+    userId: currentUserId,
+    mode: 'tidy',
+    input: topic
+  });
 
-    const res = await fetch('/mode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUserId,
-        mode: 'tidy',
-        input: tidyingTopic
-      }),
-    });
+  modeResponse.innerHTML = data?.response?.replace(/\n/g, '<br>') || '⚠️ No response received.';
+}
 
-    const data = await res.json();
-
-    if (data?.response) {
-      modeResponse.innerHTML = data.response.replace(/\n/g, '<br>');
-    } else {
-      modeResponse.textContent = '⚠️ No response received.';
-    }
-
-  } catch (err) {
-    console.error('[tidy fetch error]', err);
-    modeResponse.textContent = '⚠️ Something went wrong while tidying.';
-  } finally {
-    sendBtn.disabled = false;
-  }
-
-  return;
-  }
-
-  // Handle 'budget' mode with chat-like UI
-  if (mode === 'budget') {
-  const userInput = document.getElementById('modeTextInput').value.trim();
-  if (!userInput) {
+// ---- BUDGET ----
+async function handleBudgetMode() {
+  const input = document.getElementById('modeTextInput').value.trim();
+  if (!input) {
     modeResponse.textContent = '⚠️ Please enter your input above.';
     return;
   }
 
   const chatContainer = document.getElementById('budgetChatContainer');
-
-  // Append user message
-  const userMessage = document.createElement('div');
-  userMessage.textContent = `You: ${userInput}`;
-  userMessage.style.fontWeight = 'bold';
-  userMessage.style.marginBottom = '8px';
-  chatContainer.appendChild(userMessage);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
-
-  // Clear input box
+  appendChat(chatContainer, `You: ${input}`, true);
   document.getElementById('modeTextInput').value = '';
 
-  // Show bot "typing..." indicator
-  const botMessage = document.createElement('div');
-  botMessage.textContent = 'WREN is typing...';
-  botMessage.style.fontStyle = 'italic';
-  chatContainer.appendChild(botMessage);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  const typingMsg = appendChat(chatContainer, 'WREN is typing...', false, true);
+  const payload = { userId: currentUserId, mode: 'budget', input };
 
   try {
-    sendBtn.disabled = true;
+    const data = await postMode(payload);
+    chatContainer.removeChild(typingMsg);
 
-    // Prepare payload for budget mode
-    const payload = {
-      userId: currentUserId,
-      mode: mode,
-      input: userInput
-    };
-
-    const res = await fetch('/mode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      const errorText = await res.json();
-      console.error('Server error response:', errorText);
-      modeResponse.textContent = `❌ Server error: ${res.status} ${res.statusText}`;
-      chatContainer.removeChild(botMessage);
-      return;
+    if (!data || data.success === false) {
+      appendChat(chatContainer, `⚠️ ${data?.error || 'Request failed.'}`);
+    } else if (data.response?.trim()) {
+      appendChat(chatContainer, markdownToHtml(data.response));
+    } else {
+      appendChat(chatContainer, '⚠️ No response from backend.');
     }
-
-    const data = await res.json();
-    console.log('Backend response:', data);
-
-    // Remove "typing..." message
-    chatContainer.removeChild(botMessage);
-
-    if (data && data.success === false) {
-  const errorDiv = document.createElement('div');
-  errorDiv.textContent = `⚠️ ${data.error || 'Request failed.'}`;
-  chatContainer.appendChild(errorDiv);
-} else if (data && typeof data.response === 'string' && data.response.trim() !== '') {
-  const botReply = document.createElement('div');
-  botReply.innerHTML = typeof markdownToHtml === 'function'
-    ? markdownToHtml(data.response)
-    : data.response;
-  chatContainer.appendChild(botReply);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
-} else {
-  const warnDiv = document.createElement('div');
-  warnDiv.textContent = '⚠️ No response from backend.';
-  chatContainer.appendChild(warnDiv);
+  } catch (err) {
+    chatContainer.removeChild(typingMsg);
+    appendChat(chatContainer, `❌ Error: ${err.message}`);
+  }
 }
 
-  } catch (error) {
-    console.error('Fetch error:', error);
-    modeResponse.textContent = '❌ Network or parsing error.';
-    chatContainer.removeChild(botMessage);
-  } finally {
-    sendBtn.disabled = false;
-  }
-
-  return; // no further processing
+function appendChat(container, text, isUser = false, italic = false) {
+  const div = document.createElement('div');
+  div.innerHTML = text;
+  div.style.marginBottom = '8px';
+  if (isUser) div.style.fontWeight = 'bold';
+  if (italic) div.style.fontStyle = 'italic';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
 }
 
-  // All other modes handled here as before
-  let modeToSend;
-  if (mode === 'science') {
-    modeToSend = 'science';
-  } else if (mode === 'math') {
-    modeToSend = 'math';
-  } else {
-    modeToSend = mode;
-  }
-
-  // Prepare payload with userId and mode
-  const payload = { userId: currentUserId, mode: modeToSend };
-
-  if (mode === 'translate') {
+// ---- TRANSLATE ----
+async function handleTranslateMode() {
   const from = document.getElementById('translateFrom').value;
   const to = document.getElementById('translateTo').value;
-  const inputText = document.getElementById('modeTextInput').value.trim(); // or another input if different
+  const inputText = document.getElementById('modeTextInput').value.trim();
 
   if (!inputText) {
     modeResponse.textContent = '⚠️ Please enter text to translate.';
     return;
   }
 
-  payload.translateFrom = from;
-  payload.translateTo = to;
-  payload.input = inputText;
+  const payload = {
+    userId: currentUserId,
+    mode: 'translate',
+    translateFrom: from,
+    translateTo: to,
+    input: inputText
+  };
+
+  const data = await postMode(payload);
+  modeResponse.innerHTML = data.response || '✅ Translation complete.';
 }
 
-  else {
-    // Other modes
-    let userInput = '';
-    if (mode === 'math' || mode === 'science') {
-      userInput = document.getElementById('user-input').value.trim();
-    } else {
-      userInput = document.getElementById('modeTextInput').value.trim();
-    }
+// ---- GENERIC / FALLBACK ----
+async function handleGenericMode(mode) {
+  let inputElement =
+    mode === 'math' || mode === 'science'
+      ? document.getElementById('user-input')
+      : document.getElementById('modeTextInput');
 
-    if (mode === '1' && !userInput) {
-      userInput = nameInput.value.trim();
-    }
-
-    if (!userInput) {
-      modeResponse.textContent = '⚠️ Please enter your input above.';
-      return;
-    }
-
-    payload.input = userInput;
-  }
-
-  console.log("Sending to backend:", payload);
-
-  try {
-  sendBtn.disabled = true;
-  modeResponse.textContent = 'Loading...';
-
-  console.log('Sending payload:', payload);
+  const input = inputElement?.value.trim();
+  const payload = { userId: currentUserId, mode, input };
 
   const res = await fetch('/mode', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload)
   });
 
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
 
-  if (res.ok) {
-    if (mode === 'science') {
-    const responseText = await res.text();
-    modeResponse.textContent = responseText || '✅ Done.';
+  if (mode === 'science') {
+    const text = await res.text();
+    modeResponse.textContent = text || '✅ Done.';
   } else {
     const data = await res.json();
-
     if (mode === 'math') {
-      const answerMatch = data.response?.match(/[-+]?\d*\.?\d+/);
-      modeResponse.textContent = answerMatch?.[0] || data.response?.trim() || 'No answer received.';
+      const num = data.response?.match(/[-+]?\d*\.?\d+/)?.[0];
+      modeResponse.textContent = num || data.response?.trim() || 'No answer received.';
     } else {
       modeResponse.textContent = data.response || '✅ Done.';
     }
   }
-} else {
-  const errorText = await res.text(); // fallback for non-JSON error
-  modeResponse.textContent = errorText || '⚠️ Something went wrong.';
 }
-} catch (error) {
-  console.error('Fetch error:', error);
-  modeResponse.textContent = '❌ Network error.';
-} finally {
-  sendBtn.disabled = false;
-}
-});
 
-    // Simple markdown to HTML converter for bold and italics
-    function markdownToHtml(markdown) {
-      let html = markdown
-        .replace(/(?:\*\*|__)(.*?)\1/g, '<strong>$1</strong>') // bold
-        .replace(/(?:\*|_)(.*?)\1/g, '<em>$1</em>'); // italics
-      html = html.replace(/\n/g, '<br>');
-      return html;
-    }
+// ======= KEEP YOUR EXISTING DOMContentLoaded LOGIC BELOW =======
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('translateBtn').addEventListener('click', translate);
 
-
-    // Initial UI setup: hide modeSection and sendBtn
-    modeSection.style.display = 'none';
-    sendBtn.style.display = 'none';
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('translateBtn').addEventListener('click', translate);
-// --------- Book Category Dropdown Logic (your original) ---------
+  // Existing book category fetch, start session, etc.
   const bookCategoryDropdown = document.getElementById('bookCategory');
-
   if (bookCategoryDropdown) {
     fetch('/api/book-categories')
       .then(response => response.json())
@@ -1293,7 +1244,7 @@ async function startApp() {
         bookCategoryDropdown.innerHTML = '<option value="">-- Select a Category --</option>';
         categories.forEach(category => {
           const option = document.createElement('option');
-          option.value = category;
+          option.value = category.toLowerCase();
           option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
           bookCategoryDropdown.appendChild(option);
         });
@@ -1304,7 +1255,6 @@ async function startApp() {
       });
   }
 
-  // --------- New: Start Session Button Logic ---------
   const startSessionBtn = document.getElementById('startSessionBtn');
   const usernameInput = document.getElementById('usernameInput');
 
@@ -1319,7 +1269,6 @@ async function startApp() {
       const userId = await startSession(username);
       if (userId) {
         alert(`Session started for ${username}`);
-        // Optionally store or display the userId
         localStorage.setItem('userId', userId);
       }
     });
@@ -1328,13 +1277,12 @@ async function startApp() {
 
 
 
+</script>
+
+<style>
 
 
 
-
-  </script>
-
-  <style>
     body {
       font-family: Arial, sans-serif;
       line-height: 1.6;
@@ -1405,5 +1353,5 @@ async function startApp() {
     a:hover {
       text-decoration: underline;
     }
-  </style>
+</style>
 </body>

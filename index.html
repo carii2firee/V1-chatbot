@@ -417,11 +417,12 @@
                 <option value="budget">💰 Budget Tracker</option>
                 <option value="depression">🩺 Depression Screening</option>
                 <option value="tidy">🏠 House Tidying</option>
-                <option value="voice">🎙 Voice GUI Assistant</option>
                 <option value="logs">📜 Memory Logs</option>
+                <option value="voice" disabled title="Premium feature - available to subscribers only">🎙 Voice GUI Assistant (Premium)</option>
                 <option value="translate">🌐 Translate</option>
-                <option value="reminder">⏰ Task Reminder</option>
+                <option value="10">📝 Reminder (task list)</option>
             </select>
+
 
             <!-- Mode Instructions -->
             <div
@@ -553,6 +554,9 @@
     const bookTypeGroup = document.getElementById('bookTypeGroup');
     const modeInstructions = document.getElementById('modeInstructions');
     const translationOptions = document.getElementById('translationOptions');
+    const voiceBtn = document.getElementById('voiceBtn');
+    const voiceResponse = document.getElementById('voiceResponse');
+
     async function startSession(username) {
   try {
     const response = await fetch('/start', {
@@ -748,7 +752,7 @@ window.addEventListener('load', async () => {
     if (loading) loading.style.display = 'none';
   }
 }
-    
+
 
 async function ensureSession(userId) {
   const response = await fetch('/create_session', {
@@ -788,7 +792,7 @@ async function startApp() {
 }
 
 
-   
+
 
     // Update UI based on mode selection
     function updateModeUI() {
@@ -949,6 +953,28 @@ async function startApp() {
     modeResponse.textContent = 'Loading...';
     fetchLogs();
     break;
+
+
+
+  case '10': // Reminder mode
+  case 'reminder':
+    modeTextInputGroup.style.display = 'block';
+    queryInputGroup.style.display = 'none';
+    chatContainer.style.display = 'none'; // hide budget container if previously shown
+
+    modeInstructions.innerHTML = `
+      📝 <strong>Task Reminder Mode</strong><br><br>
+      Use commands like:
+      <ul style="margin-top: 4px; padding-left: 20px; font-size: 0.95em;">
+        <li><code>add Call mom at 5pm</code></li>
+        <li><code>view</code></li>
+        <li><code>check_due</code></li>
+        <li><code>clear</code></li>
+      </ul>
+      Enter your command below and click <strong>Send</strong>.
+    `;
+    modeResponse.textContent = '';
+    break;
   }
 }
 
@@ -1022,6 +1048,17 @@ async function startApp() {
         break;
       case 'translate':
         await handleTranslateMode();
+        break;
+      case 'voice':
+        console.warn('Voice mode is not yet implemented.');
+        modeResponse.textContent = '🛑 Voice mode is currently unavailable.';
+        break;
+
+      case '10':
+        await handleReminderMode();
+        break;
+      case 'reminder':
+        await handleReminderMode();
         break;
       default:
         await handleGenericMode(mode);
@@ -1115,6 +1152,42 @@ async function handleBookMode() {
   modeResponse.innerHTML = html;
 }
 
+
+
+
+// ============== Task reminder =============
+async function handleReminderMode() {
+  const input = modeTextInput.value.trim();
+  if (!input) {
+    modeResponse.textContent = '⚠️ Please enter a reminder command.';
+    return;
+  }
+
+  try {
+    const response = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUserId,
+        mode: 'reminder',
+        input
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data && data.success) {
+      modeResponse.innerHTML = data.response.replace(/\n/g, '<br>');
+    } else if (data && data.error) {
+      modeResponse.textContent = `⚠️ ${data.error}`;
+    } else {
+      modeResponse.textContent = '⚠️ Unexpected response.';
+    }
+  } catch (error) {
+    console.error('Reminder mode error:', error);
+    modeResponse.textContent = '❌ Failed to process your reminder.';
+  }
+}
 // ---- TIDY ----
 async function handleTidyMode() {
   const topic = document.getElementById('tidyingTopic')?.value.trim();

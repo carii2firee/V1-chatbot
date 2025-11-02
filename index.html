@@ -239,13 +239,18 @@
           background: #fff;
           padding: 20px;
           border-radius: 12px;
-          box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
-          white-space: normal;
-          min-height: 2.2em;
+          box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
           font-size: 1rem;
           color: #222;
           user-select: text;
           transition: background 0.5s ease, color 0.5s ease;
+
+
+          white-space: pre-wrap;        /* Preserve line breaks and wrap lines */
+          word-wrap: break-word;        /* Break long words if needed */
+          overflow-y: auto;             /* Allow scrolling if content is tall */
+          max-height: 350px;            /* Limit height so it doesn’t take over the screen */
+          font-family: monospace
         }
         #modeSection {
           display: none;
@@ -372,10 +377,13 @@
 <main role="main" aria-live="polite" style="display:none;">
     <h1 id="mainTitle">👋 Meet WREN — Your AI Companion</h1>
 
+
+
     <!-- Dark Mode Toggle -->
     <label for="darkModeToggle" id="darkModeLabel" style="user-select:none; margin-bottom: 10px; cursor:pointer;">
         <input type="checkbox" id="darkModeToggle"/> Toggle Dark Mode
     </label>
+    
 
     <div id="startContainer" class="input-group">
         <label for="nameInput" id="nameLabel">📝 Enter your name:</label>
@@ -390,6 +398,8 @@
             <span class="icon">➤</span> Send
         </button>
     </div>
+
+
 
     <!-- ========== RESPONSE + VIDEO INFO ========== -->
     <div id="response" aria-live="polite"></div>
@@ -785,10 +795,12 @@ async function startApp() {
   const scoreDiv = document.getElementById('finalScoreDisplay');
   if (!scoreDiv) return;
 
-  scoreDiv.textContent = `🧠 Screening Score: ${depressionScore}`;
-  scoreDiv.style.display = 'block';
-
-
+  if (depressionScore > 0) {
+    scoreDiv.textContent = `🧠 Screening Score: ${depressionScore}`;
+    scoreDiv.style.display = 'block';
+  } else {
+    scoreDiv.style.display = 'none';
+  }
 }
 
 
@@ -802,98 +814,119 @@ async function startApp() {
   const modeTextInputGroup = document.getElementById('modeTextInputGroup');
   const chatContainer = document.getElementById('budgetChatContainer');
 
+  // Elements that should be defined globally or declared above:
+  // bookCategoryGroup, bookTypeGroup, translationOptions, modeInstructions, modeResponse, sendBtn
+
+  // Reset sendBtn visibility by default (show it unless overridden)
+  sendBtn.style.display = 'inline-block';
+
   // Show or hide mode section
   modeSection.style.display = selected ? 'block' : 'none';
 
   // Show or hide budget chat container
   chatContainer.style.display = selected === 'budget' ? 'block' : 'none';
 
-  // Hide all optional UI elements
+  // Hide all optional UI elements by default
   queryInputGroup.style.display = 'none';
   modeTextInputGroup.style.display = 'none';
   bookCategoryGroup.style.display = 'none';
   bookTypeGroup.style.display = 'none';
   translationOptions.style.display = 'none';
 
-  // Clear instructions
+  // Clear instructions and response
   modeInstructions.textContent = '';
-  switch (selected) {
-  case 'math':
-  case 'science':
-    queryInputGroup.style.display = 'block';
-    modeInstructions.textContent = `Enter your ${selected === 'math' ? 'math problem' : 'science question'} above and click Send.`;
-    break;
-
-   case 'tidy':
-  modeTextInputGroup.style.display = 'none';
-  queryInputGroup.style.display = 'none';
-
-  // Inject the tidying input directly into modeInstructions
-  modeInstructions.innerHTML = `
-    <label for="tidyingTopic">
-      🏠 What area would you like help tidying?
-      <span style="display: block; font-size: 0.9em; color: #808080; margin-top: 4px;">
-        Try one of these: <strong>cleaning</strong>, <strong>energy</strong>,
-        <strong>security</strong>, <strong>organization</strong>,
-        <strong>automation</strong>
-      </span>
-    </label>
-    <input
-      type="text"
-      id="tidyingTopic"
-      placeholder="e.g., cleaning, organization, energy..."
-      autocomplete="off"
-      style="margin-top: 8px;"
-    />
-  `;
-
   modeResponse.textContent = '';
-  break;
 
+  switch (selected) {
+    case 'math':
+    case 'science':
+      queryInputGroup.style.display = 'block';
+      modeInstructions.textContent = `Enter your ${selected === 'math' ? 'math problem' : 'science question'} above and click Send.`;
+      break;
 
-  case 'book':
-    bookCategoryGroup.style.display = 'block';
-    bookTypeGroup.style.display = 'block';
-    modeInstructions.textContent = 'Select a book category and type, then click Send.';
-    break;
+    case 'tidy':
+      // No queryInputGroup or modeTextInputGroup shown here
+      modeInstructions.innerHTML = `
+        <label for="tidyingTopic">
+          🏠 What area would you like help tidying?
+          <span style="display: block; font-size: 0.9em; color: #808080; margin-top: 4px;">
+            Try one of these: <strong>cleaning</strong>, <strong>energy</strong>,
+            <strong>security</strong>, <strong>organization</strong>,
+            <strong>automation</strong>
+          </span>
+        </label>
+        <input
+          type="text"
+          id="tidyingTopic"
+          placeholder="e.g., cleaning, organization, energy..."
+          autocomplete="off"
+          style="margin-top: 8px;"
+        />
+      `;
+      break;
 
+    case 'book':
+      bookCategoryGroup.style.display = 'block';
+      bookTypeGroup.style.display = 'block';
+      modeInstructions.textContent = 'Select a book category and type, then click Send.';
+      break;
 
+    case 'depression':
+      modeTextInputGroup.style.display = 'block';
+      modeResponse.style.display = 'block';
+      modeInstructions.textContent = 'Hello there friend, to get started please enter a number from 0 to 3 to start the depression screening.';
 
-  case 'translate':
-    translationOptions.style.display = 'block';
-    modeInstructions.textContent = 'Select languages and click Translate.';
+      depressionStep = 0;
+      depressionAnswers = [];
+      depressionScore = 0;
+      updateDepressionScoreDisplay();
 
-    sendBtn.style.display = 'none';
-    document.getElementById('translateBtn').style.display = 'inline-block';
-    break;
+      fetch('/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, mode: 'depression', input: '' })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.response) {
+          if (typeof data.score === 'number') {
+            depressionScore = data.score;
+            updateDepressionScoreDisplay();
+          }
+          modeResponse.innerHTML = data.response.replace(/\n/g, '<br>');
+        }
+      })
+      .catch(() => {
+        // If fetch fails, instructions remain visible
+      });
+      break;
 
-  case 'budget':
-    modeTextInputGroup.style.display = 'block';
-    modeInstructions.textContent = 'Enter your savings goal and click Send.';
+    case 'translate':
+      translationOptions.style.display = 'block';
+      modeInstructions.textContent = 'Select languages and click Translate.';
+      sendBtn.style.display = 'none'; // Hide send button, show translate button handled elsewhere
+      document.getElementById('translateBtn').style.display = 'inline-block';
+      break;
 
-    // Clear previous chat
-    chatContainer.innerHTML = '';
+    case 'budget':
+      modeTextInputGroup.style.display = 'block';
+      modeInstructions.textContent = 'Enter your savings goal and click Send.';
+      chatContainer.innerHTML = '';
 
-    // Show bot "typing..." indicator
-    const botMessage = document.createElement('div');
-    botMessage.textContent = 'WREN is typing...';
-    botMessage.style.fontStyle = 'italic';
-    chatContainer.appendChild(botMessage);
+      // Show bot typing indicator
+      const botMessage = document.createElement('div');
+      botMessage.textContent = 'WREN is typing...';
+      botMessage.style.fontStyle = 'italic';
+      chatContainer.appendChild(botMessage);
 
-    // Trigger backend welcome message
-    fetch('/mode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUserId,
-        mode: 'budget',
-        input: '' // empty input triggers welcome
-      }),
-    })
+      fetch('/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, mode: 'budget', input: '' }),
+      })
       .then(res => res.json())
       .then(data => {
         chatContainer.removeChild(botMessage);
-
         if (data && typeof data.response === 'string' && data.response.trim() !== '') {
           const botReply = document.createElement('div');
           botReply.innerHTML = typeof markdownToHtml === 'function'
@@ -910,71 +943,45 @@ async function startApp() {
         errorDiv.textContent = '❌ Failed to load budget intro.';
         chatContainer.appendChild(errorDiv);
       });
-    break;
+      break;
 
-  case '1': // Name Recognition
-    modeTextInputGroup.style.display = 'block';
-    modeInstructions.textContent = 'Enter your name and click Send.';
-    break;
+    case '1': // Name Recognition
+      modeTextInputGroup.style.display = 'block';
+      modeInstructions.textContent = 'Enter your name and click Send.';
+      break;
 
-  case 'depression':
-    modeTextInputGroup.style.display = 'block';
-    modeInstructions.textContent = 'Loading instructions...';
-    depressionScore = 0;
-    updateDepressionScoreDisplay();
+    case 'logs':
+      modeTextInputGroup.style.display = 'none';
+      queryInputGroup.style.display = 'none';
+      modeInstructions.textContent = '📜 Displaying your memory log...';
+      modeResponse.textContent = 'Loading...';
+      fetchLogs();
+      break;
 
-    fetch('/mode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUserId, mode: 'depression', input: '' })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data && data.response) {
-        if (typeof data.score === 'number') {
-          depressionScore = data.score;
-          updateDepressionScoreDisplay();
-        }
+    case '10': // Reminder mode (number or string)
+    case 'reminder':
+      modeTextInputGroup.style.display = 'block';
+      queryInputGroup.style.display = 'none';
+      chatContainer.style.display = 'none'; // hide budget container if shown previously
 
-        modeResponse.innerHTML = data.response.replace(/\n/g, '<br>');
-      } else {
-        modeInstructions.textContent = 'Please enter your input and click Send.';
-      }
-    })
-    .catch(() => {
+      modeInstructions.innerHTML = `
+        📝 <strong>Task Reminder Mode</strong><br><br>
+        Use commands like:
+        <ul style="margin-top: 4px; padding-left: 20px; font-size: 0.95em;">
+          <li><code>add Call mom at 5pm</code></li>
+          <li><code>view</code></li>
+          <li><code>check_due</code></li>
+          <li><code>clear</code></li>
+        </ul>
+        Enter your command below and click <strong>Send</strong>.
+      `;
+      modeResponse.textContent = '';
+      break;
+
+    default:
       modeInstructions.textContent = 'Please enter your input and click Send.';
-    });
-    break;
-
-  case 'logs':
-    modeTextInputGroup.style.display = 'none';
-    queryInputGroup.style.display = 'none';
-    modeInstructions.textContent = '📜 Displaying your memory log...';
-    modeResponse.textContent = 'Loading...';
-    fetchLogs();
-    break;
-
-
-
-  case '10': // Reminder mode
-  case 'reminder':
-    modeTextInputGroup.style.display = 'block';
-    queryInputGroup.style.display = 'none';
-    chatContainer.style.display = 'none'; // hide budget container if previously shown
-
-    modeInstructions.innerHTML = `
-      📝 <strong>Task Reminder Mode</strong><br><br>
-      Use commands like:
-      <ul style="margin-top: 4px; padding-left: 20px; font-size: 0.95em;">
-        <li><code>add Call mom at 5pm</code></li>
-        <li><code>view</code></li>
-        <li><code>check_due</code></li>
-        <li><code>clear</code></li>
-      </ul>
-      Enter your command below and click <strong>Send</strong>.
-    `;
-    modeResponse.textContent = '';
-    break;
+      sendBtn.style.display = 'inline-block';
+      break;
   }
 }
 
@@ -1053,15 +1060,17 @@ async function startApp() {
         console.warn('Voice mode is not yet implemented.');
         modeResponse.textContent = '🛑 Voice mode is currently unavailable.';
         break;
-
+      case 'reminder':
       case '10':
         await handleReminderMode();
         break;
-      case 'reminder':
-        await handleReminderMode();
-        break;
-      default:
+      case 'science':
+      case 'math':
         await handleGenericMode(mode);
+        break;
+
+      default:
+        modeResponse.textContent = `⚠️ Unknown mode: ${mode}`;
         break;
     }
   } catch (err) {
@@ -1101,11 +1110,92 @@ async function postMode(payload) {
 }
 
 function markdownToHtml(markdown = '') {
-  return markdown
-    .replace(/(?:\*\*|__)(.*?)\1/g, '<strong>$1</strong>')
-    .replace(/(?:\*|_)(.*?)\1/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>');
+  // Bold
+  let html = markdown.replace(/(?:\*\*|__)(.*?)\1/g, '<strong>$1</strong>');
+  // Italic
+  html = html.replace(/(?:\*|_)(.*?)\1/g, '<em>$1</em>');
+  // Numbered list items
+  html = html.replace(/^\s*\d+\.\s+(.*)$/gm, '<li>$1</li>');
+
+  // Wrap list items in <ol>
+  // This finds consecutive <li>...</li> blocks and wraps them once in <ol>...</ol>
+  html = html.replace(/(?:<li>.*?<\/li>\s*)+/gs, match => `<ol>${match}</ol>`);
+
+  // Replace remaining newlines with <br>
+  html = html.replace(/\n/g, '<br>');
+
+  return html;
 }
+
+
+// ---- DEPRESSION CHECKER ----
+let depressionStep = 0;
+let depressionAnswers = [];
+
+async function handleDepressionMode() {
+  const inputEl = document.getElementById('modeTextInput');
+  const input = inputEl.value.trim();
+  if (!input) {
+    modeResponse.textContent = '⚠️ Please enter your response above.';
+    return;
+  }
+
+  // Disable input and send button during request to prevent double submit
+  inputEl.disabled = true;
+  sendButton.disabled = true;
+
+  // Show user input and typing message inside modeResponse
+  modeResponse.innerHTML = `<p><strong>You:</strong> ${escapeHtml(input)}</p><p><em>WREN is typing...</em></p>`;
+
+  const payload = {
+    userId: currentUserId,
+    mode: 'depression',
+    step: depressionStep,
+    answer: input,
+    answers: depressionAnswers
+  };
+
+  try {
+    const data = await postMode(payload);
+
+    if (!data || data.success === false) {
+      modeResponse.innerHTML = `<p>⚠️ ${escapeHtml(data?.error || 'Request failed.')}</p>`;
+    } else {
+      depressionStep = data.next_step ?? depressionStep;
+      depressionAnswers = data.answers ?? depressionAnswers;
+
+      let responseHtml = '';
+
+      if (data.message?.trim()) {
+        responseHtml += `<p>${markdownToHtml(data.message)}</p>`;
+      }
+
+      // If process is done, reset steps and answers
+      if (data.done) {
+        depressionStep = 0;
+        depressionAnswers = [];
+      }
+
+      modeResponse.innerHTML = responseHtml;
+    }
+  } catch (err) {
+    modeResponse.innerHTML = `<p>❌ Error: ${escapeHtml(err.message)}</p>`;
+  } finally {
+    inputEl.value = '';
+    inputEl.disabled = false;
+    sendButton.disabled = false;
+    inputEl.focus();
+  }
+}
+
+// Helper to escape HTML (to avoid injection)
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+
 
 // ======= MODE HANDLERS =======
 
@@ -1274,13 +1364,15 @@ async function handleTranslateMode() {
 
 // ---- GENERIC / FALLBACK ----
 async function handleGenericMode(mode) {
-  let inputElement =
+  const inputElement =
     mode === 'math' || mode === 'science'
       ? document.getElementById('user-input')
       : document.getElementById('modeTextInput');
 
   const input = inputElement?.value.trim();
   const payload = { userId: currentUserId, mode, input };
+
+  console.log('Payload being sent:', payload);
 
   const res = await fetch('/mode', {
     method: 'POST',
@@ -1290,21 +1382,26 @@ async function handleGenericMode(mode) {
 
   if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
 
+  let fullResponse;
+
   if (mode === 'science') {
-    const text = await res.text();
-    modeResponse.textContent = text || '✅ Done.';
+    // string-based logic, no JSON parsing
+    fullResponse = await res.text();
   } else {
+    // JSON-based logic (math or other modes)
     const data = await res.json();
-    if (mode === 'math') {
-      const num = data.response?.match(/[-+]?\d*\.?\d+/)?.[0];
-      modeResponse.textContent = num || data.response?.trim() || 'No answer received.';
-    } else {
-      modeResponse.textContent = data.response || '✅ Done.';
-    }
+    fullResponse = data.response?.trim();
+  }
+
+  const formattedHtml = markdownToHtml(fullResponse || '⚠️ No answer received.');
+  modeResponse.innerHTML = formattedHtml;
+
+  if (window.MathJax) {
+    MathJax.typesetPromise();
   }
 }
 
-// ======= KEEP YOUR EXISTING DOMContentLoaded LOGIC BELOW =======
+// ======= EXISTING DOMContentLoaded LOGIC =======
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('translateBtn').addEventListener('click', translate);
 

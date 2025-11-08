@@ -383,7 +383,7 @@
     <label for="darkModeToggle" id="darkModeLabel" style="user-select:none; margin-bottom: 10px; cursor:pointer;">
         <input type="checkbox" id="darkModeToggle"/> Toggle Dark Mode
     </label>
-    
+
 
     <div id="startContainer" class="input-group">
         <label for="nameInput" id="nameLabel">📝 Enter your name:</label>
@@ -539,8 +539,9 @@
 
 <script>
     let currentUserId = null;
-    let depressionScore = 0;
     let userInput = '';
+    let depressionStep = 0;
+    let depressionAnswers = [];
 
 
 
@@ -872,14 +873,17 @@ async function startApp() {
       break;
 
     case 'depression':
-      modeTextInputGroup.style.display = 'block';
-      modeResponse.style.display = 'block';
-      modeInstructions.textContent = 'Hello there friend, to get started please enter a number from 0 to 3 to start the depression screening.';
+    // Show the input and response area
+    modeTextInputGroup.style.display = 'none';
+    modeResponse.style.display = 'block';
 
-      depressionStep = 0;
-      depressionAnswers = [];
-      depressionScore = 0;
-      updateDepressionScoreDisplay();
+    // Instructions for starting
+    modeInstructions.textContent = 'Hello friend! Press "Send" to begin the depression screening.';
+
+    // Make sure input box is visible
+    modeTextInput.style.display = 'block';
+    modeTextInput.focus();
+    break;
 
       fetch('/mode', {
         method: 'POST',
@@ -1050,6 +1054,9 @@ async function startApp() {
       case 'logs':
         await fetchLogs();
         break;
+      case 'depression':
+        await handleDepressionMode();
+        break; 
       case 'tidy':
         await handleTidyMode();
         break;
@@ -1127,123 +1134,65 @@ function markdownToHtml(markdown = '') {
   return html;
 }
 
-
-// ---- DEPRESSION CHECKER ----
-let depressionStep = 0;
-let depressionAnswers = [];
-
+// =========== Depression Mode ===========
 async function handleDepressionMode() {
-  const inputEl = document.getElementById('modeTextInput');
-  const input = inputEl.value.trim();
-  if (!input) {
-    modeResponse.textContent = '⚠️ Please enter your response above.';
-    return;
-  }
+  // Clear previous error messages
+  modeResponse.querySelectorAll('.error-message').forEach(el => el.remove());
 
-  // Disable input and send button during request to prevent double submit
-  inputEl.disabled = true;
-  sendButton.disabled = true;
-
-  // Show user input and typing message inside modeResponse
-  modeResponse.innerHTML = `<p><strong>You:</strong> ${escapeHtml(input)}</p><p><em>WREN is typing...</em></p>`;
-
-  const payload = {
-    userId: currentUserId,
-    mode: 'depression',
-    step: depressionStep,
-    answer: input,
-    answers: depressionAnswers
-  };
+  // Show typing indicator
+  const wrenMessage = document.createElement('p');
+  wrenMessage.classList.add('processing-message');
+  wrenMessage.innerHTML = `<em>⏳ Processing...</em>`;
+  modeResponse.appendChild(wrenMessage);
+  modeResponse.scrollTop = modeResponse.scrollHeight;
 
   try {
+    // Send request to backend
+    const payload = {
+      userId: currentUserId,
+      mode: 'depression',
+      step: depressionStep,
+      answers: depressionAnswers,
+      answer: null // no input needed, just click Send
+    };
+
     const data = await postMode(payload);
+    wrenMessage.remove();
 
-    if (!data || data.success === false) {
-      modeResponse.innerHTML = `<p>⚠️ ${escapeHtml(data?.error || 'Request failed.')}</p>`;
-    } else {
-      depressionStep = data.next_step ?? depressionStep;
-      depressionAnswers = data.answers ?? depressionAnswers;
+    // Update step and answers from backend
+    depressionStep = data.next_step ?? depressionStep;
+    depressionAnswers = data.answers ?? depressionAnswers;
 
-      let responseHtml = '';
-
-      if (data.message?.trim()) {
-        responseHtml += `<p>${markdownToHtml(data.message)}</p>`;
-      }
-
-      // If process is done, reset steps and answers
-      if (data.done) {
-        depressionStep = 0;
-        depressionAnswers = [];
-      }
-
-      modeResponse.innerHTML = responseHtml;
+    // Display backend message (questions, encouragement, or final score)
+    if (data.message?.trim()) {
+      const backendMessage = document.createElement('p');
+      backendMessage.innerHTML = data.message.replace(/\n/g, '<br>');
+      modeResponse.appendChild(backendMessage);
     }
+
+    if (data.done) {
+      // Screening complete
+      depressionStep = 0;
+      depressionAnswers = [];
+
+      // Hide input when finished
+      modeTextInput.style.display = 'none';
+    } else {
+      // Show input box for next click
+      modeTextInput.style.display = 'block';
+      modeTextInput.focus();
+    }
+
   } catch (err) {
-    modeResponse.innerHTML = `<p>❌ Error: ${escapeHtml(err.message)}</p>`;
+    wrenMessage.remove();
+    const errorElem = document.createElement('p');
+    errorElem.classList.add('error-message');
+    errorElem.innerHTML = `❌ Error: ${err.message}`;
+    modeResponse.appendChild(errorElem);
   } finally {
-    inputEl.value = '';
-    inputEl.disabled = false;
-    sendButton.disabled = false;
-    inputEl.focus();
+    modeResponse.scrollTop = modeResponse.scrollHeight;
   }
 }
-
-// Helper to escape HTML (to avoid injection)
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-
-
-// ======= MODE HANDLERS =======
-
-// ---- BOOK ----
-async function handleBookMode() {
-  const selectedCategory = bookCategorySelect.value.toLowerCase();
-  const selectedType = document.querySelector('input[name="bookType"]:checked')?.value;
-  const topic = document.getElementById('modeTextInput').value.trim();
-
-  if (!selectedCategory || !selectedType) {
-    modeResponse.textContent = '⚠️ Please select both a book category and type.';
-    return;
-  }
-
-  const payload = {
-    userId: currentUserId,
-    mode: 'book',
-    bookCategory: selectedCategory,
-    bookType: selectedType,
-    topic
-  };
-
-  modeResponse.textContent = '📚 Fetching recommendations...';
-  const data = await postMode(payload);
-
-  if (!data.success) {
-    modeResponse.textContent = `⚠️ ${data.error || 'Failed to get recommendations.'}`;
-    return;
-  }
-
-  let html = `<p>Here are some recommendations:</p>`;
-  if (data.book) {
-    const { title, author } = data.book;
-    html += `<p>📖 <strong>${title || 'Unknown Title'}</strong> by ${author || 'Unknown Author'}</p>`;
-  }
-
-  if (Array.isArray(data.audiobooks) && data.audiobooks.length) {
-    const links = data.audiobooks
-      .map(a => `<a href="${a.url}" target="_blank">${a.title}</a>`)
-      .join(', ');
-    html += `<p>🎧 Audiobooks: ${links}</p>`;
-  }
-
-  modeResponse.innerHTML = html;
-}
-
-
-
 
 // ============== Task reminder =============
 async function handleReminderMode() {

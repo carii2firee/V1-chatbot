@@ -352,6 +352,23 @@
       font-family: 'Squartiqa 4F', sans-serif;
     }
 
+        #translationContainer {
+  display: flex;
+  justify-content: center; /* center horizontally */
+  align-items: center;     /* center vertically */
+  flex-direction: column;
+  margin-top: 20px;        /* space from elements above */
+}
+
+#translationOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+  width: 100%;             /* ensures inputs fill container */
+  font-family: Arial, sans-serif;
+}
+
 
     </style>
 </head>
@@ -429,7 +446,7 @@
                 <option value="tidy">🏠 House Tidying</option>
                 <option value="logs">📜 Memory Logs</option>
                 <option value="voice" disabled title="Premium feature - available to subscribers only">🎙 Voice GUI Assistant (Premium)</option>
-                <option value="translate">🌐 Translate</option>
+                <option value="translate">🌐 Translation mode</option>
                 <option value="10">📝 Reminder (task list)</option>
             </select>
 
@@ -504,23 +521,21 @@
     </div>
 
 
-    <div id="translationOptions" style="display: none; flex-direction: column; gap: 12px; margin-top: 20px;">
-        <label for="textToTranslate">Text to Translate:</label>
-        <input type="text" id="textToTranslate" placeholder="Enter text here..." autocomplete="off"/>
+    <div id="translationContainer">
+  <div id="translationOptions" style="display: none; flex-direction: column; gap: 12px; margin-top: 20px; max-width: 400px;">
+    <label for="textToTranslate">Enter text to translate:</label>
+    <textarea id="textToTranslate" placeholder="Type your text here..." rows="4" style="width: 100%;"></textarea>
 
-        <label for="translateFrom">Translate From:</label>
-        <select id="translateFrom"></select>
+    <label for="translateTo">Translate to:</label>
+    <select id="translateTo" style="width: 100%;"></select>
 
-        <label for="translateTo">Translate To:</label>
-        <select id="translateTo"></select>
+    <button id="translateBtn" style="padding: 8px 12px; cursor: pointer;">Translate</button>
 
-        <button id="translateBtn">Translate</button>
-
-        <!-- Loading + Output wrapped in the same section -->
-        <div id="loadingIndicator" style="display: none;">🔄 Translating...</div>
-        <div id="translatedText" style="margin-top: 10px; white-space: pre-wrap;"></div>
-    </div>
-
+    <!-- Loading + Output -->
+    <div id="loadingIndicator" style="display: none; color: #555;">🔄 Translating...</div>
+    <div id="translatedText" style="margin-top: 10px; white-space: pre-wrap; font-weight: bold;"></div>
+  </div>
+</div>
 
     <div id="budgetChatContainer"
          style="display:none; border: 1px solid #2b6be6; padding: 10px; height: 300px; overflow-y: auto; margin-top: 20px; background: #f9f9f9;">
@@ -660,109 +675,66 @@ window.addEventListener('load', async () => {
 
 
     const languages = {
-    auto: "Auto Detect",
-    en: "English",
-    es: "Spanish",
-    fr: "French",
-    de: "German",
-    zh: "Chinese",
-    ja: "Japanese",
-    ru: "Russian",
-    ar: "Arabic",
-    hi: "Hindi"
-    // add more as needed
-  };
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  zh: "Chinese",
+  ja: "Japanese",
+  ru: "Russian",
+  ar: "Arabic",
+  hi: "Hindi"
+};
 
+const translateTo = document.getElementById('translateTo');
+const textToTranslate = document.getElementById('textToTranslate');
+const translatedText = document.getElementById('translatedText');
+const loadingIndicator = document.getElementById('loadingIndicator');
+const translateBtn = document.getElementById('translateBtn');
 
-    const translateFrom = document.getElementById('translateFrom');
-  const translateTo = document.getElementById('translateTo');
-
-  // Populate translateFrom dropdown with Auto Detect + all languages
-  function populateTranslateFrom() {
-    for (const [code, name] of Object.entries(languages)) {
-      const option = document.createElement('option');
-      option.value = code;
-      option.textContent = name;
-      translateFrom.appendChild(option);
-    }
-    translateFrom.value = 'auto'; // default
+// Populate the target language dropdown
+function populateTranslateTo() {
+  for (const [code, name] of Object.entries(languages)) {
+    const option = document.createElement('option');
+    option.value = code;
+    option.textContent = name;
+    translateTo.appendChild(option);
   }
+  translateTo.value = 'en'; // default
+}
+populateTranslateTo();
 
-  // Populate translateTo dropdown (exclude Auto Detect)
-  function populateTranslateTo() {
-    for (const [code, name] of Object.entries(languages)) {
-      if (code === 'auto') continue; // skip auto for target language
-      const option = document.createElement('option');
-      option.value = code;
-      option.textContent = name;
-      translateTo.appendChild(option);
-    }
-    translateTo.value = 'en'; // default target language
-  }
+// Translate button click
+translateBtn.addEventListener('click', async () => {
+  const text = textToTranslate.value.trim();
+  if (!text) return alert("Please enter some text to translate.");
 
-  populateTranslateFrom();
-  populateTranslateTo();
-
-  async function translate() {
-  // Get text and trim
-  const text = document.getElementById('textToTranslate').value.trim();
-  if (!text) {
-    alert('Please enter some text to translate.');
-    return;
-  }
-
-  // Get source and target languages
-  const source_lang = document.getElementById('translateFrom').value; // make sure IDs match your HTML
-  const target_lang = document.getElementById('translateTo').value;
-
-  // Output div and loading indicator
-  const outputDiv = document.getElementById('translatedText'); // or translationOutput — pick one and keep consistent
-  const loading = document.getElementById('loadingIndicator'); // optional, if you have a loading spinner div
-
-  // Get userId or prompt
-  let userId = localStorage.getItem('userId');
-  if (!userId) {
-    userId = prompt("Enter your username:");
-    if (!userId) {
-      alert("Username is required!");
-      return;
-    }
-    localStorage.setItem('userId', userId);
-  }
-
-  outputDiv.textContent = '';
-  if (loading) loading.style.display = 'block';
+  const target_lang = translateTo.value;
+  translatedText.textContent = '';
+  loadingIndicator.style.display = 'block';
 
   try {
     const response = await fetch('/mode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: userId,
         mode: 'translate',
         input: text,
         user_translate: true,
         ai_translate: false,
         target_lang: target_lang,
-        source_lang: source_lang,
-        user_name: userId,
-        memory_logger: null
+        source_lang: 'auto',  // always auto-detect
       }),
     });
-
     const data = await response.json();
-
-    if (data.success) {
-      outputDiv.textContent = data.ai_response || data.translated_input || 'No response';
-    } else {
-      outputDiv.textContent = 'Error: ' + (data.error || 'Unknown error');
-    }
-  } catch (error) {
-    outputDiv.textContent = 'Network error: ' + error.message;
+    translatedText.textContent = data.translated_input || 'Translation failed.';
+  } catch (err) {
+    translatedText.textContent = 'Network error: ' + err.message;
   } finally {
-    if (loading) loading.style.display = 'none';
+    loadingIndicator.style.display = 'none';
   }
-}
+});
+
 
 
 async function ensureSession(userId) {
@@ -905,11 +877,12 @@ async function startApp() {
       });
       break;
 
+
     case 'translate':
-      translationOptions.style.display = 'block';
-      modeInstructions.textContent = 'Select languages and click Translate.';
-      sendBtn.style.display = 'none'; // Hide send button, show translate button handled elsewhere
-      document.getElementById('translateBtn').style.display = 'inline-block';
+      translationOptions.style.display = 'flex';
+      modeInstructions.textContent = 'Enter your text and choose the target language.';
+      sendBtn.style.display = 'none';            // hide the normal send button
+      document.getElementById('translateBtn').style.display = 'inline-block'; // show translate button
       break;
 
     case 'budget':
@@ -1290,26 +1263,68 @@ function appendChat(container, text, isUser = false, italic = false) {
 
 // ---- TRANSLATE ----
 async function handleTranslateMode() {
-  const from = document.getElementById('translateFrom').value;
-  const to = document.getElementById('translateTo').value;
-  const inputText = document.getElementById('modeTextInput').value.trim();
+  // Get DOM elements
+  const targetLang = document.getElementById('translateTo')?.value || 'en';
+  const inputText = document.getElementById('textToTranslate')?.value.trim();
+  const outputDiv = document.getElementById('translatedText');
+  const loadingIndicator = document.getElementById('loadingIndicator');
 
   if (!inputText) {
-    modeResponse.textContent = '⚠️ Please enter text to translate.';
+    outputDiv.textContent = '⚠️ Please enter text to translate.';
     return;
   }
 
+  // Show loading indicator
+  if (loadingIndicator) loadingIndicator.style.display = 'block';
+  outputDiv.textContent = '';
+
+  // Use currentUserId or prompt if missing
+  let userId = currentUserId || localStorage.getItem('userId');
+  if (!userId) {
+    userId = prompt('Enter your username:');
+    if (!userId) {
+      outputDiv.textContent = '⚠️ Username is required!';
+      if (loadingIndicator) loadingIndicator.style.display = 'none';
+      return;
+    }
+    localStorage.setItem('userId', userId);
+    currentUserId = userId;
+  }
+
   const payload = {
-    userId: currentUserId,
+    userId: userId,
     mode: 'translate',
-    translateFrom: from,
-    translateTo: to,
-    input: inputText
+    input: inputText,
+    user_translate: true,
+    ai_translate: false,
+    target_lang: targetLang,
+    memory_logger: null
   };
 
-  const data = await postMode(payload);
-  modeResponse.innerHTML = data.response || '✅ Translation complete.';
+  try {
+    const response = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      outputDiv.textContent = data.translated_input || '✅ Translation complete.';
+    } else {
+      outputDiv.textContent = '❌ Translation failed: ' + (data.error || 'Unknown error.');
+    }
+  } catch (err) {
+    console.error(err);
+    outputDiv.textContent = '❌ Translation failed. Please try again.';
+  } finally {
+    if (loadingIndicator) loadingIndicator.style.display = 'none';
+  }
 }
+
+// ---- Attach to button ----
+document.getElementById('translateBtn')?.addEventListener('click', handleTranslateMode);
 
 // ---- GENERIC / FALLBACK ----
 async function handleGenericMode(mode) {

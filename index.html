@@ -112,7 +112,8 @@
           text-align: center;
           position: relative;
           margin-top: 40px;
-        }
+          display: inline-block;
+          }
         #introLine1 {
           font-size: 1.4rem;
           margin: 0 0 8px 0;
@@ -132,41 +133,81 @@
           line-height: 1.1;
           letter-spacing: 0.06em;
         }
-        #introStar {
-          display: block;
-          margin: 20px auto 0;
-          width: 60px; height: 60px;
-          opacity: 0;
-          animation: fadeIn 2s forwards 3.5s, starPulse 3s infinite ease-in-out 5s;
-        }
-        @keyframes starPulse {
-          0%, 100% { fill: #1e88e5; opacity: 1; }
-          50% { fill: #1e88e5; opacity: 0.7; }
-        }
-        @keyframes wrenGlow {
-          0%, 100% {
-            text-shadow: 0 0 5px white, 0 0 10px white, 0 0 20px white, 0 0 30px white;
-            color: white;
+        #orbitalWrapper {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          transform-origin: center;
+          pointer-events: none;
+          animation: orbitText 32s linear 4.5s forwards;
+          }
+
+        #introBall {
+          width: 14px;
+          height: 14px;
+          background: #1e88e5;
+          border-radius: 50%;
+          box-shadow: 0 0 8px rgba(30,136,229,0.9);
+          transform: translateX(130px);
+          position: relative;
+          animation:
+          ballPulse 6s infinite ease-in-out,
+          disperseMist 2s ease-out 52.5s forwards;
+          }
+          #introBall::after {
+          content: '';
+          position: absolute;
+          top: 0; left: 0;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: rgba(30,136,229,0.3);
+          filter: blur(6px);
+          transform: translateX(-2px) translateY(-2px); /* slight offset for natural trailing effect */
+          pointer-events: none;
+          }
+          
+           @keyframes orbitText {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(720deg); }  // === Change the rotation of the blue ball effect ========
+          }
+
+          /* Mist effect after rotations */
+          @keyframes disperseMist {
+            0% {
+               opacity: 1;
+               filter: blur(4px);
+               transform: scale(1);
+             }
+              100% {
+              opacity: 0;
+              filter: blur(16px);
+            }
+          }
+
+          @keyframes ballPulse {
+          0%, 100% { opacity: 0.9; box-shadow: 0 0 8px rgba(30,136,229,0.8); }
+          50%      { opacity: 1;   box-shadow: 0 0 16px rgba(30,136,229,1); }
+          }
+
+          @keyframes wrenGlow {
+             0%, 100% {
+               text-shadow: 0 0 4px white, 0 0 8px white, 0 0 15px white;
           }
           50% {
-            text-shadow: 0 0 2px white, 0 0 6px white, 0 0 10px white;
-            color: white;
+               text-shadow: 0 0 3px white, 0 0 8px white;
           }
-        }
-        @keyframes fadeIn {
+          }
+
+          @keyframes fadeIn {
           to { opacity: 1; }
-        }
+          }
 
-    .fade-in {
-      opacity: 0;
-      animation: fadeInMain 1.5s forwards;
-    }
 
-    @keyframes fadeInMain {
-      to {
-        opacity: 1;
-      }
-    }
+
+
 
         /* ===== Main App Styles ===== */
         main {
@@ -369,7 +410,6 @@
   font-family: Arial, sans-serif;
 }
 
-
     </style>
 </head>
 <body>
@@ -380,19 +420,18 @@
         <div class="eye"></div>
     </div>
     <div id="introText">
-        <div id="introLine1">Hello there, friend</div>
-        <div id="introLine2">I'm <span class="squartiqa">WREN</span></div>
-        <!-- Star SVG -->
-        <svg id="introStar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60"
-             aria-hidden="true" focusable="false">
-            <polygon points="32,4 39,24 60,24 42,38 48,60 32,46 16,60 22,38 4,24 25,24" fill="#1e88e5"/>
-        </svg>
+    <div id="introLine1">Hello there, friend</div>
+    <div id="introLine2">I'm <span class="squartiqa">WREN</span></div>
+
+    <div id="orbitalWrapper" aria-hidden="true">
+        <div id="introBall"></div>
     </div>
+</div>
 </div>
 
 <!-- ========== MAIN APP ========== -->
 <main role="main" aria-live="polite" style="display:none;">
-    <h1 id="mainTitle">👋 Meet WREN — Your AI Companion</h1>
+    <h1 id="mainTitle">👋 Hello there — I'm WREN</h1>
 
 
 
@@ -403,7 +442,7 @@
 
 
     <div id="startContainer" class="input-group">
-        <label for="nameInput" id="nameLabel">📝 Enter your name:</label>
+        <label for="nameInput" id="nameLabel">📝  Before continuing forward, please Enter your name!:</label>
         <input
                 type="text"
                 id="nameInput"
@@ -639,6 +678,31 @@ function fetchLogs() {
     modeResponse.textContent = '⚠️ Error retrieving memory logs.';
   });
 }
+
+window.addEventListener("load", () => {
+    const wrapper = document.getElementById("orbitalWrapper");
+    const ball = document.getElementById("introBall");
+
+    // Step 1: appear
+    ball.style.opacity = "0";
+    ball.style.transition = "opacity 0.6s ease";
+
+    setTimeout(() => {
+        ball.style.opacity = "1";
+    }, 300);
+
+    // Step 2: orbit
+    setTimeout(() => {
+        wrapper.style.animation = "orbitText 2.5s ease-in-out forwards";
+    }, 900);
+
+    // Step 3: return to original spot
+    setTimeout(() => {
+        wrapper.style.animation = "none";
+        wrapper.style.transform = "rotate(0deg)";
+    }, 3500);
+});
+
 
 window.addEventListener('load', async () => {
   // You need to define username here or fetch it from somewhere
@@ -1018,6 +1082,9 @@ async function startApp() {
     modeResponse.textContent = '⏳ Processing...';
 
     switch (mode) {
+      case '1':
+        await handleNameRecognition();
+        break;
       case 'book':
         await handleBookMode();
         break;
@@ -1029,7 +1096,7 @@ async function startApp() {
         break;
       case 'depression':
         await handleDepressionMode();
-        break; 
+        break;
       case 'tidy':
         await handleTidyMode();
         break;
@@ -1061,6 +1128,7 @@ async function startApp() {
   }
 });
 
+
 // ======= VALIDATION HELPERS =======
 function validateMode(mode) {
   if (!mode) {
@@ -1090,15 +1158,17 @@ async function postMode(payload) {
 }
 
 function markdownToHtml(markdown = '') {
+  // Links: [text](url)
+  let html = markdown.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
   // Bold
-  let html = markdown.replace(/(?:\*\*|__)(.*?)\1/g, '<strong>$1</strong>');
+  html = html.replace(/(?:\*\*|__)(.*?)\1/g, '<strong>$1</strong>');
   // Italic
   html = html.replace(/(?:\*|_)(.*?)\1/g, '<em>$1</em>');
   // Numbered list items
   html = html.replace(/^\s*\d+\.\s+(.*)$/gm, '<li>$1</li>');
 
-  // Wrap list items in <ol>
-  // This finds consecutive <li>...</li> blocks and wraps them once in <ol>...</ol>
+  // Wrap consecutive <li> in <ol>
   html = html.replace(/(?:<li>.*?<\/li>\s*)+/gs, match => `<ol>${match}</ol>`);
 
   // Replace remaining newlines with <br>
@@ -1169,37 +1239,104 @@ async function handleDepressionMode() {
 
 // ============== Task reminder =============
 async function handleReminderMode() {
-  const input = modeTextInput.value.trim();
+  const input = modeTextInput.value.trim(); // Get input from the text box
+
   if (!input) {
     modeResponse.textContent = '⚠️ Please enter a reminder command.';
     return;
   }
 
   try {
+    sendBtn.disabled = true;
+    modeResponse.textContent = '⏳ Processing your reminder...';
+
+    // Prepare payload to match your backend
+    const payload = {
+      userId: currentUserId,  // your user ID variable
+      mode: 'reminder',
+      input
+    };
+
     const response = await fetch('/mode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUserId,
-        mode: 'reminder',
-        input
-      }),
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
 
     if (data && data.success) {
-      modeResponse.innerHTML = data.response.replace(/\n/g, '<br>');
+      // Render line breaks nicely
+      modeResponse.innerHTML = `<strong>📝 Reminder Mode:</strong><br>${data.response.replace(/\n/g, '<br>')}`;
     } else if (data && data.error) {
       modeResponse.textContent = `⚠️ ${data.error}`;
     } else {
-      modeResponse.textContent = '⚠️ Unexpected response.';
+      modeResponse.textContent = '⚠️ Unexpected response. Try again!';
     }
-  } catch (error) {
-    console.error('Reminder mode error:', error);
-    modeResponse.textContent = '❌ Failed to process your reminder.';
+  } catch (err) {
+    console.error('Reminder mode error:', err);
+    modeResponse.textContent = '❌ Failed to process your reminder. Check your network.';
+  } finally {
+    sendBtn.disabled = false;
   }
 }
+// ---- Book Reccomender mode -----
+async function handleBookMode() {
+  const topic = modeTextInput.value?.trim() || '';
+  const category = bookCategorySelect?.value || '';
+  const choice = document.querySelector('input[name="bookChoice"]:checked')?.value || '3';
+
+  if (!topic && !category) {
+    modeResponse.textContent = '📚 Oops! Pick a category or enter a topic to start your adventure.';
+    return;
+  }
+
+  try {
+    sendBtn.disabled = true;
+    modeResponse.textContent = '✨ Scouting the perfect story for you...';
+
+    const payload = {
+      userId: currentUserId,
+      mode: 'book',
+      topic,
+      category,
+      choice
+    };
+
+    const data = await postMode(payload);
+
+    let output = '';
+
+    // --- Book Recommendation ---
+    if (data.book) {
+      const bookUrl = data.book.url || '#';
+      output += `📘 <strong>Book Recommendation:</strong><br>`;
+      output += `🌟 <a href="${bookUrl}" target="_blank" rel="noopener noreferrer">"${data.book.title}"</a><br>`;
+      output += `✍️ Author: ${data.book.author}<br><br>`;
+    }
+
+    // --- Audiobook Picks ---
+    if (Array.isArray(data.audiobooks) && data.audiobooks.length > 0) {
+      output += `🎧 <strong>Audiobook Picks:</strong><br>`;
+      data.audiobooks.forEach((v, i) => {
+        output += `🔹 <a href="${v.url}" target="_blank" rel="noopener noreferrer">${v.title}</a><br>`;
+      });
+      output += '<br>';
+    }
+
+    if (!output) {
+      output = '😕 No magical stories found this time. Try a different category!';
+    }
+
+    modeResponse.innerHTML = output; // we’re already using HTML tags, so no need for markdown here
+  } catch (err) {
+    console.error('Book mode error:', err);
+    modeResponse.textContent = `❌ Oops! Something went wrong: ${err.message || 'Failed to fetch recommendations.'}`;
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
 // ---- TIDY ----
 async function handleTidyMode() {
   const topic = document.getElementById('tidyingTopic')?.value.trim();
@@ -1262,6 +1399,7 @@ function appendChat(container, text, isUser = false, italic = false) {
 }
 
 // ---- TRANSLATE ----
+document.getElementById('translateBtn')?.addEventListener('click', handleTranslateMode);
 async function handleTranslateMode() {
   // Get DOM elements
   const targetLang = document.getElementById('translateTo')?.value || 'en';
@@ -1323,52 +1461,130 @@ async function handleTranslateMode() {
   }
 }
 
-// ---- Attach to button ----
-document.getElementById('translateBtn')?.addEventListener('click', handleTranslateMode);
+// ---- Name Recognition Mode with Last Interaction Teaser ----
+async function handleNameRecognition() {
+  const name = modeTextInput.value?.trim();
 
-// ---- GENERIC / FALLBACK ----
+  if (!name) {
+    modeResponse.textContent = '🙋‍♂️ Please enter your name to get started!';
+    return;
+  }
+
+  try {
+    sendBtn.disabled = true;
+    modeResponse.textContent = '✨ Recognizing you...';
+
+    const payload = {
+      userId: currentUserId,
+      mode: '1',        // corresponds to handle_mode_1 in your backend
+      input: name
+    };
+
+    const data = await postMode(payload);
+
+    if (data?.response) {
+      let displayText = data.response;
+
+      // If last topic is included in the response, highlight it
+      displayText = displayText.replace(
+        /(Last time we worked on .*?\.)/i,
+        '<span style="color:#ffdd57;font-weight:bold;">$1</span>'
+      );
+
+      modeResponse.innerHTML = `
+        🎉 <strong>Welcome, ${name}!</strong><br><br>
+        ${displayText}
+      `;
+
+      // Optional: add a fun emoji depending on time of day
+      const hour = new Date().getHours();
+      let emoji = '🌞';
+      if (hour >= 17) emoji = '🌙';
+      else if (hour >= 12) emoji = '☀️';
+
+      modeResponse.innerHTML += `<br>${emoji} Let's dive in!`;
+    } else {
+      modeResponse.textContent = '😅 Hmm, something went wrong recognizing your name.';
+    }
+
+  } catch (err) {
+    console.error('Name recognition error:', err);
+    modeResponse.textContent = `❌ Error: ${err.message || 'Failed to process your name.'}`;
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+// ---- GENERIC / FALLBACK DEBUG-SAFE ----
 async function handleGenericMode(mode) {
+  // Determine input element based on mode
   const inputElement =
     mode === 'math' || mode === 'science'
       ? document.getElementById('user-input')
       : document.getElementById('modeTextInput');
 
-  const input = inputElement?.value.trim();
-  const payload = { userId: currentUserId, mode, input };
-
-  console.log('Payload being sent:', payload);
-
-  const res = await fetch('/mode', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-
-  let fullResponse;
-
-  if (mode === 'science') {
-    // string-based logic, no JSON parsing
-    fullResponse = await res.text();
-  } else {
-    // JSON-based logic (math or other modes)
-    const data = await res.json();
-    fullResponse = data.response?.trim();
+  if (!inputElement) {
+    console.error(`[handleGenericMode] Input element not found for mode: ${mode}`);
+    modeResponse.innerHTML = `⚠️ Input field not found for mode: ${mode}`;
+    return;
   }
 
-  const formattedHtml = markdownToHtml(fullResponse || '⚠️ No answer received.');
-  modeResponse.innerHTML = formattedHtml;
+  const input = inputElement.value.trim();
+  if (!input) {
+    console.warn(`[handleGenericMode] Empty input for mode: ${mode}`);
+    modeResponse.innerHTML = '⚠️ Please enter something before sending.';
+    return;
+  }
 
-  if (window.MathJax) {
-    MathJax.typesetPromise();
+  if (!currentUserId) {
+    console.error('[handleGenericMode] currentUserId is undefined!');
+    modeResponse.innerHTML = '⚠️ User not logged in. Please start a session first.';
+    return;
+  }
+
+  const payload = { userId: currentUserId, mode, input };
+  console.log('[handleGenericMode] Payload being sent:', payload);
+
+  try {
+    const res = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = { response: await res.text() };
+    }
+
+    console.log('[handleGenericMode] Backend response:', data);
+
+    if (!res.ok) {
+      const errorMsg = data?.error || `HTTP ${res.status} ${res.statusText}`;
+      throw new Error(errorMsg);
+    }
+
+    // Use string response for 'science', otherwise JSON
+    let fullResponse = mode === 'science' ? data.response || '' : data.response?.trim() || '⚠️ No answer received.';
+
+    // Convert markdown to HTML and show
+    const formattedHtml = markdownToHtml(fullResponse);
+    modeResponse.innerHTML = formattedHtml;
+
+    if (window.MathJax) {
+      MathJax.typesetPromise();
+    }
+
+  } catch (err) {
+    console.error('[handleGenericMode] Error:', err);
+    modeResponse.innerHTML = `⚠️ Error: ${err.message}`;
   }
 }
 
 // ======= KEEP YOUR EXISTING DOMContentLoaded LOGIC BELOW =======
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('translateBtn').addEventListener('click', translate);
-
   // Existing book category fetch, start session, etc.
   const bookCategoryDropdown = document.getElementById('bookCategory');
   if (bookCategoryDropdown) {

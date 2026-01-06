@@ -83,26 +83,33 @@
           pointer-events: none;
         }
         .eyes {
-          position: absolute;
-          top: calc(50% - 80px);
-          left: 50%;
-          transform: translateX(-50%);
           display: flex;
           gap: 24px;
-          animation: fadeIn 2s forwards 1.5s;
-          pointer-events: none;
-          width: 80px;
           justify-content: center;
-        }
-        .eye {
-          width: 20px; height: 20px;
+          pointer-events: none;
+          transform-origin: center; /* rotates around the center */
+          animation: eyesTilt 2s cubic-bezier(.68,-0.55,.27,1.55) forwards 2.2s;
+          }
+
+          .eye {
+          width: 20px;
+          height: 20px;
           background: white;
           border-radius: 50%;
           animation: blink 4s infinite;
-        }
-        .eye:nth-child(2) {
+          }
+
+          .eye:nth-child(2) {
           animation-delay: 2s;
-        }
+          }
+
+        @keyframes eyesTilt {
+          0% { transform: rotate(0deg); }
+          50% { transform: rotate(0deg); }
+          100% { transform: rotate(-9deg); } 
+          }
+
+
         @keyframes blink {
           0%, 90%, 100% { height: 20px; }
           95% { height: 2px; }
@@ -215,14 +222,21 @@
           max-width: 700px;
           margin: 40px auto 60px auto;
           padding: 30px 25px;
-          background: linear-gradient(to right, #e3f2fd, #fbe9e7);
-          border-radius: 16px;
-          box-shadow: 0 0 20px rgba(0,0,0,0.1);
+          background: rgba(255, 255, 255, 0.15); /* soft translucent background */
+          backdrop-filter: blur(10px);           /* frosted glass effect */
+          border-radius: 20px;                    /* gentle curves */
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* subtle floating shadow */
           color: #333;
           box-sizing: border-box;
           min-height: 300px;
-          transition: background 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
-        }
+          transition: background 0.5s ease, color 0.5s ease, box-shadow 0.5s ease, transform 0.3s ease;
+          }
+
+          main:hover {
+          transform: translateY(-2px);             /* subtle lift on hover */
+          box-shadow: 0 0 25px rgba(0, 150, 255, 0.6),      /* blue glow */
+              0 8px 30px rgba(0,0,0,0.1);           /* subtle shadow for depth */
+          }
         h1 {
           text-align: center;
           color: #2c3e50;
@@ -409,16 +423,98 @@
   width: 100%;             /* ensures inputs fill container */
   font-family: Arial, sans-serif;
 }
+        
+        #face {
+  position: absolute;
+  top: calc(50% - 80px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.smile {
+  width: 32px;               
+  height: 14px;              
+  border-bottom: 3px solid white; 
+  border-radius: 50% / 100%; /* soft curved smile */
+  transform: rotate(0deg) translateX(0px); /* start upright and centered */
+  opacity: 0;                 
+  position: relative;
+  box-shadow: 0 1px 2px rgba(255,255,255,0.5);
+  animation: smileFadeTiltSlide 2s forwards 2.2s; /* fade, tilt, slide */
+}
+
+@keyframes smileFadeTiltSlide {
+  0% {
+    opacity: 0;
+    transform: rotate(0deg) translateX(0px);
+  }
+  50% {
+    opacity: 1;          /* fully visible before tilt/slide */
+    transform: rotate(0deg) translateX(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-9deg) translateX(8px); /* tilt and move right */
+  }
+}
+
+/* ===== GTA derived Wheel ===== */
+#modeWheelContainer {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 40px auto;
+}
+
+#modeWheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  transform: rotate(-18deg); /* align first slice nicely */
+}
+
+.wheel-option {
+  position: absolute;
+  width: 100px;
+  height: 40px;
+  left: 50%;
+  top: 50%;
+  transform-origin: -50px 0; /* pivot at wheel center */
+  text-align: center;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.2);
+  transition: transform 0.3s, background 0.3s, box-shadow 0.3s;
+  user-select: none;
+}
+
+.wheel-option:hover {
+  background: rgba(0, 150, 255, 0.8);
+  color: white;
+  box-shadow: 0 0 12px rgba(0, 150, 255, 0.7);
+  transform: scale(1.2) rotate(var(--rotate)); /* keep rotation when scaling */
+}
 
     </style>
 </head>
 <body>
 <!-- ========== INTRO SCREEN ========== -->
 <div id="introScreen" aria-label="Welcome Screen" role="dialog" aria-modal="true">
-    <div class="eyes" aria-hidden="true">
-        <div class="eye"></div>
-        <div class="eye"></div>
-    </div>
+    <div id="face">
+  <div class="eyes" aria-hidden="true">
+    <div class="eye"></div>
+    <div class="eye"></div>
+  </div>
+
+  <div class="smile"></div>
+</div>
     <div id="introText">
     <div id="introLine1">Hello there, friend</div>
     <div id="introLine2">I'm <span class="squartiqa">WREN</span></div>
@@ -462,33 +558,28 @@
     <div id="video-info"></div>
 
     <!-- ========== MODE UI CONTAINER ========== -->
-    <div id="modeUIContainer">
-        <section
-                id="modeSection"
-                aria-label="Mode Selection and Interaction"
-                style="display: none;"
-        >
-            <!-- Mode Selector -->
-            <label for="modeInput" id="modeLabel">🎯 Choose a Mode:</label>
-            <select
-                    id="modeInput"
-                    aria-describedby="modeInstructions"
-                    aria-required="true"
-            >
-                <option value="">-- Select a Mode --</option>
-                <option value="1">🤖 Name Recognition</option>
-                <option value="math">🧮 Math Problem Solver</option>
-                <option value="science">🔬 Science Explainer</option>
-                <option value="book">📚 Book Recommender</option>
-                <option value="budget">💰 Budget Tracker</option>
-                <option value="depression">🩺 Depression Screening</option>
-                <option value="tidy">🏠 House Tidying</option>
-                <option value="logs">📜 Memory Logs</option>
-                <option value="voice" disabled title="Premium feature - available to subscribers only">🎙 Voice GUI Assistant (Premium)</option>
-                <option value="translate">🌐 Translation mode</option>
-                <option value="10">📝 Reminder (task list)</option>
-            </select>
-
+<div id="modeUIContainer">
+    <section
+        id="modeSection"
+        aria-label="Mode Selection and Interaction"
+        style="display: none;"
+    >
+        <div id="modeWheelContainer">
+            <div id="modeWheel">
+                <div class="wheel-option" data-value="1">🤖 Name Recognition</div>
+                <div class="wheel-option" data-value="math">🧮 Math Solver</div>
+                <div class="wheel-option" data-value="science">🔬 Science</div>
+                <div class="wheel-option" data-value="book">📚 Book</div>
+                <div class="wheel-option" data-value="budget">💰 Budget</div>
+                <div class="wheel-option" data-value="depression">🩺 Depression</div>
+                <div class="wheel-option" data-value="tidy">🏠 Tidying</div>
+                <div class="wheel-option" data-value="logs">📜 Logs</div>
+                <div class="wheel-option" data-value="translate">🌐 Translate</div>
+                <div class="wheel-option" data-value="10">📝 Reminder</div>
+            </div>
+        </div>
+    </section>
+</div>
 
             <!-- Mode Instructions -->
             <div
@@ -600,6 +691,7 @@
 
 
 
+
     // Dark mode toggle
     const darkModeToggle = document.getElementById('darkModeToggle');
     darkModeToggle.addEventListener('change', () => {
@@ -610,7 +702,6 @@
     const startBtn = document.getElementById('startBtn');
     const responseDiv = document.getElementById('response');
     const modeSection = document.getElementById('modeSection');
-    const modeInput = document.getElementById('modeInput');
     const sendBtn = document.getElementById('sendBtn');
     const modeResponse = document.getElementById('modeResponse');
     const nameInput = document.getElementById('nameInput');
@@ -621,6 +712,8 @@
     const translationOptions = document.getElementById('translationOptions');
     const voiceBtn = document.getElementById('voiceBtn');
     const voiceResponse = document.getElementById('voiceResponse');
+    const wheelOptions = document.querySelectorAll('.wheel-option');
+    const modeTextInput = document.getElementById('modeTextInput');
 
     async function startSession(username) {
   try {
@@ -703,6 +796,48 @@ window.addEventListener("load", () => {
     }, 3500);
 });
 
+
+window.addEventListener('DOMContentLoaded', () => {
+  const wheelItems = document.querySelectorAll('.wheel-option');
+  if (!wheelItems.length) return console.warn("No wheel items found.");
+
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true; // disable send until a mode is selected
+
+  function highlightSelectedWheelItem(selectedItem) {
+    wheelItems.forEach(item => item.classList.remove('selected-wheel'));
+    selectedItem.classList.add('selected-wheel');
+
+    const selectedAngle = parseFloat(selectedItem.style.getPropertyValue('--rotate')) || 0;
+    const wheel = document.getElementById('modeWheel');
+    if (wheel) wheel.style.transform = `rotate(${-selectedAngle}deg)`;
+  }
+
+  const total = wheelItems.length;
+  const angleStep = 360 / total;
+
+  wheelItems.forEach((item, i) => {
+    const angle = i * angleStep;
+    item.style.setProperty('--rotate', `${angle}deg`);
+    item.style.transform = `rotate(${angle}deg) translate(100px) rotate(-${angle}deg)`;
+
+    item.addEventListener('click', () => {
+      const modeValue = item.dataset.value; // correctly scoped
+
+      // Store globally
+      window.currentSelectedMode = modeValue;
+
+      // Update the UI for selected mode
+      updateModeUI(modeValue);
+
+      // Highlight the clicked wheel item
+      highlightSelectedWheelItem(item);
+
+      // Enable send button now that a mode is selected
+      sendBtn.disabled = false;
+    });
+  });
+});
 
 window.addEventListener('load', async () => {
   // You need to define username here or fetch it from somewhere
@@ -844,35 +979,25 @@ async function startApp() {
 
 
     // Update UI based on mode selection
-    function updateModeUI() {
-  const selected = modeInput.value;
-  const modeSection = document.getElementById('modeSection');
-  const queryInputGroup = document.getElementById('queryInputGroup');
-  const modeTextInputGroup = document.getElementById('modeTextInputGroup');
-  const chatContainer = document.getElementById('budgetChatContainer');
+    function updateModeUI(selected) {
+    if (!selected) return;
 
-  // Elements that should be defined globally or declared above:
-  // bookCategoryGroup, bookTypeGroup, translationOptions, modeInstructions, modeResponse, sendBtn
+    const modeSection = document.getElementById('modeSection');
+    const queryInputGroup = document.getElementById('queryInputGroup');
+    const modeTextInputGroup = document.getElementById('modeTextInputGroup');
+    const chatContainer = document.getElementById('budgetChatContainer');
 
-  // Reset sendBtn visibility by default (show it unless overridden)
-  sendBtn.style.display = 'inline-block';
-
-  // Show or hide mode section
-  modeSection.style.display = selected ? 'block' : 'none';
-
-  // Show or hide budget chat container
-  chatContainer.style.display = selected === 'budget' ? 'block' : 'none';
-
-  // Hide all optional UI elements by default
-  queryInputGroup.style.display = 'none';
-  modeTextInputGroup.style.display = 'none';
-  bookCategoryGroup.style.display = 'none';
-  bookTypeGroup.style.display = 'none';
-  translationOptions.style.display = 'none';
-
-  // Clear instructions and response
-  modeInstructions.textContent = '';
-  modeResponse.textContent = '';
+    // Reset UI elements
+    sendBtn.style.display = 'inline-block';
+    modeSection.style.display = selected ? 'block' : 'none';
+    chatContainer.style.display = selected === 'budget' ? 'block' : 'none';
+    queryInputGroup.style.display = 'none';
+    modeTextInputGroup.style.display = 'none';
+    bookCategoryGroup.style.display = 'none';
+    bookTypeGroup.style.display = 'none';
+    translationOptions.style.display = 'none';
+    modeInstructions.textContent = '';
+    modeResponse.textContent = '';
 
   switch (selected) {
     case 'math':
@@ -909,17 +1034,11 @@ async function startApp() {
       break;
 
     case 'depression':
-    // Show the input and response area
-    modeTextInputGroup.style.display = 'none';
-    modeResponse.style.display = 'block';
-
-    // Instructions for starting
-    modeInstructions.textContent = 'Hello friend! Press "Send" to begin the depression screening.';
-
-    // Make sure input box is visible
-    modeTextInput.style.display = 'block';
-    modeTextInput.focus();
-    break;
+      modeTextInputGroup.style.display = 'none';
+      modeResponse.style.display = 'block';
+      modeInstructions.textContent = 'Hello friend! Press "Send" to begin the depression screening.';
+      modeTextInput.style.display = 'block';
+      modeTextInput.focus();
 
       fetch('/mode', {
         method: 'POST',
@@ -936,9 +1055,7 @@ async function startApp() {
           modeResponse.innerHTML = data.response.replace(/\n/g, '<br>');
         }
       })
-      .catch(() => {
-        // If fetch fails, instructions remain visible
-      });
+      .catch(() => {});
       break;
 
 
@@ -1027,7 +1144,7 @@ async function startApp() {
 }
 
 
-    modeInput.addEventListener('change', updateModeUI);
+
    startBtn.addEventListener("click", async () => {
   const name = nameInput.value.trim();
 
@@ -1055,7 +1172,7 @@ async function startApp() {
 
       // Show mode selection section, focus input
       modeSection.style.display = 'block';
-      modeInput.focus();
+      document.getElementById('modeWheelContainer').scrollIntoView({ behavior: 'smooth' });
 
       // Disable start inputs & button to prevent re-submission
       startBtn.disabled = true;
@@ -1073,7 +1190,7 @@ async function startApp() {
 });
 
     sendBtn.addEventListener('click', async () => {
-  const mode = modeInput.value;
+  const mode = window.currentSelectedMode; // use wheel-selected mode
   if (!validateMode(mode)) return;
   if (!validateSession()) return;
 
@@ -1552,11 +1669,15 @@ async function handleGenericMode(mode) {
       body: JSON.stringify(payload)
     });
 
+    // --- Separate parsing for math (JSON) vs science (text) ---
     let data;
-    try {
+    if (mode === 'science') {
+      // Text-only mode for science
+      const textResponse = await res.text();
+      data = { response: textResponse };
+    } else {
+      // JSON mode for math (or other structured responses)
       data = await res.json();
-    } catch {
-      data = { response: await res.text() };
     }
 
     console.log('[handleGenericMode] Backend response:', data);
@@ -1566,13 +1687,14 @@ async function handleGenericMode(mode) {
       throw new Error(errorMsg);
     }
 
-    // Use string response for 'science', otherwise JSON
-    let fullResponse = mode === 'science' ? data.response || '' : data.response?.trim() || '⚠️ No answer received.';
+    // Get the response string
+    const fullResponse = data.response?.trim() || '⚠️ No answer received.';
 
     // Convert markdown to HTML and show
     const formattedHtml = markdownToHtml(fullResponse);
     modeResponse.innerHTML = formattedHtml;
 
+    // Re-render mathjax if needed
     if (window.MathJax) {
       MathJax.typesetPromise();
     }

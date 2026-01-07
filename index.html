@@ -466,8 +466,8 @@
 /* ===== GTA derived Wheel ===== */
 #modeWheelContainer {
   position: relative;
-  width: 300px;
-  height: 300px;
+  width: 400px;
+  height: 400px;
   margin: 40px auto;
 }
 
@@ -476,7 +476,7 @@
   height: 100%;
   border-radius: 50%;
   position: relative;
-  transform: rotate(-18deg); /* align first slice nicely */
+  transform: rotate(0deg); /* align first slice nicely */
 }
 
 .wheel-option {
@@ -485,7 +485,7 @@
   height: 40px;
   left: 50%;
   top: 50%;
-  transform-origin: -50px 0; /* pivot at wheel center */
+  transform-origin: -50px 0
   text-align: center;
   cursor: pointer;
   padding: 6px 12px;
@@ -547,7 +547,7 @@
                 aria-describedby="nameLabel"
         />
         <button id="startBtn">
-            <span class="icon">➤</span> Send
+            <span class="icon">➤</span> Start WREN
         </button>
     </div>
 
@@ -568,14 +568,14 @@
             <div id="modeWheel">
                 <div class="wheel-option" data-value="1">🤖 Name Recognition</div>
                 <div class="wheel-option" data-value="math">🧮 Math Solver</div>
-                <div class="wheel-option" data-value="science">🔬 Science</div>
-                <div class="wheel-option" data-value="book">📚 Book</div>
-                <div class="wheel-option" data-value="budget">💰 Budget</div>
-                <div class="wheel-option" data-value="depression">🩺 Depression</div>
-                <div class="wheel-option" data-value="tidy">🏠 Tidying</div>
-                <div class="wheel-option" data-value="logs">📜 Logs</div>
-                <div class="wheel-option" data-value="translate">🌐 Translate</div>
-                <div class="wheel-option" data-value="10">📝 Reminder</div>
+                <div class="wheel-option" data-value="science">🔬 Science mode</div>
+                <div class="wheel-option" data-value="book">📚 Book recommender mode</div>
+                <div class="wheel-option" data-value="budget">💰 Financial literacy mode</div>
+                <div class="wheel-option" data-value="depression">🩺 Depression tracker mode</div>
+                <div class="wheel-option" data-value="tidy">🏠 Environment Tidying mode</div>
+                <div class="wheel-option" data-value="logs">📜  Memory Log mode</div>
+                <div class="wheel-option" data-value="translate">🌐 Language Translate mode</div>
+                <div class="wheel-option" data-value="10">📝 Task Reminder mode</div>
             </div>
         </div>
     </section>
@@ -819,7 +819,7 @@ window.addEventListener('DOMContentLoaded', () => {
   wheelItems.forEach((item, i) => {
     const angle = i * angleStep;
     item.style.setProperty('--rotate', `${angle}deg`);
-    item.style.transform = `rotate(${angle}deg) translate(100px) rotate(-${angle}deg)`;
+    item.style.transform = `rotate(${angle}deg) translate(150px) rotate(-${angle}deg)`;
 
     item.addEventListener('click', () => {
       const modeValue = item.dataset.value; // correctly scoped

@@ -2,17 +2,23 @@ import os
 import json
 import uuid
 from datetime import datetime
-from textblob import TextBlob  # Make sure textblob is installed and imported
-from belief_system import BeliefModel  # Adjust if your belief model file is named differently
+from textblob import TextBlob
+from belief_system import BeliefModel
+
 
 class MemoryLogger:
     def __init__(self, user_name, belief_model: BeliefModel):
         self.user_name = user_name
         self.file_path = f"{user_name}_memory_log.json"
         self.belief_model = belief_model
+
+        # If the log doesn't exist, create it
         if not os.path.exists(self.file_path):
             with open(self.file_path, 'w') as f:
                 json.dump([], f)
+
+    def get_logs(self):
+        return self._read_log()
 
     def analyze_emotion(self, text):
         polarity = TextBlob(text).sentiment.polarity
@@ -32,7 +38,7 @@ class MemoryLogger:
         }
         return [tag for keyword, tag in belief_keywords.items() if keyword in text.lower()]
 
-    def log_interaction(self, question, response, tags=None):
+    def log_interaction(self, question: str, response: str, tags=None):
         emotion = self.analyze_emotion(response)
         belief_tags = self.extract_belief_tags(f"{question} {response}")
 
@@ -61,29 +67,10 @@ class MemoryLogger:
         with open(self.file_path, 'w') as f:
             json.dump(data, f, indent=4)
 
+    def to_dict(self):
+        """Convert the MemoryLogger to a serializable dictionary format."""
+        return {"user_name": self.user_name, "file_path": self.file_path}
+
     def view_logs(self):
         data = self._read_log()
-        if not data:
-            print("Memory log is empty!")
-            return
-
-        print("\n--- Memory Log ---")
-        for i, entry in enumerate(data):
-            print(f"\n[{i + 1}] {entry['timestamp']} (ID: {entry['id']})")
-            print(f"User: {entry['question']}")
-            print(f"AI:   {entry['response']}")
-            print(f"Emotion: {entry['emotion']}")
-            if entry['tags']:
-                print(f"Tags: {entry['tags']}")
-            if entry['belief_tags']:
-                print(f"Beliefs: {entry['belief_tags']}")
-        print("\n--- End of Log ---\n")
-
-    def get_entries_by_tag(self, tag):
-        return [entry for entry in self._read_log() if tag in (entry.get("tags") or [])]
-
-    def get_entries_by_emotion(self, emotion):
-        return [entry for entry in self._read_log() if entry.get("emotion") == emotion]
-
-    def get_entries_by_belief_tag(self, belief_tag):
-        return [entry for entry in self._read_log() if belief_tag in (entry.get("belief_tags") or [])]
+        return data

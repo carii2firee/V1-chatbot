@@ -1,297 +1,244 @@
-import os
-import xml.etree.ElementTree as ET
 import re
 import requests
-from sympy import Rational
-from fallback_explanations import FALLBACK_EXPLANATIONS, handle_science_question_advanced
-
-from dotenv import load_dotenv
+import matplotlib.pyplot as plt
+import numpy as np
+import uuid
+import os
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
+from sympy import Expr, Rational
 from sympy import (
-    symbols, Eq, solve, diff, integrate, limit, simplify, pretty
+    symbols, Eq, solve, diff, integrate, limit, simplify,
+    pretty, sympify, Rational
 )
 from sympy.parsing.sympy_parser import (
-    parse_expr,
-    standard_transformations,
-    implicit_multiplication_application,
-    convert_xor,
-)
-
-# --- Setup ---
-load_dotenv()
-WOLFRAM_APP_ID = os.getenv("WOLF_IFYKYK")
-print(f"[INIT] WOLFRAM_APP_ID Loaded: {bool(WOLFRAM_APP_ID)}")
-
-transformations = standard_transformations + (
+    parse_expr, standard_transformations,
     implicit_multiplication_application, convert_xor
 )
+from sympy.core.expr import Expr
+from dotenv import load_dotenv
+from fallback_explanations import handle_science_question_advanced
 
-# --- WolframAlpha Query ---
-def query_wolframalpha(question: str) -> str:
-    if not WOLFRAM_APP_ID:
-        return "⚠️ WolframAlpha API key not found."
+# === Setup ===
+load_dotenv()
+WOLFRAM_APP_ID = os.getenv("WOLF_IFYKYK")
 
-    url = "https://api.wolframalpha.com/v2/query"
-    params = {
-        "input": question,
-        "appid": WOLFRAM_APP_ID,
-        "format": "plaintext",
-        "output": "XML"
-    }
+GRAPH_DIR = "static/graphs"
+os.makedirs(GRAPH_DIR, exist_ok=True)
 
-    try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        root = ET.fromstring(response.content)
+transformations = standard_transformations + (implicit_multiplication_application, convert_xor)
 
-        if root.find(".//error") is not None:
-            return "❌ WolframAlpha returned an error for this query."
-
-        # Prefer pods with useful info
-        for pod in root.findall(".//pod"):
-            title = pod.attrib.get("title", "").lower()
-            if title in ["result", "definition", "value", "decimal approximation", "indefinite integral"]:
-                plaintext = pod.find(".//plaintext")
-                if plaintext is not None and plaintext.text:
-                    return plaintext.text.strip()
-
-        # fallback to first plaintext pod
-        fallback = root.find(".//pod/subpod/plaintext")
-        if fallback is not None and fallback.text:
-            return fallback.text.strip()
-
-        return "❓ Couldn't find a readable answer from WolframAlpha."
-    except Exception as e:
-        return f"⚠️ Error querying WolframAlpha: {e}"
+# === Helpers ===
+def format_number(val, fraction_mode=False):
+    if fraction_mode:
+        if isinstance(val, Rational):
+            return str(val)
+        return str(Rational(val).limit_denominator())
+    else:
+        if val == int(val):
+            return str(int(val))
+        return f"{val:.6f}".rstrip("0").rstrip(".")
 
 
-
-
-    # =================== parse various fractions ==========
-def parse_fraction_input(expr_str: str):
+# Math multiplication helper
+def fix_implicit_multiplication(expr_str: str) -> str:
     """
-    Converts mixed numbers (like '1 1/6') into proper fractions for calculation.
+    Replace 'number space number' with 'number*number'
+    Example: '23 7' -> '23*7'
     """
     import re
+    return re.sub(r'(\d)\s+(\d)', r'\1*\2', expr_str)
 
-    # Find all mixed numbers (digit space fraction)
+def parse_fraction_input(expr_str: str):
+    """Convert mixed numbers (like 2 3/4) to Rational"""
+    mixed_number_re = re.compile(r'(\d+)\s+(\d+)/(\d+)')
+
+
     def convert_mixed(match):
-        whole = int(match.group(1))
-        numerator = int(match.group(2))
-        denominator = int(match.group(3))
-        return str(Rational(whole * denominator + numerator, denominator))
+        whole, num, den = map(int, match.groups())
+        return str(Rational(whole * den + num, den))
+    return mixed_number_re.sub(convert_mixed, expr_str)
 
-    pattern = re.compile(r'(\d+)\s+(\d+)/(\d+)')
-    converted_expr = pattern.sub(convert_mixed, expr_str)
-    return converted_expr
+# === Wolfram Alpha Query ===
+def query_wolframalpha(question: str) -> str:
+    """Fallback for complex queries using Wolfram Alpha"""
+    url = "http://api.wolframalpha.com/v2/query"
+    params = {"input": question, "appid": WOLFRAM_APP_ID, "format": "plaintext"}
+    try:
+        res = requests.get(url, params=params, timeout=10)
+        res.raise_for_status()
+        return res.text
+    except Exception as e:
+        return f"⚠️ Wolfram Alpha error: {e}"
 
-# --- Step-by-step Solver for math equations ---
+# === Step-by-step arithmetic solver  ===
+def step_by_step_arithmetic_full(expr_str: str, fraction_mode=False) -> str:
+    """
+    True step-by-step arithmetic solver.
+    Handles addition, subtraction, multiplication, division, powers, and fractions.
+    """
+    try:
+        # 1️⃣ Fix implicit multiplication
+        expr_str = fix_implicit_multiplication(expr_str)
+        # 2️⃣ Convert mixed fractions (like 2 3/4 -> Rational)
+        expr_str = parse_fraction_input(expr_str)
+        # 3️⃣ Parse into SymPy expression WITHOUT auto-evaluation
+        expr = parse_expr(expr_str, transformations=transformations, evaluate=False)
+
+        steps = [f"🟢 Step 1: Original expression\n   {expr_str}"]
+
+        def walk(e: Expr) -> str:
+            # Rational
+            if isinstance(e, Rational):
+                return format_number(e, fraction_mode)
+            # Atomic numbers
+            if e.is_Number:
+                return format_number(e, fraction_mode)
+            # Addition/Subtraction
+            if e.is_Add:
+                values = [walk(arg) for arg in e.args]
+                result = format_number(e.evalf(), fraction_mode)
+                steps.append(f"➕ Add/Subtract: {' + '.join(values)} = {result}")
+                return result
+            # Multiplication
+            if e.is_Mul:
+                if any(arg.is_Add for arg in e.args):
+                    steps.append(f"🔹 Distributive property might apply: {e}")
+                values = [walk(arg) for arg in e.args]
+                result = format_number(e.evalf(), fraction_mode)
+                steps.append(f"✖️ Multiply: {' × '.join(values)} = {result}")
+                return result
+            # Power
+            if e.is_Pow:
+                base_v = walk(e.base)
+                exp_v = walk(e.exp)
+                result = format_number(e.evalf(), fraction_mode)
+                if e.exp == Rational(1, 2):
+                    steps.append(f"🟢 Square root: √{base_v} = {result}")
+                else:
+                    steps.append(f"🧮 Power: {base_v}^{exp_v} = {result}")
+                return result
+            # Division
+            num, denom = e.as_numer_denom()
+            if denom != 1:
+                num_v = walk(num)
+                denom_v = walk(denom)
+                result = format_number(e.evalf(), fraction_mode)
+                steps.append(f"➗ Divide: {num_v} ÷ {denom_v} = {result}")
+                return result
+            # Fallback
+            result = format_number(e.evalf(), fraction_mode)
+            steps.append(f"🔹 Simplified: {result}")
+            return result
+
+        final_result = walk(expr)
+        steps.append(f"🎯 Final Answer:\n   {final_result}")
+        return "\n\n".join(steps)
+
+    except Exception as e:
+        return f"⚠️ Unable to process arithmetic: {e}"
+
+
+
+# === Equation solver ===
 def step_by_step_solve(equation_str: str) -> str:
     try:
-        # Convert mixed numbers in the equation
         equation_str = parse_fraction_input(equation_str)
-
         left, right = equation_str.split('=')
-        left_expr = parse_expr(left.strip(), transformations=transformations)
-        right_expr = parse_expr(right.strip(), transformations=transformations)
+        left_expr = parse_expr(left, transformations=transformations)
+        right_expr = parse_expr(right, transformations=transformations)
         equation = Eq(left_expr, right_expr)
-
-        variables = list(equation.free_symbols)
-        var = variables[0] if variables else symbols('x')
+        var = list(equation.free_symbols)[0]
 
         rearranged = left_expr - right_expr
         simplified = simplify(rearranged)
         solutions = solve(simplified, var)
+        formatted = [format_number(s.evalf()) for s in solutions]
 
-        steps = [
-            f"🟢 **Step 1: Original Equation**\n   {pretty(equation)}",
-            f"🔄 **Step 2: Move all terms to one side**\n   {pretty(rearranged)} = 0",
-            f"🧹 **Step 3: Simplify the expression**\n   {pretty(simplified)} = 0",
-            f"✅ **Step 4: Solve for {var}**\n   {', '.join(map(str, solutions))}",
-            f"🎯 **Final Answer:**\n   {var} = {', '.join(map(str, solutions))}"
-        ]
-
-        return "\n\n".join(steps)
-
+        return "\n\n".join([
+            f"🟢 Step 1: Original Equation\n   {pretty(equation)}",
+            f"🔄 Step 2: Move all terms to one side\n   {pretty(rearranged)} = 0",
+            f"🧹 Step 3: Simplify\n   {pretty(simplified)} = 0",
+            f"🎯 Final Answer:\n   {var} = {', '.join(formatted)}"
+        ])
     except Exception as e:
-        return f"⚠️ Couldn't solve step-by-step: {e}"
+        return f"⚠️ Couldn't solve equation: {e}"
 
-
-def step_by_step_arithmetic(expr_str: str) -> str:
+# === Graphing with Matplotlib + SymPy ===
+def plot_expression(expr_str: str) -> str:
     try:
-        original_expr_str = expr_str.strip()
-
-        # --- Convert mixed numbers like '1 1/6' into proper fractions ---
-        expr_str = parse_fraction_input(original_expr_str)
-
-        # Parse the expression after conversion
+        expr_str = expr_str.lower().replace('plot', '').replace('^', '**').strip()
+        x = symbols('x')
         expr = parse_expr(expr_str, transformations=transformations)
-        result = simplify(expr)
+        x_vals = np.linspace(-10, 10, 400)
+        y_vals = [float(expr.subs(x, v)) for v in x_vals]
 
-        steps = [
-            f"🟢 **Step 1: Original expression**\n   {original_expr_str}",
-            f"➕ **Step 2: Convert mixed numbers**\n   {expr_str}",
-            f"🧮 **Step 3: Evaluate**\n   {expr_str} = {result}",
-            f"🎯 **Final Answer:**\n   {result}"
-        ]
-        return "\n\n".join(steps)
-
+        filename = f"{uuid.uuid4().hex}.png"
+        path = os.path.join(GRAPH_DIR, filename)
+        plt.plot(x_vals, y_vals)
+        plt.grid(True)
+        plt.savefig(path)
+        plt.close()
+        return f"🖼 [View graph]({path})"
     except Exception as e:
-        return f"⚠️ Unable to process simple arithmetic: {e}"
+        return f"⚠️ Graph error: {e}"
 
-# --- Advanced math processing ---
+# === Unified math handler ===
 def handle_math_question_advanced(question: str) -> str:
-    """
-    Advanced math processor for AI companion.
-    Supports algebra, calculus (derivatives, integrals, limits), and systems of equations.
-    Provides step-by-step reasoning.
-    """
-    original_input = question.strip()
-    q = original_input.lower().replace('^', '**')
+    q = question.strip().replace("^", "**")  # normalize powers
+
+    # Detect simple arithmetic (numbers, operators, parentheses only)
+    if re.fullmatch(r'[\d\s\+\-\*\/\(\)]+', q):
+        return step_by_step_arithmetic_full(q)
 
     try:
-        # --- Derivatives ---
-        if q.startswith('diff '):
-            expr_str = original_input[5:].strip()  # remove 'diff '
-            expr = parse_expr(expr_str, transformations=transformations)
-            variables = list(expr.free_symbols)
-            var = variables[0] if variables else symbols('x')
-            derivative = diff(expr, var)
-            steps = [
-                f"🟢 **Step 1: Original expression**\n   {pretty(expr)}",
-                f"🧮 **Step 2: Differentiate w.r.t {var}**\n   d/d{var} {pretty(expr)} = {pretty(derivative)}",
-                f"🎯 **Final Answer:**\n   {pretty(derivative)}"
-            ]
-            return "\n\n".join(steps)
+        # Derivative
+        if q.lower().startswith("diff "):
+            expr = parse_expr(question[5:], transformations=transformations)
+            var = list(expr.free_symbols)[0]
+            return pretty(diff(expr, var))
 
-        # --- Integrals ---
-        if q.startswith('integrate '):
-            expr_str = original_input[9:].strip()  # remove 'integrate '
-            expr = parse_expr(expr_str, transformations=transformations)
-            variables = list(expr.free_symbols)
-            var = variables[0] if variables else symbols('x')
-            integral = integrate(expr, var)
-            steps = [
-                f"🟢 **Step 1: Original expression**\n   {pretty(expr)}",
-                f"🧮 **Step 2: Integrate w.r.t {var}**\n   ∫ {pretty(expr)} d{var} = {pretty(integral)}",
-                f"🎯 **Final Answer:**\n   {pretty(integral)} + C"
-            ]
-            return "\n\n".join(steps)
+        # Integral
+        if q.lower().startswith("integrate "):
+            expr = parse_expr(question[9:], transformations=transformations)
+            var = list(expr.free_symbols)[0]
+            return pretty(integrate(expr, var)) + " + C"
 
-        # --- Limits ---
-        if q.startswith('limit '):
-            # Expect format: limit f(x) as x->a
-            import re
-            match = re.search(r'limit (.+) as (.+)->(.+)', q)
+        # Limit
+        if q.lower().startswith("limit "):
+            match = re.search(r'limit (.+) as (.+)->(.+)', q.lower())
             if match:
-                expr_str, var_str, point_str = match.groups()
-                expr = parse_expr(expr_str, transformations=transformations)
-                var = symbols(var_str.strip())
-                point = parse_expr(point_str.strip(), transformations=transformations)
-                lim = limit(expr, var, point)
-                steps = [
-                    f"🟢 **Step 1: Original expression**\n   {pretty(expr)}",
-                    f"🧮 **Step 2: Evaluate limit as {var} -> {point}**\n   {pretty(lim)}",
-                    f"🎯 **Final Answer:**\n   {lim}"
-                ]
-                return "\n\n".join(steps)
-            else:
-                return "⚠️ Limit query not understood. Use format: 'limit f(x) as x->a'"
+                expr, var, pt = match.groups()
+                return str(limit(parse_expr(expr), symbols(var), sympify(pt)))
 
-        # --- Equations ---
-        if '=' in q:
-            return step_by_step_solve(original_input)
+        # Equation solving
+        if "=" in q:
+            return step_by_step_solve(question)
 
-        # --- Systems of equations (comma-separated) ---
-        if ',' in q:
-            eqs = [parse_expr(eq.strip(), transformations=transformations) for eq in q.split(',')]
-            vars_set = set().union(*[eq.free_symbols for eq in eqs])
-            solutions = solve(eqs, vars_set)
-            return f"🧮 **System of Equations Solution:**\n   {solutions}"
+        # Graphing
+        if "plot" in q.lower():
+            return plot_expression(question)
 
-        # --- Simple arithmetic / simplification ---
+        # Complex arithmetic that slipped through
         expr = parse_expr(q, transformations=transformations)
-        if expr.free_symbols == set():
-            return step_by_step_arithmetic(original_input)
-        simplified = simplify(expr)
-        return f"🧮 Simplified Expression:\n  {pretty(expr)} = {simplified}"
+        if not expr.free_symbols:
+            return step_by_step_arithmetic_full(question)
 
-    except Exception as e:
-        return f"⚠️ Unable to process expression: {e}"
+        # Algebraic simplification
+        return f"🧮 Simplified:\n   {pretty(simplify(expr))}"
 
-# --- Science keywords for subject detection ---
-WOLFRAM_KEYWORDS = {
-    "biology": ["cell", "dna", "rna", "photosynthesis", "organism", "evolution", "genetics", "enzyme", "protein", "neuron"],
-    "chemistry": ["atom", "molecule", "compound", "acid", "base", "reaction", "bond", "ion", "periodic", "solution"],
-    "physics": ["force", "mass", "velocity", "energy", "acceleration", "momentum", "gravity", "friction", "work", "wave", "light", "electricity", "thermodynamics"],
-    "astronomy": ["planet", "star", "galaxy", "universe", "black hole", "comet", "asteroid", "orbit", "light year"],
-    "earth_science": ["rock", "volcano", "earthquake", "climate", "weather", "atmosphere", "ocean", "ecosystem", "pollution"],
-}
+    except Exception:
+        # Wolfram Alpha fallback for anything SymPy can't handle
+        return query_wolframalpha(question)
 
+
+# === Science handler ===
 def handle_science_question(question: str, memory_logger=None) -> str:
-    lower = question.lower().strip()
-    print(f"[DEBUG] Received science question: {lower}")
+    return handle_science_question_advanced(question, memory_logger)
 
-    # --- Normalize question ---
-    cleaned = re.sub(r'[^a-z0-9\s]', '', lower)
-
-    # --- Detect subject by keyword presence ---
-    subject_scores = {
-        subject: sum(1 for kw in kws if re.search(rf'\b{re.escape(kw)}s?\b', cleaned))
-        for subject, kws in WOLFRAM_KEYWORDS.items()
-    }
-    subject_scores = {k: v for k, v in subject_scores.items() if v > 0}
-
-    if not subject_scores:
-        return "🤖 Try a more specific science question — for example, mention terms like *photosynthesis*, *atom*, or *gravity*."
-
-    subject = max(subject_scores, key=subject_scores.get)
-
-    # --- Query WolframAlpha ---
-    result = query_wolframalpha(question)
-
-    fallback_hit = None
-    # --- Level 7 fallback if WolframAlpha fails ---
-    if not result or any(err in result.lower() for err in ["no result", "error", "unknown", "not found"]):
-        # Delegate entirely to the Level 7 advanced handler
-        result = handle_science_question_advanced(question, memory_logger=memory_logger)
-        return result
-
-    # --- Log interaction (if applicable) ---
-    if memory_logger:
-        memory_logger.log_interaction(
-            question=f"[Science/{subject.capitalize()}] Q: {question}",
-            response=f"A: {result}",
-            tags=["science_mode", subject]
-        )
-
-    # --- Generic message if still no result ---
-    if not result:
-        result = "🤖 I couldn’t find a detailed explanation, but try rephrasing your question or including more context."
-
-    # --- Add context line if fallback was used ---
-    if fallback_hit:
-        result += f"\n\n🔍 (Matched fallback topic: **{fallback_hit}**)"
-
-    return result
-
-# --- Unified handler for math or science queries ---
-
+# === Unified query processor ===
 def process_query(user_input: str, mode: str = None, memory_logger=None) -> str:
-    print(f"[DEBUG] memory_logger type: {type(memory_logger)}")
-    user_input = user_input.strip()
-
-    if not user_input:
-        return "⚠️ Please enter a valid question or expression."
-
-    try:
-        if mode == 'science':
-            return handle_science_question(user_input, memory_logger)
-
-        elif mode == 'math':
-            return handle_math_question_advanced(user_input)
-
-        else:
-            return "⚠️ Unknown mode specified. Please use 'math' or 'science'."
-
-    except Exception as e:
-        return f"⚠️ Unexpected error: {str(e)}"
+    if mode == "math":
+        return handle_math_question_advanced(user_input)
+    if mode == "science":
+        return handle_science_question(user_input, memory_logger)
+    return "⚠️ Unknown mode."

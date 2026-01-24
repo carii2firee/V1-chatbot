@@ -20,7 +20,7 @@
 
         #startContainer {
           max-width: 320px;
-          margin: 40px auto 30px auto; /* centers horizontally and adds vertical spacing */
+          margin: 0 auto; /* centers horizontally and adds vertical spacing */
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -96,14 +96,19 @@
           opacity: 0 !important;
           pointer-events: none;
         }
+        
         .eyes {
           display: flex;
           gap: 24px;
           justify-content: center;
           pointer-events: none;
-          transform-origin: center; /* rotates around the center */
+
+          position: relative;
+          top: -8px; /* move eyes up — adjust as needed */
+
+          transform-origin: center;
           animation: eyesTilt 2s cubic-bezier(.68,-0.55,.27,1.55) forwards 2.2s;
-          }
+         }
 
           .eye {
           width: 20px;
@@ -153,16 +158,19 @@
           line-height: 1.1;
           letter-spacing: 0.06em;
         }
+
         #orbitalWrapper {
           position: absolute;
           top: 50%;
           left: 50%;
-          width: 0;
-          height: 0;
-          transform-origin: center;
+          width: 300px;
+          height: 300px;
+          transform-origin: 50% 50%;
           pointer-events: none;
-          animation: orbitText 32s linear 4.5s forwards;
-          }
+          animation: spin 6s linear forwards;
+          overflow: visible;      
+        }
+
 
         /* Center all mode containers and their children */
         #modeSection,
@@ -186,25 +194,24 @@
           height: 14px;
           background: #1e88e5;
           border-radius: 50%;
-          box-shadow: 0 0 8px rgba(30,136,229,0.9);
-          transform: translateX(130px);
-          position: relative;
-          animation:
-          ballPulse 6s infinite ease-in-out,
-          disperseMist 2s ease-out 52.5s forwards;
-          }
-          #introBall::after {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) translateX(78px);
+          animation: spin 3s linear infinite;
+          box-shadow: 0 0 12px rgba(30,136,229,0.8);
+        }
+
+         #introBall::after {
           content: '';
           position: absolute;
           top: 0; left: 0;
-          width: 14px;
-          height: 14px;
+          width: 14px; height: 14px;
           border-radius: 50%;
           background: rgba(30,136,229,0.3);
-          filter: blur(6px);
-          transform: translateX(-2px) translateY(-2px); /* slight offset for natural trailing effect */
+          filter: blur(8px);
           pointer-events: none;
-          }
+        }
           
            @keyframes orbitText {
           0% { transform: rotate(0deg); }
@@ -241,6 +248,28 @@
           @keyframes fadeIn {
           to { opacity: 1; }
           }
+
+
+          /* Spin Animation */
+          @keyframes spin {
+            0%   { transform: rotate(0deg); }
+               100% { transform: rotate(360deg); }
+           }
+
+          #orbitalTrailSVG circle {
+            stroke-dasharray: 879;       /* circumference of the circle ≈ 2πr */
+            stroke-dashoffset: 879;      /* hide initially */
+            stroke: rgba(30,136,229,0.3);
+            stroke-width: 4;
+            fill: none;
+            animation: drawCircle 3s linear forwards; /* draw once and stop */
+        }
+
+/* Animate the circle to be drawn */
+@keyframes drawCircle {
+  0%   { stroke-dashoffset: 879; }
+  100% { stroke-dashoffset: 0; }
+}
 
 
 
@@ -451,15 +480,18 @@
 }
 
 .smile {
-  width: 32px;               
-  height: 14px;              
-  border-bottom: 3px solid white; 
-  border-radius: 50% / 100%; /* soft curved smile */
-  transform: rotate(0deg) translateX(0px); /* start upright and centered */
-  opacity: 0;                 
+  width: 32px;
+  height: 14px;
+  border-bottom: 3px solid white;
+  border-radius: 50% / 100%;
+  transform: rotate(0deg) translateX(0px);
+  opacity: 0;
   position: relative;
+
+  top: -8px; /* 🔼 move smile up (adjust this value) */
+
   box-shadow: 0 1px 2px rgba(255,255,255,0.5);
-  animation: smileFadeTiltSlide 2s forwards 2.2s; /* fade, tilt, slide */
+  animation: smileFadeTiltSlide 2s forwards 2.2s;
 }
 
 @keyframes smileFadeTiltSlide {
@@ -482,7 +514,13 @@
   position: relative;
   width: 400px;
   height: 400px;
-  margin: 40px auto;
+
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-40px);
+  margin: 0 auto; /* keep horizontal centering */
 }
 
 #modeWheel {
@@ -493,34 +531,72 @@
   transform: rotate(0deg); /* align first slice nicely */
 }
 
+
+
+/* ===== Wheel Mode Options ===== */
 .wheel-option {
   position: absolute;
-  width: 100px;
-  height: 40px;
+  width: 140px;
+  height: 48px;
+
   left: 50%;
   top: 50%;
-  transform-origin: -50px 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.2);
-  transition: transform 0.3s, background 0.3s, box-shadow 0.3s;
   user-select: none;
+
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.35);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #222;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+
+  /* ==== Transform Controls ==== */
+  --radius: 220px; /* increase slightly for horizontal spacing */
+  --rotate: 72deg; /* individual rotation for each mode */
+
+  /* 
+    Order of transforms matters:
+    1. rotate(var(--rotate)) -> rotate box around center
+    2. translateX(var(--radius)) -> move outwards along rotated axis
+    3. translate(-50%, -50%) -> center box itself
+  */
+  transform:
+    rotate(var(--rotate))
+    translateX(var(--radius))
+    translate(-50%, -50%);
 }
 
+/* Hover */
 .wheel-option:hover {
-  background: rgba(0, 150, 255, 0.8);
+  background: rgba(0, 150, 255, 0.85);
   color: white;
-  box-shadow: 0 0 12px rgba(0, 150, 255, 0.7);
-  transform: scale(1.2) rotate(var(--rotate)); /* keep rotation when scaling */
-}
+  box-shadow: 0 0 14px rgba(0,150,255,0.6);
 
+  transform:
+    rotate(var(--rotate))
+    translateX(var(--radius))
+    translate(-50%, -50%)
+    scale(1.1);
+}
+        
+        
+        
+        
     </style>
 </head>
 <body>
 <!-- ========== INTRO SCREEN ========== -->
 <div id="introScreen" aria-label="Welcome Screen" role="dialog" aria-modal="true" class="centered-container">
+
+    <!-- Face with eyes and smile -->
     <div id="face">
         <div class="eyes" aria-hidden="true">
             <div class="eye"></div>
@@ -529,13 +605,26 @@
         <div class="smile"></div>
     </div>
 
+    <!-- Orbital trail SVG -->
+    <!-- Orbital Trail (static circle) -->
+<svg id="orbitalTrailSVG"
+     width="300"
+     height="300"
+     viewBox="0 0 300 300"
+     style="position:absolute; top:45%; left:50%; transform:translate(-50%, -50%); pointer-events:none; overflow:visible;">
+    <circle cx="150" cy="150" r="140"
+            stroke="rgba(30,136,229,0.3)"
+            stroke-width="4"
+            fill="none"/> </svg>
+    <!-- Intro Text -->
     <div id="introText" class="centered-container">
         <div id="introLine1">Hello there, friend</div>
         <div id="introLine2">I'm <span class="squartiqa">WREN</span></div>
 
+        <!-- Spinning ball -->
         <div id="orbitalWrapper" aria-hidden="true">
-            <div id="introBall"></div>
-        </div>
+  <div id="introBall"></div>
+</div>
     </div>
 </div>
 <!-- ========== MAIN APP ========== -->
@@ -566,8 +655,8 @@
         <section id="modeSection" aria-label="Mode Selection and Interaction" class="centered-container" style="display: none;">
             <div id="modeWheelContainer">
                 <div id="modeWheel">
-                    <div class="wheel-option" data-value="1">🤖 Name Recognition</div>
-                    <div class="wheel-option" data-value="math">🧮 Math Solver</div>
+                    <div class="wheel-option" data-value="1">🤖 WREN Welcome Mode</div>
+                    <div class="wheel-option" data-value="math">🧮 Advanced math processing tutor mode</div>
                     <div class="wheel-option" data-value="science">🔬 Science mode</div>
                     <div class="wheel-option" data-value="book">📚 Book recommender mode</div>
                     <div class="wheel-option" data-value="budget">💰 Financial literacy mode</div>
@@ -661,6 +750,7 @@
 </main>
 
 <script>
+
     let currentUserId = null;
     let userInput = '';
     let depressionStep = 0;
@@ -1288,6 +1378,36 @@ async function handleMemoryLogs() {
 }
 
 
+// ----------- Tidy Mode function -----------
+async function handleTidyMode(userInput = "") {
+  try {
+    modeResponse.textContent = '🧹 Loading Tidy Mode...';
+    sendBtn.disabled = true;
+
+    const response = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUserId,
+        mode: "tidy",
+        topic: userInput
+      })
+    });
+
+    // 🔑 Read as text, not JSON
+    const data = await response.text();
+
+    // Display the raw string
+    modeResponse.textContent = data;
+
+  } catch (err) {
+    console.error('Tidy Mode error:', err);
+    modeResponse.textContent = '❌ Failed to load Tidy Mode.';
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
 // =========== Depression Mode ===========
 async function handleDepressionMode() {
   // Clear previous error messages
@@ -1508,22 +1628,23 @@ function appendChat(container, text, isUser = false, italic = false) {
 // ---- TRANSLATE ----
 document.getElementById('translateBtn')?.addEventListener('click', handleTranslateMode);
 async function handleTranslateMode() {
-  // Get DOM elements
+  // ---- DOM Elements ----
   const targetLang = document.getElementById('translateTo')?.value || 'en';
   const inputText = document.getElementById('textToTranslate')?.value.trim();
   const outputDiv = document.getElementById('translatedText');
   const loadingIndicator = document.getElementById('loadingIndicator');
 
+  // ---- Validate Input ----
   if (!inputText) {
     outputDiv.textContent = '⚠️ Please enter text to translate.';
     return;
   }
 
-  // Show loading indicator
+  // ---- Show Loading State ----
   if (loadingIndicator) loadingIndicator.style.display = 'block';
   outputDiv.textContent = '';
 
-  // Use currentUserId or prompt if missing
+  // ---- Get or Prompt for User ID ----
   let userId = currentUserId || localStorage.getItem('userId');
   if (!userId) {
     userId = prompt('Enter your username:');
@@ -1536,17 +1657,19 @@ async function handleTranslateMode() {
     currentUserId = userId;
   }
 
+  // ---- Prepare Payload for Backend ----
   const payload = {
     userId: userId,
     mode: 'translate',
     input: inputText,
-    user_translate: true,
-    ai_translate: false,
-    target_lang: targetLang,
-    memory_logger: null
+    user_translate: true,          // always translate
+    target_lang: targetLang,       // only the chosen language
+    memory_logger: null,           // optional: include if logging interactions
+    user_name: userId              // optional: track user
   };
 
   try {
+    // ---- Send Translation Request ----
     const response = await fetch('/mode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1555,6 +1678,7 @@ async function handleTranslateMode() {
 
     const data = await response.json();
 
+    // ---- Display Result ----
     if (data.success) {
       outputDiv.textContent = data.translated_input || '✅ Translation complete.';
     } else {
@@ -1772,11 +1896,6 @@ document.addEventListener('DOMContentLoaded', () => {
       text-align: center;
       margin-top: 100px;
       font-size: 1.5rem;
-    }
-
-    #introStar {
-      margin-top: 20px;
-      fill: #1e88e5;
     }
 
     label {

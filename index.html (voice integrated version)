@@ -823,6 +823,9 @@
     const voiceResponse = document.getElementById('voiceResponse');
     const wheelOptions = document.querySelectorAll('.wheel-option');
     const modeTextInput = document.getElementById('modeTextInput');
+    const voiceButton = document.getElementById("voice_button");
+    const voiceUser = document.getElementById("voice_user");
+    const voiceAssistant = document.getElementById("voice_assistant");
 
     async function startSession(username) {
   try {
@@ -846,6 +849,62 @@
     return null;
   }
 }
+
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = "en-US";
+recognition.interimResults = false;
+
+voiceButton.addEventListener("click", () => {
+    voiceUser.textContent = "You: Listening...";
+    recognition.start();
+});
+
+// When speech is recognized
+recognition.addEventListener("result", async (event) => {
+    const transcript = event.results[0][0].transcript.trim();
+    voiceUser.textContent = `You: ${transcript}`;
+
+    // Only send to reminder mode
+    try {
+        const payload = {
+            userId: currentUserId,
+            mode: "reminder",
+            input: transcript
+        };
+
+        voiceAssistant.textContent = "Assistant: ⏳ Processing...";
+
+        const response = await fetch("/mode", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data && data.success) {
+            // Show reminders in voice box
+            const tasks = data.tasks || [];
+            const taskList = tasks.length
+                ? tasks.map(t => `- ${t.text}`).join("\n")
+                : "🔕 No reminders saved.";
+
+            voiceAssistant.textContent = `Assistant: ${taskList}\n💬 ${data.response || ""}`;
+        } else if (data && data.error) {
+            voiceAssistant.textContent = `Assistant: ⚠️ ${data.error}`;
+        } else {
+            voiceAssistant.textContent = "Assistant: ⚠️ Unexpected response.";
+        }
+    } catch (err) {
+        console.error("Voice reminder error:", err);
+        voiceAssistant.textContent = "Assistant: ❌ Failed to process reminder.";
+    }
+});
+
+// Optional: handle end
+recognition.addEventListener("end", () => {
+    voiceUser.textContent = voiceUser.textContent.replace("Listening...", "done listening");
+});
 
 
 window.addEventListener("load", () => {

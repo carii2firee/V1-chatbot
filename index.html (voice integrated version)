@@ -1686,6 +1686,74 @@ async function handleReminderMode() {
 }
 
 
+// ----------------- Voice Reminder Handler -----------------
+async function handleVoiceReminder() {
+    const voiceUserEl = document.getElementById("voice_user");
+    const voiceAssistantEl = document.getElementById("voice_assistant");
+
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        voiceAssistantEl.textContent = "⚠️ Your browser does not support speech recognition.";
+        return;
+    }
+
+    // Initialize recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.start();
+    voiceAssistantEl.textContent = "🎧 Listening for your reminder...";
+
+    recognition.onresult = async (event) => {
+        const spokenText = event.results[0][0].transcript.trim();
+        voiceUserEl.textContent = `You: ${spokenText}`;
+        voiceAssistantEl.textContent = "⏳ Processing your reminder...";
+
+        // Prepare payload for backend (mode: reminder)
+        const payload = {
+            userId: currentUserId, // replace with your JS variable holding the current user
+            mode: 'reminder',
+            input: spokenText
+        };
+
+        try {
+            const response = await fetch('/mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+
+            if (data && data.success) {
+                voiceAssistantEl.innerHTML = `<strong>WREN:</strong> ${data.response.replace(/\n/g, '<br>')}`;
+            } else if (data && data.error) {
+                voiceAssistantEl.textContent = `⚠️ ${data.error}`;
+            } else {
+                voiceAssistantEl.textContent = "⚠️ Unexpected response from WREN.";
+            }
+        } catch (err) {
+            console.error("Voice reminder error:", err);
+            voiceAssistantEl.textContent = "❌ Failed to process reminder. Check your network.";
+        }
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        voiceAssistantEl.textContent = `⚠️ Recognition error: ${event.error}`;
+    };
+
+    recognition.onend = () => {
+        // You could auto-restart recognition here if you want continuous listening
+        console.log("Speech recognition ended.");
+    };
+}
+
+// ----------------- Attach to Speak button -----------------
+const voiceButton = document.getElementById("voice_button");
+voiceButton.addEventListener("click", handleVoiceReminder);
+
 
 
 

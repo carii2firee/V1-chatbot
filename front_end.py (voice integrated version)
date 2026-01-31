@@ -1,0 +1,500 @@
+from flask import Flask, request, jsonify, render_template
+import re
+import threading
+import os
+import webbrowser
+import dateparser
+import json
+import random
+from threading import Timer
+from dotenv import load_dotenv
+from werkzeug.exceptions import HTTPException
+from googletrans import Translator
+from flask import Flask, request, jsonify
+from app import VoiceAssistant, interpret_message
+
+
+# --- Local Imports ---
+from name_recognition import check_name
+from voice_gui_assistant import run_voice_assistant_gui
+from cli_assistant import cli_intro_sequence
+from book_recommender import handle_book_recommendation, get_video_lists
+from budget_tracker import start_budget_tracking
+from depression_checker import handle_depression_screening_step
+from math_processor import process_query
+from house_helper import house_tidying, match_topic_to_category
+from language_mode import language_translation_mode_backend, detect_language
+from reminder_manager import ReminderManager
+from memory_logger import MemoryLogger, BeliefModel
+
+# --- Load Environment ---
+load_dotenv()
+YOUTUBE_API_KEY = os.getenv('YT_IFYKYK')
+
+# --- Flask App ---
+app = Flask(__name__)
+
+# --- Global Variables ---
+user_sessions = {}
+user_reminder_managers = {}
+SESSION_FILE = 'user_sessions.json'
+translator = Translator()
+user_memory_loggers = {}
+va = VoiceAssistant()
+# ---------------- Helper Functions ------------------
+
+def sanitize_username(name: str) -> str:
+    """Remove non-alphanumeric and underscore characters from username."""
+    sanitized = re.sub(r'[^a-zA-Z0-9_]', '', name)
+    print(f"[sanitize_username] Input: {name} -> Sanitized: {sanitized}")
+    return sanitized
+
+
+
+@app.route("/clear_logs", methods=["POST"])
+def clear_logs():
+    data = request.json
+    user_id = data.get("userId")
+
+    memory_logger = get_memory_logger(user_id)
+    memory_logger.clear_logs()
+
+    return jsonify({"success": True})
+
+
+def get_memory_logger(user_id):
+    if user_id not in user_memory_loggers:
+        user_memory_loggers[user_id] = MemoryLogger(
+            user_id=user_id,
+            belief_model=BeliefModel()
+        )
+    return user_memory_loggers[user_id]
+
+
+def load_sessions():
+    """Load user sessions from JSON file."""
+    global user_sessions
+    try:
+        with open(SESSION_FILE, 'r') as f:
+            content = f.read().strip()
+            if content:
+                user_sessions = json.loads(content)
+                for key, session in user_sessions.items():
+                    user_name = session.get('display_name')
+                    if user_name:
+                        session['memory_logger'] = MemoryLogger(user_name, BeliefModel(user_name))
+                print(f"[load_sessions] Loaded {len(user_sessions)} sessions.")
+            else:
+                user_sessions = {}
+                print("[load_sessions] No previous sessions found.")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"[load_sessions] Error loading sessions: {e}")
+        user_sessions = {}
+
+def save_sessions():
+    """Save user sessions to JSON file (exclude memory_logger for serialization)."""
+    try:
+        serializable_sessions = {
+            k: {ik: iv for ik, iv in v.items() if ik != 'memory_logger'}
+            for k, v in user_sessions.items()
+        }
+        with open(SESSION_FILE, 'w') as f:
+            json.dump(serializable_sessions, f, indent=4)
+        print(f"[save_sessions] Saved {len(user_sessions)} sessions.")
+    except Exception as e:
+        print(f"[save_sessions] Failed to save sessions: {e}")
+
+def get_memory_logger_for_user(user_id):
+    """Retrieve memory logger object for a given user."""
+    logger = user_sessions.get(user_id, {}).get('memory_logger')
+    print(f"[get_memory_logger_for_user] User: {user_id} -> Logger found: {bool(logger)}")
+    return logger
+
+@app.route('/voice_input', methods=['POST'])
+def voice_input():
+    """
+    Capture user voice (or fallback to keyboard), interpret it, and return text.
+    """
+    # Listen to mic or fallback
+    user_text = va.listen(prompt="You: ")
+
+    # Optionally, process it via your AI assistant backend
+    assistant_response = interpret_message(user_text)
+
+    # Speak out if TTS is enabled
+    va.speak(assistant_response)
+
+    return jsonify({
+        "success": True,
+        "user_text": user_text,
+        "assistant_text": assistant_response
+    })
+
+# ---------------- Mode Handlers ------------------
+
+def handle_mode_1(user_input, memory_logger):
+    """Name recognition mode."""
+    response = check_name(user_input, memory_logger)
+    if memory_logger:
+        memory_logger.log_interaction(
+            question=user_input,
+            response=response,
+            tags=["name_recognition"]
+        )
+    return {"success": True, "response": response}
+
+
+def handle_mode_3(user_id, memory_logger, data):
+    """Book recommendation mode."""
+    topic = (data.get("topic") or data.get("input") or "").strip()
+    category = (data.get("category") or data.get("bookCategory") or "").strip().lower()
+    choice = str(data.get("choice") or data.get("bookType") or "3").strip()
+
+    if not topic and not category:
+        return {"success": False, "error": "Provide a topic or category."}
+
+    valid_categories = {k.lower() for k in get_video_lists().keys()}
+    if category not in valid_categories:
+        return {"success": False, "error": f"Invalid category '{category}'. Valid: {', '.join(valid_categories)}"}
+
+    if choice not in {"1", "2", "3"}:
+        choice = "3"
+
+    results = handle_book_recommendation(user_id, memory_logger, topic, choice, category)
+
+    response_lines = ["Here are your recommendations:"]
+    if results.get("book"):
+        book = results["book"]
+        response_lines.append(f"📘 Book: {book.get('title')} by {book.get('author')}")
+    if results.get("audiobooks"):
+        response_lines.append("🎧 Audiobooks:")
+        for a in results["audiobooks"]:
+            response_lines.append(f"- {a['title']}")
+    response_text = "\n".join(response_lines)
+
+    if memory_logger:
+        memory_logger.log_interaction(
+            question=f"Book request: {topic} ({category})",
+            response=response_text,
+            tags=["book", "recommendation"]
+        )
+
+    return {"success": True, "response": response_text, "book": results.get("book"), "audiobooks": results.get("audiobooks")}
+
+
+def handle_mode_4(user_id, session, user_input):
+    """Budget tracker mode."""
+    memory_logger = session.get('memory_logger')
+    if "budget_gen" not in session:
+        budget_gen = start_budget_tracking(user_id, memory_logger)
+        session["budget_gen"] = budget_gen
+        try:
+            output = next(budget_gen)
+        except StopIteration:
+            output = "Budget tracker exited immediately."
+            session.pop("budget_gen", None)
+        if memory_logger:
+            memory_logger.log_interaction("Start Budget Tracker", output, tags=["budget"])
+        return {"success": True, "response": output}
+    else:
+        budget_gen = session["budget_gen"]
+        try:
+            output = budget_gen.send(user_input)
+        except StopIteration:
+            output = "Exiting Budget Tracker."
+            session.pop("budget_gen", None)
+        if memory_logger:
+            memory_logger.log_interaction(user_input, output, tags=["budget"])
+        return {"success": True, "response": output}
+
+
+def handle_mode_5(session, user_input, memory_logger):
+    """Depression screening mode."""
+    step = session.get("depression_step", 0)
+    answers = session.get("depression_answers", [])
+
+    if not user_input or user_input.strip() == "":
+        result = handle_depression_screening_step(step=step, answers=answers, memory_logger=memory_logger)
+    else:
+        try:
+            answer = int(user_input)
+            if answer not in range(4):
+                raise ValueError
+        except (ValueError, TypeError):
+            return {"success": False, "message": "⚠️ Enter a number 0-3.", "error": "Invalid input", "done": False, "answers": answers, "next_step": step}
+
+        result = handle_depression_screening_step(step=step, answer=answer, answers=answers, memory_logger=memory_logger)
+
+    session["depression_answers"] = result.get("answers", answers)
+    if not result.get("done"):
+        session["depression_step"] = result.get("next_step", step + 1)
+    else:
+        session.pop("depression_step", None)
+        session.pop("depression_answers", None)
+
+    return {k: result.get(k) for k in ["success", "message", "done", "next_step", "answers", "error"]}
+
+
+def handle_mode_6(topic, memory_logger=None):
+    """House tidying tips mode."""
+    category = match_topic_to_category(topic.strip().lower()) or random.choice(
+        ["cleaning", "energy", "security", "organization", "automation"]
+    )
+    advice = house_tidying(category)
+    if memory_logger:
+        memory_logger.log_interaction(
+            question=f"Tidy topic: {topic}",
+            response=advice,
+            tags=["tidy", category]
+        )
+    return {"success": True, "response": advice}
+
+
+def handle_mode_7(memory_logger):
+    """Voice assistant GUI mode."""
+    try:
+        threading.Thread(target=run_voice_assistant_gui, daemon=True).start()
+        output = "✅ Voice GUI Assistant launched!"
+    except Exception as e:
+        output = f"❌ Failed to launch GUI: {e}"
+    if memory_logger:
+        memory_logger.log_interaction("Launch voice assistant", output, tags=["voice_gui"])
+    return {"success": True, "response": output}
+
+
+def handle_mode_8(memory_logger):
+    """Retrieve memory logs mode."""
+    logs = memory_logger.get_logs() if memory_logger else "No logs available."
+    return {"success": True, "response": logs}
+
+
+def handle_mode_10(session, user_input, data, memory_logger=None):
+    """Reminder management mode."""
+    user_id = session.get("user_id") or data.get("userId") or "unknown_user"
+    reminder_manager = user_reminder_managers.get(user_id) or ReminderManager(user_id)
+    user_reminder_managers[user_id] = reminder_manager
+
+    cmd_parts = user_input.strip().split(" ", 1)
+    cmd = cmd_parts[0].lower()
+    arg = cmd_parts[1].strip() if len(cmd_parts) > 1 else None
+
+    response = {"success": True, "tasks": []}
+
+    if cmd == "add":
+        if not arg:
+            response.update({"success": False, "response": "⚠️ Reminder text required."})
+        else:
+            due_time = data.get("dueTime")
+            result = reminder_manager.add_reminder(arg, due_time)
+            response.update(result)
+            response["tasks"] = reminder_manager.view_reminders()
+    elif cmd == "view":
+        tasks = reminder_manager.view_reminders()
+        response.update({"tasks": tasks, "response": f"📋 Reminders ({len(tasks)})"})
+    elif cmd == "check":
+        result = reminder_manager.check_due_reminders()
+        response.update({"tasks": result["tasks"], "response": result["response"]})
+    elif cmd == "clear":
+        result = reminder_manager.clear_reminders()
+        response.update(result)
+        response["tasks"] = []
+    else:
+        response["response"] = "⚠️ Unknown command. Please use keywords like 'add', 'view', 'check', or 'clear'."
+
+    if memory_logger:
+        memory_logger.log_interaction(user_input, str(response), tags=["reminder", cmd])
+
+    return response
+
+
+def handle_math_mode(user_input, memory_logger, mode="math_processing"):
+    """
+    Math processing mode — returns step-by-step output AND belief tags.
+    """
+    # 1️⃣ Define belief tags
+    belief_tags = ["offer math tips", "show steps", "check calculations"]
+
+    # 2️⃣ Reinforce beliefs in memory logger
+    if memory_logger:
+        memory_logger.belief_model.reinforce_beliefs(
+            belief_tags=belief_tags,
+            emotion="neutral"
+        )
+
+    # 3️⃣ Get strongest beliefs for display
+    tasks = []
+    if memory_logger:
+        # Assuming get_strongest_beliefs returns list of tuples like [(tag, weight), ...]
+        tasks = memory_logger.belief_model.get_strongest_beliefs(top_n=3)
+
+    # 4️⃣ Generate step-by-step math output
+    try:
+        # This calls your process_query which handles arithmetic, equations, derivatives, etc.
+        steps_output = process_query(user_input, mode="math", memory_logger=memory_logger)
+    except Exception as e:
+        steps_output = f"⚠️ Error processing math input: {e}"
+
+    # 5️⃣ Recommended mode (optional, fallback to current)
+    recommended_mode = getattr(memory_logger.belief_model, "recommended_mode", lambda: mode)()
+
+    # 6️⃣ Return structured JSON with both steps and tasks
+    return {
+        "success": True,
+        "steps_output": steps_output,
+        "tasks": tasks,
+        "current_mode": mode,
+        "recommended_mode": recommended_mode
+    }
+
+
+# ---------------- Flask Routes ------------------
+
+@app.route('/')
+def home():
+    categories = sorted(get_video_lists().keys())
+    return render_template('index.html', categories=categories)
+
+@app.route('/detect', methods=['POST'])
+def detect_route():
+    text = request.json.get('input')
+    if not text:
+        return jsonify(success=False, error="No text provided"), 400
+    lang_code = detect_language(text)
+    if lang_code:
+        return jsonify(success=True, lang_code=lang_code)
+    return jsonify(success=False, error="Detection failed"), 500
+
+@app.route('/create_session', methods=['POST'])
+def create_session():
+    user_id = request.json.get('userId')
+    if not user_id:
+        return jsonify({"success": False, "error": "Missing userId"}), 400
+    if user_id in user_sessions:
+        return jsonify({"success": True, "message": "Session already exists."})
+
+    memory_logger = MemoryLogger(user_id, BeliefModel(user_id))
+    user_sessions[user_id] = {"display_name": user_id, "memory_logger": memory_logger}
+    save_sessions()
+    return jsonify({"success": True, "message": f"Session created for {user_id}"})
+
+@app.route('/logs', methods=['POST'])
+def get_memory_logs():
+    user_id = request.json.get('userId')
+    if not user_id:
+        return jsonify({"error": "Missing userId"}), 400
+    logger = get_memory_logger_for_user(user_id)
+    if not logger:
+        return jsonify({"error": "No memory logger found"}), 404
+    return jsonify({"logs": logger.get_logs()})
+
+@app.route('/api/book-categories', methods=['GET'])
+def get_book_categories():
+    return jsonify(list(get_video_lists().keys()))
+
+@app.route('/category/<category_name>')
+def get_category(category_name):
+    categories = get_video_lists()
+    if category_name.lower() not in categories:
+        return jsonify({"success": False, "error": f"Category '{category_name}' not found."}), 404
+    return jsonify(categories[category_name.lower()])
+
+@app.route('/start', methods=['POST'])
+def start_assistant():
+    data = request.get_json(force=True)
+    name = (data.get('name') or "").strip()
+    if not name:
+        return jsonify({"success": False, "error": "Name is required."}), 400
+
+    session_key = sanitize_username(name)
+    if not session_key:
+        return jsonify({"success": False, "error": "Invalid name."}), 400
+
+    try:
+        user_name, memory_logger, reminder_manager = cli_intro_sequence(name)
+        user_sessions[session_key] = {
+            'display_name': name,
+            'reminder_manager': reminder_manager,
+            'user_id': session_key,
+            'memory_logger': memory_logger,
+        }
+        save_sessions()
+        return jsonify({"success": True, "message": f"Assistant started for {name}.", "userId": session_key})
+    except Exception as e:
+        print(f"[start_assistant][ERROR] {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/mode', methods=['POST'])
+def run_mode():
+    try:
+        data = request.get_json(force=True)
+        if not data:
+            return jsonify({"success": False, "error": "Invalid JSON"}), 400
+
+        user_id = data.get('userId')
+        mode = str(data.get('mode') or '').lower()
+        user_input = (data.get('input') or '').strip()
+        topic = (data.get('topic') or '').strip() or user_input
+
+        if not user_id or not mode:
+            return jsonify({"success": False, "error": "Missing userId or mode"}), 400
+
+        session = user_sessions.get(user_id) or {"memory_logger": MemoryLogger()}
+        memory_logger = session.get('memory_logger')
+        if not memory_logger:
+            return jsonify({"success": False, "error": "Missing memory logger"}), 400
+
+        mode_dispatch = {
+            "1": lambda: handle_mode_1(user_input, memory_logger),
+            "book": lambda: handle_mode_3(user_id, memory_logger, data),
+            "4": lambda: handle_mode_4(user_id, session, user_input),
+            "budget": lambda: handle_mode_4(user_id, session, user_input),
+            "5": lambda: handle_mode_5(session, user_input, memory_logger),
+            "depression": lambda: handle_mode_5(session, user_input, memory_logger),
+            "tidy": lambda: handle_mode_6(topic, memory_logger),
+            "voice": lambda: handle_mode_7(memory_logger),
+            "logs": lambda: handle_mode_8(memory_logger),
+            "reminder": lambda: handle_mode_10(session, user_input, data, memory_logger),
+            "math": lambda: handle_math_mode(user_input, memory_logger),
+            "science": lambda: process_query(user_input, "science", memory_logger),
+            "translate": lambda: language_translation_mode_backend(
+                user_input=data.get('user_input', '').strip(),
+                target_lang=data.get('target_lang', 'en'),
+                user_translate=data.get('user_translate', True),
+                memory_logger=memory_logger
+            )
+        }
+
+        handler = mode_dispatch.get(mode)
+        if not handler:
+            return jsonify({"success": False, "error": f"Unsupported mode: {mode}"}), 400
+
+        result = handler()
+        return jsonify(result) if isinstance(result, dict) else result
+
+    except Exception as e:
+        print(f"[run_mode][ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": f"Internal server error: {e}"}), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    if isinstance(e, HTTPException):
+        return e
+    import traceback
+    traceback.print_exc()
+    return jsonify({"success": False, "error": f"Internal server error: {e}"}), 500
+
+# ---------------- Main Entry ------------------
+
+def open_browser():
+    print("[open_browser] Opening browser at http://127.0.0.1:5000")
+    webbrowser.open_new("http://127.0.0.1:5000")
+
+if __name__ == '__main__':
+    load_sessions()
+    print(f"[main] Loaded {len(user_sessions)} sessions.")
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        Timer(1, open_browser).start()
+    print("[main] Starting Flask app")
+    app.run(debug=True)

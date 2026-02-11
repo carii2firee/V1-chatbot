@@ -263,9 +263,9 @@ def start_assistant():
             "user_id": user_id,
             "memory_logger": memory_logger,
             "reminder_manager": reminder_manager
+
         }
         save_sessions()
-        start_voice_listener(user_id)
         return jsonify({"success": True, "message": f"Assistant started for {name}.", "userId": user_id})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

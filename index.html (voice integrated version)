@@ -801,6 +801,8 @@
 
 
 
+
+
     // Dark mode toggle
     const darkModeToggle = document.getElementById('darkModeToggle');
     darkModeToggle.addEventListener('change', () => {
@@ -826,6 +828,18 @@
     const voiceUser = document.getElementById("voice_user");
     const voiceAssistant = document.getElementById("voice_assistant");
 
+    const VOICE_MODE_KEYWORDS = {
+  math: ["math", "math mode", "math processing", "calculate"],
+  science: ["science", "science mode"],
+  book: ["book", "book mode", "recommend a book"],
+  budget: ["budget", "budget mode", "track spending"],
+  reminder: ["reminder", "set a reminder"],
+  translate: ["translate", "translation", "language mode"],
+  tidy: ["tidy", "cleaning", "house helper"],
+  depression: ["depression", "mental health", "screening"],
+  logs: ["logs", "memory logs"]
+};
+
     async function startSession(username) {
   try {
     const response = await fetch('/start', {
@@ -849,7 +863,13 @@
   }
 }
 
-
+// Makes sure all the modes can run efficiently
+document.querySelectorAll('.wheel-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.value;
+    switchMode(mode, 'ui');
+  });
+});
 
 
 window.addEventListener("load", () => {
@@ -908,7 +928,7 @@ window.addEventListener('DOMContentLoaded', () => {
       window.currentSelectedMode = modeValue;
 
       // Update the UI for selected mode
-      updateModeUI(modeValue);
+      switchMode(modeValue, 'click');
 
       // Highlight the clicked wheel item
       highlightSelectedWheelItem(item);
@@ -1084,8 +1104,62 @@ voiceButton.addEventListener("click", () => {
     handleVoiceReminder();
 });
 
+function switchMode(mode, source = 'ui') {
+  if (!mode) return;
+
+  // prevent redundant switches
+  if (window.currentSelectedMode === mode && source === 'ui') return;
+
+  window.currentSelectedMode = mode;
+
+  updateModeUI(mode);
+
+  // highlight wheel if exists
+  const wheelItem = document.querySelector(`.wheel-option[data-value="${mode}"]`);
+  if (wheelItem) {
+    document.querySelectorAll('.wheel-option')
+      .forEach(i => i.classList.remove('selected-wheel'));
+    wheelItem.classList.add('selected-wheel');
+  }
+
+  // enable send
+  if (sendBtn) sendBtn.disabled = false;
+
+  console.log(`🔀 Mode switched to "${mode}" via ${source}`);
+}
+
+// Transcription function
+function resolveModeFromTranscript(transcript) {
+  const text = transcript.toLowerCase();
+
+  for (const [mode, keywords] of Object.entries(VOICE_MODE_KEYWORDS)) {
+    if (keywords.some(k => text.includes(k))) {
+      return mode;
+    }
+  }
+  return null;
+}
 
 
+function handleVoiceTranscript(transcript) {
+  const voiceUserEl = document.getElementById("voice_user");
+  if (voiceUserEl) {
+    voiceUserEl.textContent = `You: ${transcript}`;
+  }
+
+  const mode = resolveModeFromTranscript(transcript);
+
+  if (mode) {
+    switchMode(mode, 'voice');
+
+    const assistant = document.getElementById('voice_assistant');
+    if (assistant) {
+      assistant.textContent = `Assistant: Switching to ${mode} mode`;
+    }
+  } else {
+    console.log("❌ No mode detected from:", transcript);
+  }
+}
 
     // Update UI based on mode selection
     function updateModeUI(selected) {
@@ -1595,61 +1669,80 @@ async function handleReminderMode() {
 
 // ----------------- Voice Reminder Handler -----------------
 async function handleVoiceReminder() {
-    const voiceUserEl = document.getElementById("voice_user");
-    const voiceAssistantEl = document.getElementById("voice_assistant");
+  const voiceUserEl = document.getElementById("voice_user");
+  const voiceAssistantEl = document.getElementById("voice_assistant");
 
-    // Check for browser support
-    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-        voiceAssistantEl.textContent = "⚠️ Your browser does not support speech recognition.";
-        return;
+  if (!voiceUserEl || !voiceAssistantEl) {
+    console.error("Voice UI elements missing");
+    return;
+  }
+
+  // Browser support check
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    voiceAssistantEl.textContent =
+      "⚠️ Speech recognition not supported in this browser.";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  let finalTranscript = "";
+
+  // Start listening
+  recognition.start();
+  voiceAssistantEl.textContent = "🎧 Listening...";
+  voiceUserEl.textContent = "You: …";
+
+  recognition.onresult = (event) => {
+    let interimTranscript = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript + " ";
+      } else {
+        interimTranscript += transcript;
+      }
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = true;  // Live transcription
-    recognition.maxAlternatives = 1;
+    // Live transcript UI
+    voiceUserEl.textContent = `You: ${finalTranscript}${
+      interimTranscript ? "…" + interimTranscript : ""
+    }`;
+  };
 
-    // Start listening
-    recognition.start();
-    voiceAssistantEl.textContent = "🎧 Listening...";
+  recognition.onerror = (event) => {
+    console.error("Speech recognition error:", event.error);
+    voiceAssistantEl.textContent = `⚠️ Error: ${event.error}`;
+  };
 
-    recognition.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
+  recognition.onend = () => {
+    const spokenText = finalTranscript.trim();
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-                finalTranscript += transcript + ' ';
-            } else {
-                interimTranscript += transcript;
-            }
-        }
+    if (!spokenText) {
+      voiceAssistantEl.textContent = "🎧 Listening stopped.";
+      return;
+    }
 
-        // Live UI update
-        voiceUserEl.textContent = `You: ${finalTranscript}${interimTranscript ? '…' + interimTranscript : ''}`;
+    voiceAssistantEl.textContent = `✅ Captured: "${spokenText}"`;
 
-        // Only save when speech is finalized
-        if (finalTranscript.trim()) {
-            voiceAssistantEl.textContent = `✅ Captured: "${finalTranscript.trim()}"`;
+    // Optional: store transcript (keep if you want logs)
+    const history = JSON.parse(
+      localStorage.getItem("voice_history") || "[]"
+    );
+    history.push({ text: spokenText, timestamp: Date.now() });
+    localStorage.setItem("voice_history", JSON.stringify(history));
 
-            // Store in localStorage
-            const reminders = JSON.parse(localStorage.getItem("voice_reminders") || "[]");
-            reminders.push({ text: finalTranscript.trim(), timestamp: Date.now() });
-            localStorage.setItem("voice_reminders", JSON.stringify(reminders));
-        }
-    };
 
-    recognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
-        voiceAssistantEl.textContent = `⚠️ Recognition error: ${event.error}`;
-    };
-
-    recognition.onend = () => {
-        console.log("Recognition ended.");
-        voiceAssistantEl.textContent = "🎧 Listening stopped.";
-    };
+    handleVoiceTranscript(spokenText);
+  };
 }
 
 

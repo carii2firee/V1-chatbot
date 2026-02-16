@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import uuid
 import os
-from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
-from sympy import Expr, Rational
+
 from sympy import (
     symbols, Eq, solve, diff, integrate, limit, simplify,
     pretty, sympify, Rational
@@ -73,70 +72,259 @@ def query_wolframalpha(question: str) -> str:
 # === Step-by-step arithmetic solver  ===
 def step_by_step_arithmetic_full(expr_str: str, fraction_mode=False) -> str:
     """
-    True step-by-step arithmetic solver.
-    Handles addition, subtraction, multiplication, division, powers, and fractions.
+    Conversational, scaffolded arithmetic tutor with reflective thought bubbles.
     """
+
     try:
-        # 1️⃣ Fix implicit multiplication
         expr_str = fix_implicit_multiplication(expr_str)
-        # 2️⃣ Convert mixed fractions (like 2 3/4 -> Rational)
         expr_str = parse_fraction_input(expr_str)
-        # 3️⃣ Parse into SymPy expression WITHOUT auto-evaluation
         expr = parse_expr(expr_str, transformations=transformations, evaluate=False)
 
-        steps = [f"🟢 Step 1: Original expression\n   {expr_str}"]
+        steps = []
 
+        # -----------------------------------------
+        # Messaging Helpers
+        # -----------------------------------------
+        def add_step(msg):
+            steps.append(msg)
+
+        def thought(msg):
+            steps.append(f"💭 Pause & Think: {msg}")
+
+        def coach(msg):
+            steps.append(f"🧠 Strategy: {msg}")
+
+        # -----------------------------------------
+        # Intro
+        # -----------------------------------------
+        add_step(f"🟢 Let's solve this together:\n   {expr_str}")
+        add_step("We’ll move slowly and make sure each idea actually makes sense.")
+
+        # -----------------------------------------
+        # Utility: Place-Value Decomposition
+        # -----------------------------------------
+        def decompose_number(n):
+            parts = []
+            place = 1
+            while n > 0:
+                digit = n % 10
+                if digit != 0:
+                    parts.append(digit * place)
+                n //= 10
+                place *= 10
+            return list(reversed(parts))
+
+        # -----------------------------------------
+        # Multiplication Handler
+        # -----------------------------------------
+        def handle_multiplication(e):
+            add_step(f"\n🔎 We see multiplication → {e}")
+            thought("Can any of these numbers be broken into easier parts?")
+
+            # Distribution case
+            if any(arg.is_Add for arg in e.args):
+                coach("When multiplication touches parentheses, we distribute.")
+
+                thought("What does multiplying across a sum remind you of?")
+
+                distributed_terms = []
+                for arg in e.args:
+                    if arg.is_Add:
+                        other_factors = [a for a in e.args if a != arg]
+                        for term in arg.args:
+                            new_expr = term
+                            for factor in other_factors:
+                                new_expr *= factor
+                            distributed_terms.append(new_expr)
+
+                expanded = sum(distributed_terms)
+
+                add_step(f"🪜 After distributing:\n   {expanded}")
+                thought("Why does distributing preserve the total value?")
+                return walk(expanded)
+
+            # Pure numbers
+            if all(arg.is_Number for arg in e.args):
+                nums = [int(a) for a in e.args]
+
+                # Exactly 2 numbers
+                if len(nums) == 2:
+                    a, b = nums
+                    digits_a = len(str(abs(a)))
+                    digits_b = len(str(abs(b)))
+
+                    # Single-digit × single-digit
+                    if digits_a == 1 and digits_b == 1:
+                        coach("Both are single digits — direct multiplication.")
+                        result = a * b
+                        add_step(f"   {a} × {b} = {result}")
+                        thought("Does that match any ideas that you already know?")
+                        return format_number(result, fraction_mode)
+
+                    # Multi-digit × single-digit
+                    if digits_a > 1 and digits_b == 1:
+                        coach("Break the larger number using place value.")
+
+                        parts = decompose_number(a)
+                        add_step(f"   {a} = {' + '.join(map(str, parts))}")
+
+                        thought("Why is breaking by place value helpful here?")
+
+                        partials = []
+                        for p in parts:
+                            val = p * b
+                            partials.append(val)
+                            add_step(f"   {p} × {b} = {val}")
+
+                        total = sum(partials)
+                        add_step(f"➕ Add partial products:")
+                        add_step(f"   {' + '.join(map(str, partials))} = {total}")
+
+                        thought("Why does adding these give the answer we want?")
+                        return format_number(total, fraction_mode)
+
+                    # Multi-digit × multi-digit
+                    coach("Break BOTH numbers (area model thinking).")
+
+                    parts_a = decompose_number(a)
+                    parts_b = decompose_number(b)
+
+                    add_step(f"   {a} = {' + '.join(map(str, parts_a))}")
+                    add_step(f"   {b} = {' + '.join(map(str, parts_b))}")
+
+                    thought("How many smaller multiplications will we create?")
+
+                    partials = []
+                    for pa in parts_a:
+                        for pb in parts_b:
+                            val = pa * pb
+                            partials.append(val)
+                            add_step(f"   {pa} × {pb} = {val}")
+
+                    total = sum(partials)
+                    add_step("➕ Add all partial products:")
+                    add_step(f"   {' + '.join(map(str, partials))} = {total}")
+
+                    thought("Does this result seem reasonable compared to jus estimating it")
+                    return format_number(total, fraction_mode)
+
+                # More than 2 numbers
+                coach("Multiply step-by-step from left to right.")
+                current = nums[0]
+
+                for n in nums[1:]:
+                    thought(f"What happens when we multiply {current} by {n}?")
+                    add_step(f"   {current} × {n}")
+                    current *= n
+
+                add_step(f"✖️ Final result = {current}")
+                return format_number(current, fraction_mode)
+
+            # Mixed symbolic
+            coach("Evaluate each factor first, then combine.")
+            values = [walk(arg) for arg in e.args]
+            result = format_number(e.evalf(), fraction_mode)
+            add_step(f"✖️ Combine → {' × '.join(values)} = {result}")
+            return result
+
+        # -----------------------------------------
+        # Addition Handler
+        # -----------------------------------------
+        def handle_addition(e):
+            add_step(f"\n🔎 I see addition/subtraction → {e}")
+            thought("Should we evaluate any parts first before combining?")
+
+            values = [walk(arg) for arg in e.args]
+            result = format_number(e.evalf(), fraction_mode)
+
+            add_step(f"➕ Combine:")
+            add_step(f"   {' + '.join(values)} = {result}")
+
+            thought("Is the final number larger or smaller than the biggest addend?")
+            return result
+
+        # -----------------------------------------
+        # Power Handler
+        # -----------------------------------------
+        def handle_power(e):
+            base_v = walk(e.base)
+            exp_v = walk(e.exp)
+
+            add_step(f"\n🔎 Exponent detected → {base_v}^{exp_v}")
+            thought("What does an exponent represent conceptually?")
+
+            if e.exp.is_Integer and e.exp > 1:
+                coach(f"Multiply {base_v} by itself {e.exp} times.")
+                result = format_number(e.evalf(), fraction_mode)
+                add_step(f"   Result = {result}")
+                return result
+
+            if e.exp.is_Number and e.exp < 0:
+                coach("Negative exponent → take reciprocal.")
+                result = format_number(e.evalf(), fraction_mode)
+                add_step(f"   Result = {result}")
+                return result
+
+            if e.exp == Rational(1, 2):
+                coach("Exponent of 1/2 means square root.")
+                result = format_number(e.evalf(), fraction_mode)
+                add_step(f"   √{base_v} = {result}")
+                return result
+
+            result = format_number(e.evalf(), fraction_mode)
+            add_step(f"   Result = {result}")
+            return result
+
+        # -----------------------------------------
+        # Recursive Walker
+        # -----------------------------------------
         def walk(e: Expr) -> str:
-            # Rational
+
             if isinstance(e, Rational):
                 return format_number(e, fraction_mode)
-            # Atomic numbers
+
             if e.is_Number:
                 return format_number(e, fraction_mode)
-            # Addition/Subtraction
+
             if e.is_Add:
-                values = [walk(arg) for arg in e.args]
-                result = format_number(e.evalf(), fraction_mode)
-                steps.append(f"➕ Add/Subtract: {' + '.join(values)} = {result}")
-                return result
-            # Multiplication
+                return handle_addition(e)
+
             if e.is_Mul:
-                if any(arg.is_Add for arg in e.args):
-                    steps.append(f"🔹 Distributive property might apply: {e}")
-                values = [walk(arg) for arg in e.args]
-                result = format_number(e.evalf(), fraction_mode)
-                steps.append(f"✖️ Multiply: {' × '.join(values)} = {result}")
-                return result
-            # Power
+                return handle_multiplication(e)
+
             if e.is_Pow:
-                base_v = walk(e.base)
-                exp_v = walk(e.exp)
-                result = format_number(e.evalf(), fraction_mode)
-                if e.exp == Rational(1, 2):
-                    steps.append(f"🟢 Square root: √{base_v} = {result}")
-                else:
-                    steps.append(f"🧮 Power: {base_v}^{exp_v} = {result}")
-                return result
-            # Division
+                return handle_power(e)
+
             num, denom = e.as_numer_denom()
             if denom != 1:
+                add_step("\n🔎 Division detected.")
+                thought("Division can be thought of as splitting or fractions.")
+
                 num_v = walk(num)
                 denom_v = walk(denom)
+
                 result = format_number(e.evalf(), fraction_mode)
-                steps.append(f"➗ Divide: {num_v} ÷ {denom_v} = {result}")
+                add_step(f"➗ {num_v} ÷ {denom_v} = {result}")
+
+                thought("Does this quotient make sense in size?")
                 return result
-            # Fallback
+
             result = format_number(e.evalf(), fraction_mode)
-            steps.append(f"🔹 Simplified: {result}")
+            add_step(f"🔹 Simplified result = {result}")
             return result
 
         final_result = walk(expr)
-        steps.append(f"🎯 Final Answer:\n   {final_result}")
-        return "\n\n".join(steps)
+
+        add_step("\n🎯 Final Answer:")
+        add_step(f"   {final_result}")
+
+        thought("Could you explain one of the steps in your own words?")
+        add_step("That’s how you lock understanding in.")
+
+        return "\n".join(steps)
 
     except Exception as e:
-        return f"⚠️ Unable to process arithmetic: {e}"
-
+        return f"⚠️ Unable to process your math problem: {e}"
 
 
 # === Equation solver ===
@@ -155,10 +343,10 @@ def step_by_step_solve(equation_str: str) -> str:
         formatted = [format_number(s.evalf()) for s in solutions]
 
         return "\n\n".join([
-            f"🟢 Step 1: Original Equation\n   {pretty(equation)}",
+            f"🟢 Step 1: Original Equation\n   {pretty(equation)} which we want to evaluate is {formatted[0]}",
             f"🔄 Step 2: Move all terms to one side\n   {pretty(rearranged)} = 0",
             f"🧹 Step 3: Simplify\n   {pretty(simplified)} = 0",
-            f"🎯 Final Answer:\n   {var} = {', '.join(formatted)}"
+            f"🎯 Final Answer:\n   {var} = {', '.join(formatted)} Now I want you to give it a try! "
         ])
     except Exception as e:
         return f"⚠️ Couldn't solve equation: {e}"

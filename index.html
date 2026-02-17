@@ -172,10 +172,23 @@
         }
 
 
+        #modeUIContainer {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          width: center;
+          margin: 10px auto;
+          transform: translateX(-25px);
+          margin: 10px auto;        /* keeps horizontal centering */
+
+          }
+
+
+
         /* Center all mode containers and their children */
         #modeSection,
         #bookCategoryGroup,
-        #modeUIContainer,
         #modeTextInputGroup,
         #queryInputGroup,
         #translationContainer,
@@ -252,17 +265,18 @@
 
           /* Spin Animation */
           @keyframes spin {
-            0%   { transform: rotate(0deg); }
+            0%   { transform: rotate(360deg); }
                100% { transform: rotate(360deg); }
            }
 
           #orbitalTrailSVG circle {
-            stroke-dasharray: 879;       /* circumference of the circle ≈ 2πr */
-            stroke-dashoffset: 879;      /* hide initially */
-            stroke: rgba(30,136,229,0.3);
+            stroke: #1e88e5; /* blue color that matches the ball spinning */
             stroke-width: 4;
             fill: none;
-            animation: drawCircle 3s linear forwards; /* draw once and stop */
+            filter: drop-shadow(0 0 8px #1e88e5);
+            stroke-dasharray: 879;
+            stroke-dashoffset: 879;
+            animation: drawCircle 3s linear forwards;
         }
 
 /* Animate the circle to be drawn */
@@ -586,6 +600,54 @@
     translate(-50%, -50%)
     scale(1.1);
 }
+
+
+  // === New dark mode toggle css code ===
+        /* Hide default checkbox */
+#darkModeToggle {
+    display: none;
+}
+
+/* Wrapper */
+.toggle-wrapper {
+    position: relative;
+    width: 60px;
+    height: 32px;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Background track */
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1e88e5, #42a5f5);
+    border-radius: 50px;
+    transition: 0.4s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Circle knob */
+.toggle-slider::before {
+    content: "";
+    position: absolute;
+    height: 24px;
+    width: 24px;
+    left: 4px;
+    top: 4px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.4s;
+}
+
+/* When checked */
+#darkModeToggle:checked + .toggle-slider {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+#darkModeToggle:checked + .toggle-slider::before {
+    transform: translateX(28px);
+}
         
         
         
@@ -629,18 +691,24 @@
 </div>
 <!-- ========== MAIN APP ========== -->
 <main role="main" aria-live="polite" style="display:none;">
-    <h1 id="mainTitle">👋 Hello there — I'm WREN</h1>
+    <h1 id="mainTitle">👋 Welcome back, ready when you are! </h1>
 
+        <!-- Dark Mode Toggle -->
     <!-- Dark Mode Toggle -->
-    <label for="darkModeToggle" id="darkModeLabel" style="user-select:none; cursor:pointer;">
-        <input type="checkbox" id="darkModeToggle"/> Toggle Dark Mode
+<div id="darkModeContainer" class="centered-container">
+    <label for="darkModeToggle" id="darkModeLabel" class="toggle-wrapper">
+        <input type="checkbox" id="darkModeToggle"/>
+        <span class="toggle-slider"></span>
     </label>
+</div>
+
+
 
     <!-- Start Input -->
     <div id="startContainer" class="input-group centered-container">
         <label for="nameInput" id="nameLabel">📝 Before continuing forward, please Enter your name!:</label>
         <input type="text" id="nameInput" placeholder="Your name here..." autocomplete="off" aria-describedby="nameLabel"/>
-        <button id="startBtn"><span class="icon">➤</span> Start WREN</button>
+        <button id="startBtn"><span class="icon">🎖️</span> Start WREN </button>
     </div>
 
 
@@ -656,7 +724,7 @@
             <div id="modeWheelContainer">
                 <div id="modeWheel">
                     <div class="wheel-option" data-value="1">🤖 WREN Welcome Mode</div>
-                    <div class="wheel-option" data-value="math">🧮 Advanced math processing tutor mode</div>
+                    <div class="wheel-option" data-value="math">🧮 Math processing mode</div>
                     <div class="wheel-option" data-value="science">🔬 Science mode</div>
                     <div class="wheel-option" data-value="book">📚 Book recommender mode</div>
                     <div class="wheel-option" data-value="budget">💰 Financial literacy mode</div>
@@ -755,6 +823,7 @@
     let userInput = '';
     let depressionStep = 0;
     let depressionAnswers = [];
+    let sendBtnMode = 'send';
 
 
 
@@ -782,6 +851,7 @@
     const voiceResponse = document.getElementById('voiceResponse');
     const wheelOptions = document.querySelectorAll('.wheel-option');
     const modeTextInput = document.getElementById('modeTextInput');
+    const DarkmodeBox = document.getElementById("Dark mode Toggle container");
 
     async function startSession(username) {
   try {
@@ -926,6 +996,45 @@ const translatedText = document.getElementById('translatedText');
 const loadingIndicator = document.getElementById('loadingIndicator');
 const translateBtn = document.getElementById('translateBtn');
 
+function switchSendBtnToMemoryClear() {
+  sendBtn.textContent = '🧹 Clear Memory Logs';
+  sendBtn.dataset.action = 'clear-logs';
+  sendBtn.style.display = 'inline-block';
+  sendBtn.disabled = false;
+}
+//  Function for memory logger to restore and delete it
+function restoreSendBtn() {
+  sendBtn.textContent = 'Send';
+  sendBtn.dataset.action = 'send';
+  sendBtn.disabled = false;
+}
+
+async function clearMemoryLogs() {
+  try {
+    modeResponse.textContent = '🧹 Clearing memory logs...';
+    sendBtn.disabled = true;
+
+    const res = await fetch('/clear-logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUserId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to clear logs');
+    }
+
+    modeResponse.textContent = '✅ All memory logs cleared.';
+  } catch (err) {
+    console.error(err);
+    modeResponse.textContent = '❌ Failed to clear memory logs.';
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
 // Populate the target language dropdown
 function populateTranslateTo() {
   for (const [code, name] of Object.entries(languages)) {
@@ -1016,6 +1125,8 @@ async function startApp() {
     // Update UI based on mode selection
     function updateModeUI(selected) {
     if (!selected) return;
+
+    restoreSendBtn();
 
     const modeSection = document.getElementById('modeSection');
     const queryInputGroup = document.getElementById('queryInputGroup');
@@ -1146,8 +1257,11 @@ async function startApp() {
     case 'logs':
       modeTextInputGroup.style.display = 'none';
       queryInputGroup.style.display = 'none';
+
       modeInstructions.textContent = '📜 Displaying your conversations with me...';
       modeResponse.textContent = 'Loading...';
+
+      switchSendBtnToMemoryClear();
       handleMemoryLogs();
       break;
 
@@ -1221,11 +1335,19 @@ async function startApp() {
   } catch (error) {
     console.error("Error:", error);
     responseDiv.innerText = "❌ Something went wrong. Try again.";
+
   }
 });
 
     sendBtn.addEventListener('click', async () => {
-  const mode = window.currentSelectedMode; // use wheel-selected mode
+  // 🔴 FIRST: special button modes
+  if (sendBtnMode === 'clearLogs') {
+    await clearMemoryLogs();
+    return;
+  }
+
+  // 🟢 NORMAL SEND FLOW
+  const mode = window.currentSelectedMode;
   if (!validateMode(mode)) return;
   if (!validateSession()) return;
 
@@ -1255,22 +1377,16 @@ async function startApp() {
       case 'translate':
         await handleTranslateMode();
         break;
-      case 'voice':
-        console.warn('Voice mode is not yet implemented.');
-        modeResponse.textContent = '🛑 Voice mode is currently unavailable.';
+      case 'science':
+      case 'math':
+        await handleGenericMode(mode);
         break;
       case 'reminder':
       case '10':
         await handleReminderMode();
         break;
-      case 'science':
-      case 'math':
-        await handleGenericMode(mode);
-        break;
-
       default:
         modeResponse.textContent = `⚠️ Unknown mode: ${mode}`;
-        break;
     }
   } catch (err) {
     console.error('Error in mode handler:', err);
@@ -1661,7 +1777,7 @@ async function handleTranslateMode() {
   const payload = {
     userId: userId,
     mode: 'translate',
-    input: inputText,
+    user_input: inputText,
     user_translate: true,          // always translate
     target_lang: targetLang,       // only the chosen language
     memory_logger: null,           // optional: include if logging interactions
@@ -1802,11 +1918,11 @@ async function handleGenericMode(mode) {
     }
 
     // Get the response string
-    const fullResponse = data.response?.trim() || '⚠️ No answer received.';
+    let fullResponse = (data.steps_output || data.response || '').trim();
 
     // Convert markdown to HTML and show
     const formattedHtml = markdownToHtml(fullResponse);
-    modeResponse.innerHTML = formattedHtml;
+   modeResponse.innerHTML = formattedHtml;
 
     // Re-render mathjax if needed
     if (window.MathJax) {

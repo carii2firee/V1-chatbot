@@ -618,6 +618,9 @@
     background-color: #1E90FF;
 }
 
+.task { margin-bottom: 12px; }
+.progress-bar { background-color: #e0e0e0; border-radius: 8px; overflow: hidden; height: 20px; }
+.progress-fill { background-color: #4caf50; height: 100%; text-align: center; color: white; font-weight: bold; }
 
 
 

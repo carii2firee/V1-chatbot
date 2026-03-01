@@ -698,16 +698,16 @@
         <section id="modeSection" aria-label="Mode Selection and Interaction" class="centered-container" style="display: none;">
             <div id="modeWheelContainer">
                 <div id="modeWheel">
-                    <div class="wheel-option" data-value="1">🤖 WREN Welcome Mode</div>
-                    <div class="wheel-option" data-value="math">🧮 Math processing mode</div>
-                    <div class="wheel-option" data-value="science">🔬 Science mode</div>
-                    <div class="wheel-option" data-value="book">📚 Book recommender mode</div>
-                    <div class="wheel-option" data-value="budget">💰 Financial literacy mode</div>
-                    <div class="wheel-option" data-value="depression">🩺 Depression tracker mode</div>
-                    <div class="wheel-option" data-value="tidy">🏠 Environment Tidying mode</div>
-                    <div class="wheel-option" data-value="logs">📜 Memory Log mode</div>
-                    <div class="wheel-option" data-value="translate">🌐 Language Translate mode</div>
-                    <div class="wheel-option" data-value="10">📝 Task Reminder mode</div>
+                    <div class="wheel-option" data-value="1">🤖 Gretting module</div>
+                    <div class="wheel-option" data-value="math">🧮 Math module</div>
+                    <div class="wheel-option" data-value="science">🔬 Scientist module</div>
+                    <div class="wheel-option" data-value="book">📚 Book module</div>
+                    <div class="wheel-option" data-value="budget">💰 Finance module</div>
+                    <div class="wheel-option" data-value="depression">🩺 Depression screening module</div>
+                    <div class="wheel-option" data-value="tidy">🏠 Neat freak module</div>
+                    <div class="wheel-option" data-value="logs">📜 Reminder module</div>
+                    <div class="wheel-option" data-value="translate">🌐 Translation module</div>
+                    <div class="wheel-option" data-value="10">📝 Reminder module</div>
 
                 </div>
             </div>

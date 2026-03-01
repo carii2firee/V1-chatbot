@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import dateparser
 
 
@@ -8,7 +8,7 @@ class ReminderManager:
     def __init__(self, user_id):
         self.user_id = user_id
         self.file_path = f"{self.user_id}_reminders.json"
-        self.reminders = self._load()  # load directly, no extra check
+        self.reminders = self._load()  # load directly
 
     # --- Internal helper methods ---
     def _load(self):
@@ -19,33 +19,55 @@ class ReminderManager:
                 except json.JSONDecodeError:
                     return []
         else:
-            # Initialize empty file if not exist
             with open(self.file_path, "w", encoding="utf-8") as f:
                 json.dump([], f)
             return []
 
     def _save(self):
-        # Save self.reminders only (no extra data passed)
         with open(self.file_path, "w", encoding="utf-8") as f:
             json.dump(self.reminders, f, indent=4)
 
     # --- Public methods ---
     def add_reminder(self, text, due_time=None):
-        """Add a new reminder. Parse natural language time if string."""
+        """
+        Add a new reminder. Supports optional due_time string from JS payload.
+        If no due_time is provided, sets reminder 30 minutes from now.
+        Accepts exact times like '5 pm' and calculates the correct future datetime.
+        """
+
+        # --- Extract due_time from JS payload if present ---
+        if '|' in text:
+            text, due_time_str = text.split('|', 1)
+            due_time = dateparser.parse(due_time_str, settings={"PREFER_DATES_FROM": "future"})
+
+        # --- Parse natural language due_time string if still a string ---
         if isinstance(due_time, str):
             due_time = dateparser.parse(due_time, settings={"PREFER_DATES_FROM": "future"})
-            if not due_time:
-                return {"success": False, "response": "⚠️ Could not understand the time."}
 
+        now = datetime.now()
+
+        # --- Default to 30 minutes from now if no valid due_time ---
         if not due_time:
-            due_time = datetime.now()
+            due_time = now + timedelta(minutes=30)
+        else:
+            # If user entered a time like "5 pm", calculate exact future datetime
+            # dateparser already returns future date if possible, but ensure it's not in the past
+            if due_time <= now:
+                # If the parsed time is earlier than now, move it to next day
+                due_time += timedelta(days=1)
 
-        # Store as ISO and immediately persist
-        reminder = {"text": text, "scheduled_time": due_time.isoformat()}
+        # --- Store reminder ---
+        reminder = {
+            "text": text.strip(),
+            "scheduled_time": due_time.isoformat()
+        }
         self.reminders.append(reminder)
         self._save()
 
-        return {"success": True, "response": f"✅ Reminder added: {text} at {due_time}"}
+        return {
+            "success": True,
+            "response": f"✅ Reminder added: {text.strip()} at {due_time.strftime('%Y-%m-%d %I:%M %p')}"
+        }
 
     def view_reminders(self):
         """Return all reminders sorted by due time."""

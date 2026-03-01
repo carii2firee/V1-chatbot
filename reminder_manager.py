@@ -1,86 +1,76 @@
 import os
 import json
 from datetime import datetime
-from voice_input import get_input  # your voice + fallback input function
+import dateparser
+
 
 class ReminderManager:
-    def __init__(self, user_name):
-        self.file_path = f"{user_name}_reminders.json"
-        if not os.path.exists(self.file_path):
-            with open(self.file_path, 'w') as f:
-                json.dump([], f)
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.file_path = f"{self.user_id}_reminders.json"
+        self.reminders = self._load()  # load directly, no extra check
 
-    def add_reminder(self, reminder):
-        with open(self.file_path, 'r+') as f:
-            data = json.load(f)
-            data.append({
-                "reminder": reminder,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-            f.seek(0)
-            json.dump(data, f, indent=4)
-            f.truncate()
+    # --- Internal helper methods ---
+    def _load(self):
+        if os.path.exists(self.file_path):
+            with open(self.file_path, "r", encoding="utf-8") as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    return []
+        else:
+            # Initialize empty file if not exist
+            with open(self.file_path, "w", encoding="utf-8") as f:
+                json.dump([], f)
+            return []
+
+    def _save(self):
+        # Save self.reminders only (no extra data passed)
+        with open(self.file_path, "w", encoding="utf-8") as f:
+            json.dump(self.reminders, f, indent=4)
+
+    # --- Public methods ---
+    def add_reminder(self, text, due_time=None):
+        """Add a new reminder. Parse natural language time if string."""
+        if isinstance(due_time, str):
+            due_time = dateparser.parse(due_time, settings={"PREFER_DATES_FROM": "future"})
+            if not due_time:
+                return {"success": False, "response": "⚠️ Could not understand the time."}
+
+        if not due_time:
+            due_time = datetime.now()
+
+        # Store as ISO and immediately persist
+        reminder = {"text": text, "scheduled_time": due_time.isoformat()}
+        self.reminders.append(reminder)
+        self._save()
+
+        return {"success": True, "response": f"✅ Reminder added: {text} at {due_time}"}
 
     def view_reminders(self):
-        with open(self.file_path, 'r') as f:
-            data = json.load(f)
-            if not data:
-                print("🔕 No reminders saved.")
-                return
-            print("\n📌 Your Reminders:")
-            for i, entry in enumerate(data, 1):
-                print(f"{i}. {entry['reminder']} (added on {entry['timestamp']})")
+        """Return all reminders sorted by due time."""
+        self.reminders.sort(key=lambda r: r["scheduled_time"])
+        if not self.reminders:
+            return {"success": True, "response": "🔕 No reminders saved.", "tasks": []}
+        return {"success": True, "response": f"📋 Reminders ({len(self.reminders)})", "tasks": self.reminders}
+
+    def check_due_reminders(self):
+        """Return reminders that are due now."""
+        now = datetime.now()
+        due = []
+        for r in self.reminders:
+            try:
+                t = datetime.fromisoformat(r["scheduled_time"])
+                if t <= now:
+                    due.append(r)
+            except Exception:
+                continue  # skip malformed dates
+
+        response = f"⏰ {len(due)} reminder(s) are due now." if due else "✅ No reminders are due right now."
+        return {"success": True, "response": response, "tasks": due}
 
     def clear_reminders(self):
-        with open(self.file_path, 'w') as f:
-            json.dump([], f)
-        print("✅ All reminders cleared.")
-
-def handle_reminder_mode(user_name, memory_logger=None):
-    reminder_manager = ReminderManager(user_name)
-    print("\n=== 🧠 Reminder Mode ===")
-
-    while True:
-        print("\nWhat would you like to do?")
-        print("1. Add a reminder")
-        print("2. View reminders")
-        print("3. Clear all reminders")
-        print("4. Exit reminder mode")
-
-        choice = get_input("Say or type a number (1-4): ").strip().lower()
-
-        spoken_map = {"one": "1", "two": "2", "three": "3", "four": "4"}
-        choice = spoken_map.get(choice, choice)
-
-        if choice == "1":
-            reminder = get_input("What's the reminder? ").strip()
-            if reminder:
-                reminder_manager.add_reminder(reminder)
-                print("📝 Reminder saved!")
-                if memory_logger:
-                    memory_logger.log_interaction("Added reminder", reminder)
-            else:
-                print("❌ Reminder cannot be empty.")
-
-        elif choice == "2":
-            reminder_manager.view_reminders()
-            if memory_logger:
-                memory_logger.log_interaction("Viewed reminders", "")
-
-        elif choice == "3":
-            confirm = get_input("Are you sure? This will delete all reminders. Say 'yes' or 'no': ").strip().lower()
-            if confirm in ["yes", "y"]:
-                reminder_manager.clear_reminders()
-                if memory_logger:
-                    memory_logger.log_interaction("Cleared reminders", "")
-            else:
-                print("❌ Clear canceled.")
-
-        elif choice == "4":
-            print("📤 Exiting Reminder Mode...")
-            if memory_logger:
-                memory_logger.log_interaction("Exited Reminder Mode", "")
-            break
-
-        else:
-            print("❌ Invalid choice. Please select 1-4.")
+        """Delete all reminders."""
+        self.reminders = []
+        self._save()
+        return {"success": True, "response": "✅ All reminders cleared.", "tasks": []}

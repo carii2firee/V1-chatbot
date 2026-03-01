@@ -1311,25 +1311,26 @@ function handleVoiceTranscript(transcript) {
       chatContainer.style.display = 'none'; // hide budget container if shown previously
 
       modeInstructions.innerHTML = `
-        📝 <strong>Task Reminder Mode</strong><br><br>
-        Use commands like:
+        📝 <strong>Reminder modulee</strong><br><br>
+        I operate based on keywords like..:
         <ul style="margin-top: 4px; padding-left: 20px; font-size: 0.95em;">
-          <li><code>add Call mom at 5pm</code></li>
-          <li><code>view</code></li>
-          <li><code>check_due</code></li>
-          <li><code>clear</code></li>
+          <li><code>add finish calc homework </code></li>
+          <li><code>view my overall reminders</code></li>
+          <li><code>check which reminders are due</code></li>
+          <li><code>clear my recent reminders</code></li>
         </ul>
-        Enter your command below and click <strong>Send</strong>.
+        Enter your command either manually or verbally.. <strong>Send</strong>.
       `;
       modeResponse.textContent = '';
       break;
 
     default:
-      modeInstructions.textContent = 'Please enter your input and click Send.';
+      modeInstructions.textContent = 'Enter the input and press SEND.';
       sendBtn.style.display = 'inline-block';
       break;
   }
 }
+
 
 
 

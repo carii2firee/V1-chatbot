@@ -668,6 +668,8 @@
         <input type="checkbox" id="darkModeToggle"/> Toggle Dark Mode
     </label>
 
+    <div id="reminder-tasks-container"></div>
+
     <div id="voice_container">
     <div id="voice_box" class="centered-container">
         <p id="voice_user">You: ...</p>
@@ -675,6 +677,7 @@
     </div>
     <button id="voice_button">🎤 Speak</button>
 </div>
+
 
     <!-- Start Input -->
     <div id="startContainer" class="input-group centered-container">
@@ -705,6 +708,7 @@
                     <div class="wheel-option" data-value="logs">📜 Memory Log mode</div>
                     <div class="wheel-option" data-value="translate">🌐 Language Translate mode</div>
                     <div class="wheel-option" data-value="10">📝 Task Reminder mode</div>
+
                 </div>
             </div>
         </section>
@@ -1160,6 +1164,41 @@ function handleVoiceTranscript(transcript) {
     console.log("❌ No mode detected from:", transcript);
   }
 }
+
+
+function renderReminders(tasks) {
+  const container = document.getElementById('reminder-tasks-container');
+  container.innerHTML = ''; // clear previous tasks
+
+  tasks.forEach((task, index) => {
+    // Create task wrapper
+    const taskDiv = document.createElement('div');
+    taskDiv.classList.add('task');
+
+    // Task label
+    const label = document.createElement('p');
+    label.textContent = task.text;
+
+    // Progress bar container
+    const progress = document.createElement('div');
+    progress.classList.add('progress-bar');
+
+    // Progress fill (dynamic width)
+    const fill = document.createElement('div');
+    fill.classList.add('progress-fill');
+
+    // Example: dynamically calculate progress (0-100%) if task has progress field
+    const percent = task.percent || 0; // you can calculate in JS
+    fill.style.width = percent + '%';
+    fill.textContent = percent + '%'; // optional, show text inside bar
+
+    progress.appendChild(fill);
+    taskDiv.appendChild(label);
+    taskDiv.appendChild(progress);
+    container.appendChild(taskDiv);
+  });
+}
+
 
     // Update UI based on mode selection
     function updateModeUI(selected) {
@@ -1632,15 +1671,32 @@ async function handleReminderMode() {
     return;
   }
 
+  // --- Teen-friendly command mapping ---
+  function mapTeenCommand(cmd) {
+    const command = cmd.toLowerCase().trim();
+    if (command.startsWith('show')) return 'view_reminders';
+    if (command.startsWith('due')) return 'check_due_reminders';
+    if (command.startsWith('add')) return 'add_reminder';
+    if (command.startsWith('clear')) return 'clear_reminders';
+    return 'Theres was a problem carrying the command out.';
+  }
+
+  const teenCommand = mapTeenCommand(input);
+  if (teenCommand === 'unknown') {
+    modeResponse.textContent = '⚠️ Command not recognized. Try "show", "due", "add", or "clear".';
+    return;
+  }
+
   try {
     sendBtn.disabled = true;
     modeResponse.textContent = '⏳ Processing your reminder...';
 
-    // Prepare payload to match your backend
+    // Send the mapped command to backend, keep any extra arguments
+    const args = input.split(' ').slice(1).join(' '); // everything after first word
     const payload = {
-      userId: currentUserId,  // your user ID variable
+      userId: currentUserId,
       mode: 'reminder',
-      input
+      input: teenCommand + (args ? ' ' + args : '')
     };
 
     const response = await fetch('/mode', {
@@ -1652,8 +1708,38 @@ async function handleReminderMode() {
     const data = await response.json();
 
     if (data && data.success) {
-      // Render line breaks nicely
+      // Render textual response
       modeResponse.innerHTML = `<strong>📝 Reminder Mode:</strong><br>${data.response.replace(/\n/g, '<br>')}`;
+
+      // --- Render tasks/progress bars if available ---
+      if (data.tasks && data.tasks.length > 0) {
+        const container = document.getElementById('reminder-tasks-container');
+        container.innerHTML = ''; // clear previous tasks
+
+        data.tasks.forEach(task => {
+          const taskDiv = document.createElement('div');
+          taskDiv.classList.add('task');
+
+          const label = document.createElement('p');
+          label.textContent = task.text;
+
+          const progress = document.createElement('div');
+          progress.classList.add('progress-bar');
+
+          const fill = document.createElement('div');
+          fill.classList.add('progress-fill');
+          const percent = task.percent || 0; // can calculate dynamically in JS
+          fill.style.width = percent + '%';
+          fill.textContent = percent + '%'; // optional
+
+          progress.appendChild(fill);
+          taskDiv.appendChild(label);
+          taskDiv.appendChild(progress);
+          container.appendChild(taskDiv);
+        });
+      }
+      // --- End progress bars ---
+
     } else if (data && data.error) {
       modeResponse.textContent = `⚠️ ${data.error}`;
     } else {
@@ -1666,6 +1752,7 @@ async function handleReminderMode() {
     sendBtn.disabled = false;
   }
 }
+
 
 
 // ----------------- Voice Reminder Handler -----------------

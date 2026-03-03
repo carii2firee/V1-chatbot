@@ -1,4 +1,4 @@
-`<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
@@ -9,13 +9,26 @@
 
         .centered-container {
           display: flex;
-          flex-direction: column;   /* stack children */
-          align-items: center;      /* center horizontally */
-          justify-content: center;  /* center vertically if needed */
-          text-align: center;
-          width: 100%;              /* full width for responsiveness */
-          gap: 12px;                /* spacing between children */
-         }
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          width: 100%;
+        }
+
+        .centered-container input,
+        .centered-container select,
+        .centered-container textarea {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box; /* includes padding/border in width */
+        }
+
+
+        #reminder-tasks-container {
+          width: 100%;
+          max-width: 600px;
+          margin: 0 auto;
+        }
 
 
         #startContainer {
@@ -83,7 +96,8 @@
           position: fixed;
           z-index: 9999;
           top: 0; left: 0;
-          width: 100vw; height: 100vh;
+          width: 100vw;
+          height: 100vh;
           background: black;
           color: white;
           display: flex;
@@ -91,7 +105,21 @@
           align-items: center;
           justify-content: center;
           transition: opacity 1.5s ease;
+
+            background: linear-gradient(-45deg, #2b0f3a, #0f1b3a, #1a0f3a, #0f2a3a);
+            background-size: 400% 400%; /* big size for smooth animation */
+            animation: lavaFlow 20s ease infinite;
+
         }
+
+        // Control the pace of the lava flow
+        @keyframes lavaFlow {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+
         #introScreen.fade-out {
           opacity: 0 !important;
           pointer-events: none;
@@ -180,10 +208,19 @@
           width: center;
           margin: 10px auto;
           transform: translateX(-29px);
-          margin: 10px auto;        /* keeps horizontal centering */
+          margin: 10px auto;
 
           }
 
+        #modeWheelContainer {
+          width: 600px;   /* wider container */
+          height: 600px;  /* keeps circle proportional */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto;
+          position: relative;
+        }
 
 
         /* Center all mode containers and their children */
@@ -193,7 +230,6 @@
         #queryInputGroup,
         #translationContainer,
         #translationOptions,
-        #modeWheelContainer {
           display: flex;
           flex-direction: column;   /* stack children vertically */
           align-items: center;      /* center horizontally */
@@ -202,29 +238,22 @@
           margin: 20px auto;        /* auto margin to center container */
           }
 
-        #introBall {
-          width: 14px;
-          height: 14px;
-          background: #1e88e5;
-          border-radius: 50%;
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%) translateX(78px);
-          animation: spin 3s linear infinite;
-          box-shadow: 0 0 12px rgba(30,136,229,0.8);
-        }
 
-         #introBall::after {
-          content: '';
-          position: absolute;
-          top: 0; left: 0;
-          width: 14px; height: 14px;
-          border-radius: 50%;
-          background: rgba(30,136,229,0.3);
-          filter: blur(8px);
-          pointer-events: none;
-        }
+            // Establish the lava background on the entire screen.
+            #lavaBackground {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100vw;
+              height: 100vh;
+              z-index: -1; /* behind introScreen */
+              overflow: hidden;
+              background: #1a001a; /* dark base so no white shows */
+            }
+
+            body {
+              background: #1a001a;
+            }
           
            @keyframes orbitText {
           0% { transform: rotate(0deg); }
@@ -289,23 +318,57 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* ===== Main App Styles ===== */
 
 
         main {
-          display: flex;                 /* enable flex layout */
-          flex-direction: column;        /* stack children vertically */
-          justify-content: center;       /* center vertically */
-          align-items: center;           /* center horizontally */
-          min-height: 100vh;             /* full viewport height */
-          max-width: 700px;              /* optional max width */
-          margin: 0 auto;                /* horizontal center */
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;  /* better than center for scrolling content */
+          align-items: center;         /* stretch children horizontally */
+          min-height: 100vh;
+          width: 90%;                   /* use most of horizontal space */
+          max-width: 1400px;            /* optional, don’t get too wide */
+          margin: 0 auto;               /* center horizontally */
           padding: 30px 25px;
-          gap: 20px;                     /* space between children */
-          background: rgba(255, 255, 255, 0.15); /* soft translucent background */
-          backdrop-filter: blur(10px);           /* frosted glass effect */
-          border-radius: 20px;                    /* gentle curves */
-          box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* subtle floating shadow */
+          gap: 20px;
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(10px);
+          border-radius: 20px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
           color: #333;
           box-sizing: border-box;
           transition: background 0.5s ease, color 0.5s ease, box-shadow 0.5s ease, transform 0.3s ease;
@@ -404,11 +467,13 @@
     /* Center individual inputs inside their group */
     #modeTextInput,
     #user-input,
-    #tidyingTopic {
-      width: 300px;
-      max-width: 90%;
-      margin: 8px auto 0 auto; /* top spacing + horizontal centering */
+    #tidyingTopic,
+      input, select, textarea {
+      width: 100%;       /* fill parent container */
+      max-width: 600px;  /* optional cap for readability */
+      margin: 8px auto 0 auto;
       display: block;
+      box-sizing: border-box;
     }
 
     #modeTextInputGroup,
@@ -550,7 +615,7 @@
 /* ===== Wheel Mode Options ===== */
 .wheel-option {
   position: absolute;
-  width: 140px;
+  width: 120px;
   height: 48px;
 
   left: 50%;
@@ -568,12 +633,12 @@
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.35);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #222;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 
   /* ==== Transform Controls ==== */
-  --radius: 220px; /* increase slightly for horizontal spacing */
+  --radius: 280px; /* increase slightly for horizontal spacing */
   --rotate: 72deg; /* individual rotation for each mode */
 
   /* 
@@ -613,7 +678,8 @@
     position: relative;
     width: 60px;
     height: 32px;
-    display: inline-block;
+    display: block;
+    margin: 0 auto;
     cursor: pointer;
 }
 
@@ -648,9 +714,39 @@
 #darkModeToggle:checked + .toggle-slider::before {
     transform: translateX(28px);
 }
+
+
+        // CSS for the task reminder progress bar
+
+        .progress-bar {
+  width: 100%;
+  background-color: #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 20px;
+  margin: 5px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #2b6be6;
+  text-align: center;
+  color: white;
+  line-height: 20px;
+}
         
-        
-        
+        // Code to keep the width and height of my html centered despite being on mobile or not
+        @media (max-width: 800px) {
+  #modeWheelContainer {
+    width: 90%;
+    height: 90vw;  /* keep circle proportional */
+  }
+  .wheel-option {
+    --radius: 40%;  /* % works with responsive width */
+    width: 100px;
+    font-size: 0.8rem;
+  }
+}
         
     </style>
 </head>
@@ -680,8 +776,8 @@
             fill="none"/> </svg>
     <!-- Intro Text -->
     <div id="introText" class="centered-container">
-        <div id="introLine1">Hello there, friend</div>
-        <div id="introLine2">I'm <span class="squartiqa">WREN</span></div>
+        <div id="introLine1">Greetings scholar</div>
+        <div id="introLine2">I'm <span class="squartiqa">WRIN</span></div>
 
         <!-- Spinning ball -->
         <div id="orbitalWrapper" aria-hidden="true">
@@ -690,10 +786,11 @@
     </div>
 </div>
 <!-- ========== MAIN APP ========== -->
-<main role="main" aria-live="polite" style="display:none;">
+<main role="main" aria-live="polite"
+      style="display:none; width: 90%; max-width: 1400px; margin: 0 auto;">
     <h1 id="mainTitle">👋 Welcome back, ready when you are! </h1>
 
-        <!-- Dark Mode Toggle -->
+
     <!-- Dark Mode Toggle -->
 <div id="darkModeContainer" class="centered-container">
     <label for="darkModeToggle" id="darkModeLabel" class="toggle-wrapper">
@@ -703,12 +800,14 @@
 </div>
 
 
+    <div id="reminder-tasks-container"></div>
+    <div id="budget-progress-container"></div>
 
     <!-- Start Input -->
     <div id="startContainer" class="input-group centered-container">
-        <label for="nameInput" id="nameLabel">📝 Before continuing forward, please Enter your name!:</label>
+        <label for="nameInput" id="nameLabel">📝 Ready to invest in yourself, press enter!</label>
         <input type="text" id="nameInput" placeholder="Your name here..." autocomplete="off" aria-describedby="nameLabel"/>
-        <button id="startBtn"><span class="icon">🎖️</span> Start WREN </button>
+        <button id="startBtn"><span class="icon">🎖️</span> Start WRIN </button>
     </div>
 
 
@@ -723,16 +822,16 @@
         <section id="modeSection" aria-label="Mode Selection and Interaction" class="centered-container" style="display: none;">
             <div id="modeWheelContainer">
                 <div id="modeWheel">
-                    <div class="wheel-option" data-value="1">🤖 WREN Welcome Mode</div>
-                    <div class="wheel-option" data-value="math">🧮 Math processing mode</div>
-                    <div class="wheel-option" data-value="science">🔬 Science mode</div>
-                    <div class="wheel-option" data-value="book">📚 Book recommender mode</div>
-                    <div class="wheel-option" data-value="budget">💰 Financial literacy mode</div>
-                    <div class="wheel-option" data-value="depression">🩺 Depression tracker mode</div>
-                    <div class="wheel-option" data-value="tidy">🏠 Environment Tidying mode</div>
-                    <div class="wheel-option" data-value="logs">📜 Memory Log mode</div>
-                    <div class="wheel-option" data-value="translate">🌐 Language Translate mode</div>
-                    <div class="wheel-option" data-value="10">📝 Task Reminder mode</div>
+                    <div class="wheel-option" data-value="1">🤖 Greeting module</div>
+                    <div class="wheel-option" data-value="math">🧮 Math module</div>
+                    <div class="wheel-option" data-value="science">🔬 Scientist module</div>
+                    <div class="wheel-option" data-value="book">📚 Book module</div>
+                    <div class="wheel-option" data-value="budget">💰 Finance module</div>
+                    <div class="wheel-option" data-value="depression">🩺 Depression screening module</div>
+                    <div class="wheel-option" data-value="tidy">🏠 Neat freak module</div>
+                    <div class="wheel-option" data-value="logs">📜 Core Memory module</div>
+                    <div class="wheel-option" data-value="translate">🌐 Language tutor module</div>
+                    <div class="wheel-option" data-value="10">📝 Reminder Module</div>
                 </div>
             </div>
         </section>
@@ -743,8 +842,8 @@
 
              <!-- General Input Group -->
         <div id="modeTextInputGroup" class="input-group centered-container" style="display: none;">
-            <label for="modeTextInput">Your input:</label>
-            <input type="text" id="modeTextInput" placeholder="Enter your question or info..."/>
+            <label for="modeTextInput">Scholars input:</label>
+            <input type="text" id="modeTextInput" placeholder="Enter here..."/>
         </div>
 
             <!-- Query Input Group -->
@@ -1121,6 +1220,93 @@ async function startApp() {
 
 
 
+function parseTeenCommand(input) {
+  const words = input.trim().split(' ');
+  const commandWord = words[0].toLowerCase(); // first word
+  const args = words.slice(1).join(' '); // everything after the first word
+
+  // Map teen-friendly word to backend function
+  const commandMap = {
+    show: 'view_reminders',
+    due: 'check_due_reminders',
+    add: 'add_reminder',
+    clear: 'clear_reminders'
+  };
+
+  const backendCommand = commandMap[commandWord] || null;
+  return { backendCommand, args };
+}
+
+
+// Progress bar sections for each of the modes.
+
+    function renderReminders(tasks) {
+  const container = document.getElementById('reminder-tasks-container');
+  container.innerHTML = ''; // clear previous tasks
+
+  tasks.forEach((task, index) => {
+    // Create task wrapper
+    const taskDiv = document.createElement('div');
+    taskDiv.classList.add('task');
+
+    // Task label
+    const label = document.createElement('p');
+    label.textContent = task.text;
+
+    // Progress bar container
+    const progress = document.createElement('div');
+    progress.classList.add('progress-bar');
+
+    // Progress fill (dynamic width)
+    const fill = document.createElement('div');
+    fill.classList.add('progress-fill');
+
+    // Example: dynamically calculate progress (0-100%) if task has progress field
+    const percent = task.percent || 0; // you can calculate in JS
+    fill.style.width = percent + '%';
+    fill.textContent = percent + '%'; // optional, show text inside bar
+
+    progress.appendChild(fill);
+    taskDiv.appendChild(label);
+    taskDiv.appendChild(progress);
+    container.appendChild(taskDiv);
+  });
+}
+
+function renderGoalProgress(progressData) {
+  const container = document.getElementById('budget-progress-container');
+  container.innerHTML = ''; // clear old progress
+
+  const taskDiv = document.createElement('div');
+  taskDiv.classList.add('task');
+
+  const label = document.createElement('p');
+  label.textContent = `🎯 $${progressData.current} / $${progressData.goal}`;
+
+  const progress = document.createElement('div');
+  progress.classList.add('progress-bar');
+
+  const fill = document.createElement('div');
+  fill.classList.add('progress-fill');
+
+  const percent = Math.min(progressData.progress, 100);
+
+  fill.style.width = '0%';
+  fill.textContent = percent + '%';
+
+  progress.appendChild(fill);
+  taskDiv.appendChild(label);
+  taskDiv.appendChild(progress);
+  container.appendChild(taskDiv);
+
+  // smooth animate
+  setTimeout(() => {
+    fill.style.width = percent + '%';
+  }, 50);
+}
+
+
+
 
     // Update UI based on mode selection
     function updateModeUI(selected) {
@@ -1182,7 +1368,7 @@ async function startApp() {
     case 'depression':
       modeTextInputGroup.style.display = 'none';
       modeResponse.style.display = 'block';
-      modeInstructions.textContent = 'Hello friend! Press "Send" to begin the depression screening.';
+      modeInstructions.textContent = 'Welcome back! Press "Send" to begin the depression screening.';
       modeTextInput.style.display = 'block';
       modeTextInput.focus();
 
@@ -1251,7 +1437,7 @@ async function startApp() {
 
     case '1': // Name Recognition
       modeTextInputGroup.style.display = 'block';
-      modeInstructions.textContent = 'Enter your name and click Send.';
+      modeInstructions.textContent = 'Please dont be afraid to introduce yourself below.';
       break;
 
     case 'logs':
@@ -1272,21 +1458,21 @@ async function startApp() {
       chatContainer.style.display = 'none'; // hide budget container if shown previously
 
       modeInstructions.innerHTML = `
-        📝 <strong>Task Reminder Mode</strong><br><br>
-        Use commands like:
+        📝 <strong>Reminder modulee</strong><br><br>
+        I operate based on keywords like..:
         <ul style="margin-top: 4px; padding-left: 20px; font-size: 0.95em;">
-          <li><code>add Call mom at 5pm</code></li>
-          <li><code>view</code></li>
-          <li><code>check_due</code></li>
-          <li><code>clear</code></li>
+          <li><code>add finish calc homework (include time by hour with keywords 'at') </code></li>
+          <li><code>show my overall reminders</code></li>
+          <li><code>due reminders listed</code></li>
+          <li><code>clear my recent reminders</code></li>
         </ul>
-        Enter your command below and click <strong>Send</strong>.
+        Enter your command either manually or verbally.. <strong>Send</strong>.
       `;
       modeResponse.textContent = '';
       break;
 
     default:
-      modeInstructions.textContent = 'Please enter your input and click Send.';
+      modeInstructions.textContent = 'Enter the input and press SEND.';
       sendBtn.style.display = 'inline-block';
       break;
   }
@@ -1340,6 +1526,12 @@ async function startApp() {
 });
 
     sendBtn.addEventListener('click', async () => {
+  // 🔹 Clear the response immediately
+  modeResponse.textContent = ''; // or use innerHTML = '' if you had HTML
+  // Optional: also clear other UI containers if needed
+  const reminderTasksContainer = document.getElementById('reminder-tasks-container');
+  if (reminderTasksContainer) reminderTasksContainer.innerHTML = '';
+
   // 🔴 FIRST: special button modes
   if (sendBtnMode === 'clearLogs') {
     await clearMemoryLogs();
@@ -1353,6 +1545,7 @@ async function startApp() {
 
   try {
     sendBtn.disabled = true;
+    // Show processing text after clearing old content
     modeResponse.textContent = '⏳ Processing...';
 
     switch (mode) {
@@ -1593,15 +1786,32 @@ async function handleReminderMode() {
     return;
   }
 
+  // --- Teen-friendly command mapping ---
+  function mapTeenCommand(cmd) {
+    const command = cmd.toLowerCase().trim();
+    if (command.startsWith('show')) return 'view';
+    if (command.startsWith('due')) return 'check_due';
+    if (command.startsWith('add') || command.startsWith('create')) return 'add';
+    if (command.startsWith('clear') || command.startsWith('delete')) return 'clear';
+    return 'unknown';
+  }
+
+  const teenCommand = mapTeenCommand(input);
+  if (teenCommand === 'unknown') {
+    modeResponse.textContent = '⚠️ Command not recognized. Try "show", "due", "add", or "clear".';
+    return;
+  }
+
   try {
     sendBtn.disabled = true;
     modeResponse.textContent = '⏳ Processing your reminder...';
 
-    // Prepare payload to match your backend
+    // Send the mapped command to backend, keep any extra arguments
+    const args = input.split(' ').slice(1).join(' '); // everything after first word
     const payload = {
-      userId: currentUserId,  // your user ID variable
+      userId: currentUserId,
       mode: 'reminder',
-      input
+      input: teenCommand + (args ? ' ' + args : '')
     };
 
     const response = await fetch('/mode', {
@@ -1613,8 +1823,59 @@ async function handleReminderMode() {
     const data = await response.json();
 
     if (data && data.success) {
-      // Render line breaks nicely
+      // Render textual response
       modeResponse.innerHTML = `<strong>📝 Reminder Mode:</strong><br>${data.response.replace(/\n/g, '<br>')}`;
+
+      // --- Render tasks/progress bars if available ---
+      if (data.tasks && data.tasks.length > 0) {
+        const container = document.getElementById('reminder-tasks-container');
+        container.innerHTML = ''; // clear previous tasks
+
+        const now = new Date();
+
+        data.tasks.forEach(task => {
+          const taskDiv = document.createElement('div');
+          taskDiv.classList.add('task');
+
+          // Label: include text and due time if exists
+          const label = document.createElement('p');
+          let dueTimeText = '';
+          if (task.scheduled_time) {
+            const dueTime = new Date(task.scheduled_time);
+            const hours = dueTime.getHours().toString().padStart(2, '0');
+            const minutes = dueTime.getMinutes().toString().padStart(2, '0');
+            const day = dueTime.getDate();
+            const month = dueTime.getMonth() + 1; // zero-indexed
+            dueTimeText = ` (Due: ${month}/${day} ${hours}:${minutes})`;
+          }
+          label.textContent = task.text + dueTimeText;
+
+          // Progress bar
+          const progress = document.createElement('div');
+          progress.classList.add('progress-bar');
+
+          const fill = document.createElement('div');
+          fill.classList.add('progress-fill');
+
+          // Calculate percent complete if due_time exists
+          let percent = 0;
+          if (task.scheduled_time) {
+            const startTime = new Date(); // now
+            const endTime = new Date(task.scheduled_time);
+            const totalMs = endTime - startTime;
+            percent = totalMs <= 0 ? 100 : Math.min(Math.floor(((30 * 60 * 1000 - totalMs) / (30 * 60 * 1000)) * 100), 100);
+          }
+          fill.style.width = percent + '%';
+          fill.textContent = percent + '%';
+
+          progress.appendChild(fill);
+          taskDiv.appendChild(label);
+          taskDiv.appendChild(progress);
+          container.appendChild(taskDiv);
+        });
+      }
+      // --- End progress bars ---
+
     } else if (data && data.error) {
       modeResponse.textContent = `⚠️ ${data.error}`;
     } else {
@@ -1714,6 +1975,10 @@ async function handleBudgetMode() {
     if (!data || data.success === false) {
       appendChat(chatContainer, `⚠️ ${data?.error || 'Request failed.'}`);
     } else if (data.response?.trim()) {
+
+    else if (data.goal_progress) {
+      renderGoalProgress(data.goal_progress);
+    }
       appendChat(chatContainer, markdownToHtml(data.response));
     } else {
       appendChat(chatContainer, '⚠️ No response from backend.');

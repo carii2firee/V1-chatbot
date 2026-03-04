@@ -50,6 +50,7 @@
         }
 
         html, body {
+          background: #000010;
           margin: 0; padding: 0;
           font-family: 'Quicksand', sans-serif;
           background: #f9f9f9;
@@ -92,38 +93,65 @@
     }
 
         /* ===== Intro Screen ===== */
-        #introScreen {
-          position: fixed;
-          z-index: 9999;
-          top: 0; left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: black;
-          color: white;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          transition: opacity 1.5s ease;
+#introScreen {
+  position: fixed;
+  z-index: 9999;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(-45deg, #000011, #000033, #001144, #000011);
+  background-size: 400% 400%;
+  animation: lavaFlow 20s ease infinite;
 
-            background: linear-gradient(-45deg, #2b0f3a, #0f1b3a, #1a0f3a, #0f2a3a);
-            background-size: 400% 400%; /* big size for smooth animation */
-            animation: lavaFlow 20s ease infinite;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* keep flows inside */
+  color: white;
+  transition: opacity 1.5s ease;
+}
 
-        }
+/* Smooth gradient movement */
+@keyframes lavaFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
-        // Control the pace of the lava flow
-        @keyframes lavaFlow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
+/* Lava blobs overlay (blue/cyan) */
+#introScreen::before,
+#introScreen::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle at 30% 30%, rgba(0,255,255,0.5), transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: blobMove 15s infinite alternate ease-in-out;
+  pointer-events: none;
+}
 
+#introScreen::after {
+  background: radial-gradient(circle at 70% 70%, rgba(0,180,255,0.5), transparent 70%);
+  animation-duration: 20s;
+}
 
-        #introScreen.fade-out {
-          opacity: 0 !important;
-          pointer-events: none;
-        }
+/* Blob animation */
+@keyframes blobMove {
+  0% { transform: translate(0px, 0px) scale(1); }
+  25% { transform: translate(60px, -40px) scale(1.2); }
+  50% { transform: translate(-50px, 50px) scale(0.9); }
+  75% { transform: translate(70px, 30px) scale(1.1); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+/* Fade out for when intro screen disappears */
+#introScreen.fade-out {
+  opacity: 0 !important;
+  pointer-events: none;
+}
         
         .eyes {
           display: flex;
@@ -313,33 +341,6 @@
   0%   { stroke-dashoffset: 879; }
   100% { stroke-dashoffset: 0; }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1303,6 +1304,8 @@ function animateProgressBar(barElement, targetPercent, duration = 800) {
 }
 
 
+
+
 function renderGoalProgress(progressData) {
   const container = document.getElementById('budget-progress-container');
   container.innerHTML = ''; // clear old progress
@@ -1337,21 +1340,30 @@ function renderGoalProgress(progressData) {
 }
 
 function renderGoalProgress(progressData) {
-  const container = document.getElementById('budget-progress-container');
-  if (!container) return;
+  const budgetProgress = document.getElementById('budget-progress-container');
+  if (!budgetProgress || !progressData) return;
 
-  let bar = container.querySelector('.progress-bar');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.className = 'progress-bar';
-    bar.style.height = '24px';
-    bar.style.width = '0%';
-    bar.style.backgroundColor = '#4caf50';
-    bar.style.transition = 'width 0.3s ease-out';
-    container.appendChild(bar);
-  }
+  const percent = Math.min(Math.round(progressData.progress), 100);
 
-  animateProgressBar(bar, progressData.progress);
+  // Simple progress bar HTML
+  budgetProgress.innerHTML = `
+    <div style="background: #eee; width: 100%; border-radius: 6px; height: 20px;">
+      <div style="
+        width: ${percent}%;
+        background: #4caf50;
+        height: 100%;
+        border-radius: 6px;
+        text-align: center;
+        color: white;
+        line-height: 20px;
+        font-size: 12px;
+      ">
+        ${percent}%
+      </div>
+    </div>
+  `;
+
+  budgetProgress.style.display = 'block';
 }
 
 

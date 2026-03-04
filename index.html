@@ -729,10 +729,9 @@
 
 .progress-fill {
   height: 100%;
-  background-color: #2b6be6;
-  text-align: center;
-  color: white;
-  line-height: 20px;
+  background: #2b6be6;
+  width: 0%;
+  transition: width 0.4s ease;
 }
         
         // Code to keep the width and height of my html centered despite being on mobile or not
@@ -801,7 +800,7 @@
 
 
     <div id="reminder-tasks-container"></div>
-    <div id="budget-progress-container"></div>
+
 
     <!-- Start Input -->
     <div id="startContainer" class="input-group centered-container">
@@ -908,12 +907,16 @@
 
     <!-- Budget Container -->
         <div id="budgetChatContainer" class="centered-container" style="display:none; border: 1px solid #2b6be6; padding: 10px; height: 300px; overflow-y: auto; background: #f9f9f9;">
-            <div id="finalScoreDisplay" style="display: none; font-weight: bold;"></div>
+
         </div>
+
+    <div id="budget-progress-container"></div>
 
         <button id="sendBtn" style="display:none;">Send</button>
         <div id="output" style="white-space: pre-wrap;"></div>
         <div id="modeResponse" aria-live="polite" aria-atomic="true"></div>
+
+
 </main>
 
 <script>
@@ -951,6 +954,7 @@
     const wheelOptions = document.querySelectorAll('.wheel-option');
     const modeTextInput = document.getElementById('modeTextInput');
     const DarkmodeBox = document.getElementById("Dark mode Toggle container");
+    const budgetProgress = document.getElementById('budget-progress-container');
 
     async function startSession(username) {
   try {
@@ -1273,6 +1277,32 @@ function parseTeenCommand(input) {
   });
 }
 
+
+
+// Allow the progress bar to flow
+function animateProgressBar(barElement, targetPercent, duration = 800) {
+  if (!barElement) return;
+
+  const startWidth = parseFloat(barElement.style.width) || 0;
+  const endWidth = Math.min(targetPercent, 100);
+  const startTime = performance.now();
+
+  function step(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const newWidth = startWidth + (endWidth - startWidth) * progress;
+
+    barElement.style.width = newWidth + '%';
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
+
 function renderGoalProgress(progressData) {
   const container = document.getElementById('budget-progress-container');
   container.innerHTML = ''; // clear old progress
@@ -1292,6 +1322,7 @@ function renderGoalProgress(progressData) {
   const percent = Math.min(progressData.progress, 100);
 
   fill.style.width = '0%';
+  fill.style.transition = 'width 0.6s ease';
   fill.textContent = percent + '%';
 
   progress.appendChild(fill);
@@ -1304,6 +1335,41 @@ function renderGoalProgress(progressData) {
     fill.style.width = percent + '%';
   }, 50);
 }
+
+function renderGoalProgress(progressData) {
+  const container = document.getElementById('budget-progress-container');
+  if (!container) return;
+
+  let bar = container.querySelector('.progress-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'progress-bar';
+    bar.style.height = '24px';
+    bar.style.width = '0%';
+    bar.style.backgroundColor = '#4caf50';
+    bar.style.transition = 'width 0.3s ease-out';
+    container.appendChild(bar);
+  }
+
+  animateProgressBar(bar, progressData.progress);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1318,6 +1384,11 @@ function renderGoalProgress(progressData) {
     const queryInputGroup = document.getElementById('queryInputGroup');
     const modeTextInputGroup = document.getElementById('modeTextInputGroup');
     const chatContainer = document.getElementById('budgetChatContainer');
+    const budgetProgress = document.getElementById('budget-progress-container');
+    if (budgetProgress) {
+      budgetProgress.innerHTML = '';
+      budgetProgress.style.display = 'none';
+    }
 
     // Reset UI elements
     sendBtn.style.display = 'inline-block';
@@ -1399,41 +1470,35 @@ function renderGoalProgress(progressData) {
       break;
 
     case 'budget':
-      modeTextInputGroup.style.display = 'block';
-      modeInstructions.textContent = 'Enter your savings goal and click Send.';
-      chatContainer.innerHTML = '';
+  modeTextInputGroup.style.display = 'block';
+  modeInstructions.textContent = 'Enter your savings goal and click Send.';
+  chatContainer.innerHTML = '';
 
-      // Show bot typing indicator
-      const botMessage = document.createElement('div');
-      botMessage.textContent = 'WREN is typing...';
-      botMessage.style.fontStyle = 'italic';
-      chatContainer.appendChild(botMessage);
 
-      fetch('/mode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUserId, mode: 'budget', input: '' }),
-      })
-      .then(res => res.json())
-      .then(data => {
-        chatContainer.removeChild(botMessage);
-        if (data && typeof data.response === 'string' && data.response.trim() !== '') {
-          const botReply = document.createElement('div');
-          botReply.innerHTML = typeof markdownToHtml === 'function'
-            ? markdownToHtml(data.response)
-            : data.response;
-          chatContainer.appendChild(botReply);
-          chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-      })
-      .catch(error => {
-        console.error('Budget welcome error:', error);
-        chatContainer.removeChild(botMessage);
-        const errorDiv = document.createElement('div');
-        errorDiv.textContent = '❌ Failed to load budget intro.';
-        chatContainer.appendChild(errorDiv);
-      });
-      break;
+  const botMessage = document.createElement('div');
+  botMessage.textContent = 'WREN is typing...';
+  botMessage.style.fontStyle = 'italic';
+  chatContainer.appendChild(botMessage);
+
+  fetch('/mode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: currentUserId, mode: 'budget', input: '' }),
+  })
+  .then(res => res.json())
+  .then(data => {
+    chatContainer.removeChild(botMessage);
+
+    if (data.response) {
+      appendChat(chatContainer, markdownToHtml(data.response));
+    }
+
+    if (data.goal_progress) {
+      renderGoalProgress(data.goal_progress);
+    }
+  });
+
+  break;
 
     case '1': // Name Recognition
       modeTextInputGroup.style.display = 'block';
@@ -1955,36 +2020,58 @@ async function handleBookMode() {
 
 // ---- BUDGET ----
 async function handleBudgetMode() {
-  const input = document.getElementById('modeTextInput').value.trim();
+  const inputEl = document.getElementById('modeTextInput');
+  const input = inputEl.value.trim();
+
   if (!input) {
     modeResponse.textContent = '⚠️ Please enter your input above.';
     return;
   }
 
   const chatContainer = document.getElementById('budgetChatContainer');
-  appendChat(chatContainer, `You: ${input}`, true);
-  document.getElementById('modeTextInput').value = '';
 
-  const typingMsg = appendChat(chatContainer, 'WREN is typing...', false, true);
-  const payload = { userId: currentUserId, mode: 'budget', input };
+  // Show user message
+  appendChat(chatContainer, `You: ${input}`, true);
+  inputEl.value = '';
+
+  // Typing indicator
+  const typingMsg = appendChat(chatContainer, 'WRIN is typing...', false, true);
+
+  const payload = {
+    userId: currentUserId,
+    mode: 'budget',
+    input
+  };
 
   try {
     const data = await postMode(payload);
-    chatContainer.removeChild(typingMsg);
 
+    // Remove typing indicator safely
+    if (typingMsg && typingMsg.parentNode) {
+      typingMsg.parentNode.removeChild(typingMsg);
+    }
+
+    // Backend failure
     if (!data || data.success === false) {
       appendChat(chatContainer, `⚠️ ${data?.error || 'Request failed.'}`);
-    } else if (data.response?.trim()) {
+      return;
+    }
 
-    else if (data.goal_progress) {
+    // Render backend message (if exists)
+    if (data.response && data.response.trim()) {
+      appendChat(chatContainer, markdownToHtml(data.response));
+    }
+
+    // Update progress bar (if backend sent progress)
+    if (data.goal_progress) {
       renderGoalProgress(data.goal_progress);
     }
-      appendChat(chatContainer, markdownToHtml(data.response));
-    } else {
-      appendChat(chatContainer, '⚠️ No response from backend.');
-    }
+
   } catch (err) {
-    chatContainer.removeChild(typingMsg);
+    if (typingMsg && typingMsg.parentNode) {
+      typingMsg.parentNode.removeChild(typingMsg);
+    }
+
     appendChat(chatContainer, `❌ Error: ${err.message}`);
   }
 }
@@ -2005,6 +2092,8 @@ function appendChat(container, text, isUser = false, italic = false) {
   container.scrollTop = container.scrollHeight;
   return div;
 }
+
+
 
 // ---- TRANSLATE ----
 document.getElementById('translateBtn')?.addEventListener('click', handleTranslateMode);

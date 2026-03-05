@@ -2,7 +2,7 @@
 # ============== Main Execution ===============
 
 import re
-from voice_input import get_input  # Your voice + fallback input function
+# from voice_input import get_input  # Your voice + fallback input function
 from reminder_manager import ReminderManager
 from belief_system import BeliefModel
 from memory_logger import MemoryLogger

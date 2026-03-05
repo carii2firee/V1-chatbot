@@ -1,4 +1,4 @@
-PySide6
+
 cffi
 dateparser
 python-dotenv
@@ -10,8 +10,8 @@ matplotlib
 numpy
 openai
 pandas
-pygame
-pyttsx3
+
+
 requests
 safetensors
 seaborn
@@ -28,4 +28,5 @@ PyYAML
 torch
 textblob
 sympy
-speech_recognition
+
+

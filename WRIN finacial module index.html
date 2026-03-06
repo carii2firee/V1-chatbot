@@ -1,0 +1,2786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <title>WRIN Financial literacy app</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet"/>
+    <style>
+        /* ===== Global Styles ===== */
+
+        .centered-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          width: 100%;
+        }
+
+        .centered-container input,
+        .centered-container select,
+        .centered-container textarea {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box; /* includes padding/border in width */
+        }
+
+
+        #reminder-tasks-container {
+          width: 100%;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+
+
+        #startContainer {
+          max-width: 320px;
+          margin: 0 auto; /* centers horizontally and adds vertical spacing */
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px; /* space between elements */
+        }
+
+        #startContainer label {
+          font-weight: 600;
+          font-size: 1rem;
+          color: inherit;        
+          user-select: none;
+          text-align: center;
+          width: 100%;
+        }
+
+        html, body {
+          background: #000010;
+          margin: 0; padding: 0;
+          font-family: 'Quicksand', sans-serif;
+          background: #f9f9f9;
+          height: 100%;
+          color: #333;
+          transition: background-color 0.5s ease, color 0.5s ease;
+          user-select: none;
+        }
+        body.dark-mode {
+          background: #121212;
+          color: #ddd;
+        }
+        body.dark-mode main {
+          background: linear-gradient(to right, #222, #333);
+          color: #eee;
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+             #video-info {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      pointer-events: none;
+    }
+
+    #video-info.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    body.dark-mode #video-info {
+      background: #1e1e1e;
+      color: #ddd;
+    }
+    
+    body.dark-mode #budgetChatContainer div {
+      font-weight: bold; /* makes all chat text bold */
+      color: #ddd;       /* ensures contrast on dark background */
+    }
+
+        /* ===== Intro Screen ===== */
+#introScreen {
+  position: fixed;
+  z-index: 9999;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(-45deg, #000011, #000033, #001144, #000011);
+  background-size: 400% 400%;
+  animation: lavaFlow 20s ease infinite;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* keep flows inside */
+  color: white;
+  transition: opacity 1.5s ease;
+}
+
+/* Smooth gradient movement */
+@keyframes lavaFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Lava blobs overlay (blue/cyan) */
+#introScreen::before,
+#introScreen::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle at 30% 30%, rgba(0,255,255,0.5), transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: blobMove 15s infinite alternate ease-in-out;
+  pointer-events: none;
+}
+
+#introScreen::after {
+  background: radial-gradient(circle at 70% 70%, rgba(0,180,255,0.5), transparent 70%);
+  animation-duration: 20s;
+}
+
+/* Blob animation */
+@keyframes blobMove {
+  0% { transform: translate(0px, 0px) scale(1); }
+  25% { transform: translate(60px, -40px) scale(1.2); }
+  50% { transform: translate(-50px, 50px) scale(0.9); }
+  75% { transform: translate(70px, 30px) scale(1.1); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+/* Fade out for when intro screen disappears */
+#introScreen.fade-out {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+        
+        .eyes {
+          display: flex;
+          gap: 24px;
+          justify-content: center;
+          pointer-events: none;
+
+          position: relative;
+          top: -8px; /* move eyes up — adjust as needed */
+
+          transform-origin: center;
+          animation: eyesTilt 2s cubic-bezier(.68,-0.55,.27,1.55) forwards 2.2s;
+         }
+
+          .eye {
+          width: 20px;
+          height: 20px;
+          background: white;
+          border-radius: 50%;
+          animation: blink 4s infinite;
+          }
+
+          .eye:nth-child(2) {
+          animation-delay: 2s;
+          }
+
+        @keyframes eyesTilt {
+          0% { transform: rotate(0deg); }
+          50% { transform: rotate(0deg); }
+          100% { transform: rotate(-9deg); } 
+          }
+
+
+        @keyframes blink {
+          0%, 90%, 100% { height: 20px; }
+          95% { height: 2px; }
+        }
+
+        #introText {
+          text-align: center;
+          position: relative;
+          display: inline-block;
+          }
+        #introLine1 {
+          font-size: 1.4rem;
+          margin: 0 0 8px 0;
+          opacity: 0;
+          animation: fadeIn 2s forwards 0.5s;
+          line-height: 1.2;
+          font-weight: 400;
+          color: #ccc;
+        }
+        #introLine2 {
+          font-size: 2.2rem;
+          font-weight: 900;
+          color: white;
+          text-shadow: 0 0 5px white, 0 0 10px white, 0 0 20px white, 0 0 30px white;
+          opacity: 0;
+          animation: fadeIn 2s forwards 2.5s, wrenGlow 3s infinite ease-in-out 4.5s;
+          line-height: 1.1;
+          letter-spacing: 0.06em;
+        }
+
+        #orbitalWrapper {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 300px;
+          height: 300px;
+          transform-origin: 50% 50%;
+          pointer-events: none;
+          animation: spin 6s linear forwards;
+          overflow: visible;      
+        }
+
+
+        #modeUIContainer {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          width: center;
+          margin: 10px auto;
+          transform: translateX(-29px);
+          margin: 10px auto;
+
+          }
+
+        #modeWheelContainer {
+          width: 600px;   /* wider container */
+          height: 600px;  /* keeps circle proportional */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto;
+          position: relative;
+        }
+
+
+        /* Center all mode containers and their children */
+        #modeSection,
+        #bookCategoryGroup,
+        #modeTextInputGroup,
+        #queryInputGroup,
+        #translationContainer,
+        #translationOptions,
+          display: flex;
+          flex-direction: column;   /* stack children vertically */
+          align-items: center;      /* center horizontally */
+          text-align: center;       /* center text */
+          width: 100%;              /* full width for responsiveness */
+          margin: 20px auto;        /* auto margin to center container */
+          }
+
+
+            // Establish the lava background on the entire screen.
+            #lavaBackground {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100vw;
+              height: 100vh;
+              z-index: -1; /* behind introScreen */
+              overflow: hidden;
+              background: #1a001a; /* dark base so no white shows */
+            }
+
+            body {
+              background: #1a001a;
+            }
+          
+           @keyframes orbitText {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(720deg); }  // === Change the rotation of the blue ball effect ========
+          }
+
+          /* Mist effect after rotations */
+          @keyframes disperseMist {
+            0% {
+               opacity: 1;
+               filter: blur(4px);
+               transform: scale(1);
+             }
+              100% {
+              opacity: 0;
+              filter: blur(16px);
+            }
+          }
+
+          @keyframes ballPulse {
+          0%, 100% { opacity: 0.9; box-shadow: 0 0 8px rgba(30,136,229,0.8); }
+          50%      { opacity: 1;   box-shadow: 0 0 16px rgba(30,136,229,1); }
+          }
+
+          @keyframes wrenGlow {
+             0%, 100% {
+               text-shadow: 0 0 4px white, 0 0 8px white, 0 0 15px white;
+          }
+          50% {
+               text-shadow: 0 0 3px white, 0 0 8px white;
+          }
+          }
+
+          @keyframes fadeIn {
+          to { opacity: 1; }
+          }
+
+
+          /* Spin Animation */
+          @keyframes spin {
+            0%   { transform: rotate(360deg); }
+               100% { transform: rotate(360deg); }
+           }
+
+          #orbitalTrailSVG circle {
+            stroke: #1e88e5; /* blue color that matches the ball spinning */
+            stroke-width: 4;
+            fill: none;
+            filter: drop-shadow(0 0 8px #1e88e5);
+            stroke-dasharray: 879;
+            stroke-dashoffset: 879;
+            animation: drawCircle 3s linear forwards;
+        }
+
+/* Animate the circle to be drawn */
+@keyframes drawCircle {
+  0%   { stroke-dashoffset: 879; }
+  100% { stroke-dashoffset: 0; }
+}
+
+
+
+
+
+
+
+
+
+
+
+        /* ===== Main App Styles ===== */
+
+
+        main {
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;  /* better than center for scrolling content */
+          align-items: center;         /* stretch children horizontally */
+          min-height: 100vh;
+          width: 90%;                   /* use most of horizontal space */
+          max-width: 1400px;            /* optional, don’t get too wide */
+          margin: 0 auto;               /* center horizontally */
+          padding: 30px 25px;
+          gap: 20px;
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(10px);
+          border-radius: 20px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          color: #333;
+          box-sizing: border-box;
+          transition: background 0.5s ease, color 0.5s ease, box-shadow 0.5s ease, transform 0.3s ease;
+        }
+
+          main:hover {
+          transform: translateY(-2px);             /* subtle lift on hover */
+          box-shadow: 0 0 25px rgba(0, 150, 255, 0.6),      /* blue glow */
+              0 8px 30px rgba(0,0,0,0.1);           /* subtle shadow for depth */
+          }
+        h1 {
+          text-align: center;
+          color: #2c3e50;
+          margin-bottom: 25px;
+          user-select: none;
+        }
+
+
+        input, select {
+          padding: 12px 15px;
+          margin-top: 8px;
+          width: 100%;
+          font-size: 1rem;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          box-sizing: border-box;
+          transition: border-color 0.3s ease;
+          background: white;
+          color: #333;
+        }
+        input:focus, select:focus {
+          outline: none;
+          border-color: #4caf50;
+          box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+        }
+        button {
+         padding: 14px 0;
+         font-size: 1.1rem;
+         width: 100%;
+         margin-top: 22px;
+         background-color: #0047AB;
+         color: white;
+         border: none;
+         border-radius: 8px;
+         cursor: pointer;
+         font-weight: 600;
+         transition: background-color 0.3s ease;
+         user-select: none;
+        }
+
+
+        button:hover:not(:disabled) {
+          background-color: #388e3c;
+        }
+        button:disabled {
+          background-color: #a5d6a7;
+          cursor: wait;
+        }
+        #response, #modeResponse {
+          margin-top: 22px;
+          background: #fff;
+          padding: 20px;
+          border-radius: 12px;
+          box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+          font-size: 1rem;
+          color: #222;
+          user-select: text;
+          transition: background 0.5s ease, color 0.5s ease;
+
+
+          white-space: pre-wrap;        /* Preserve line breaks and wrap lines */
+          word-wrap: break-word;        /* Break long words if needed */
+          overflow-y: auto;             /* Allow scrolling if content is tall */
+          max-height: 350px;            /* Limit height so it doesn’t take over the screen */
+          font-family: monospace
+        }
+        #modeSection {
+          display: none;
+          margin-top: 32px;
+        }
+        #bookCategoryGroup {
+          display: none;
+          margin-top: 18px;
+        }
+
+
+
+
+    /* Ensure input groups stack their children vertically and are centered */
+      .input-group {
+        display: flex;
+        flex-direction: column; /* stack label + input + button vertically */
+        align-items: center;    /* center horizontally */
+        text-align: center;     /* center label text */
+        width: 100%;            /* optional, ensures inputs respect max-width */
+      }
+
+    /* Center individual inputs inside their group */
+    #modeTextInput,
+    #user-input,
+    #tidyingTopic,
+      input, select, textarea {
+      width: 100%;       /* fill parent container */
+      max-width: 600px;  /* optional cap for readability */
+      margin: 8px auto 0 auto;
+      display: block;
+      box-sizing: border-box;
+    }
+
+    #modeTextInputGroup,
+    #queryInputGroup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+        #modeInstructions {
+          margin-top: 8px;
+          font-size: 0.9rem;
+          color: #555;
+          min-height: 10em;
+          font-style: italic;
+          white-space: pre-wrap;
+          transition: color 0.5s ease;
+        }
+
+      #translateBtn {
+        background-color: #4CAF50;
+        color: white;
+        cursor: pointer;
+        border: none;
+        font-weight: bold;
+      }
+      #translateBtn:hover {
+        background-color: #45a049;
+      }
+      #translatedText {
+        margin-top: 16px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f2f2f2;
+        min-height: 40px;
+        white-space: pre-wrap;
+      }
+        body.dark-mode #modeInstructions {
+          color: #ccc;
+        }
+
+        @font-face {
+      font-family: 'Squartiqa 4F';
+      src: url('/static/fonts/Squartiqa4F.woff2') format('woff2'),
+           url('/static/fonts/Squartiqa4F.woff') format('woff'),
+           url('/static/fonts/Squartiqa4F.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    .squartiqa {
+      font-family: 'Squartiqa 4F', sans-serif;
+    }
+
+        #translationContainer {
+  display: flex;
+  justify-content: center; /* center horizontally */
+  align-items: center;     /* center vertically */
+  flex-direction: column;
+  margin-top: 20px;        /* space from elements above */
+}
+
+#translationOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+  width: 100%;             /* ensures inputs fill container */
+  font-family: Arial, sans-serif;
+}
+        
+        #face {
+  position: absolute;
+  top: calc(50% - 80px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.smile {
+  width: 32px;
+  height: 14px;
+  border-bottom: 3px solid white;
+  border-radius: 50% / 100%;
+  transform: rotate(0deg) translateX(0px);
+  opacity: 0;
+  position: relative;
+
+  top: -8px; /* 🔼 move smile up (adjust this value) */
+
+  box-shadow: 0 1px 2px rgba(255,255,255,0.5);
+  animation: smileFadeTiltSlide 2s forwards 2.2s;
+}
+
+@keyframes smileFadeTiltSlide {
+  0% {
+    opacity: 0;
+    transform: rotate(0deg) translateX(0px);
+  }
+  50% {
+    opacity: 1;          /* fully visible before tilt/slide */
+    transform: rotate(0deg) translateX(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-9deg) translateX(8px); /* tilt and move right */
+  }
+}
+
+/* ===== GTA derived Wheel ===== */
+#modeWheelContainer {
+  position: relative;
+  width: 400px;
+  height: 400px;
+
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-40px);
+  margin: 0 auto; /* keep horizontal centering */
+}
+
+#modeWheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  transform: rotate(0deg); /* align first slice nicely */
+}
+
+
+
+/* ===== Wheel Mode Options ===== */
+.wheel-option {
+  position: absolute;
+  width: 120px;
+  height: 48px;
+
+  left: 50%;
+  top: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.35);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #222;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+
+  /* ==== Transform Controls ==== */
+  --radius: 280px; /* increase slightly for horizontal spacing */
+  --rotate: 72deg; /* individual rotation for each mode */
+
+  /* 
+    Order of transforms matters:
+    1. rotate(var(--rotate)) -> rotate box around center
+    2. translateX(var(--radius)) -> move outwards along rotated axis
+    3. translate(-50%, -50%) -> center box itself
+  */
+  transform:
+    rotate(var(--rotate))
+    translateX(var(--radius))
+    translate(-50%, -50%);
+}
+
+/* Hover */
+.wheel-option:hover {
+  background: rgba(0, 150, 255, 0.85);
+  color: white;
+  box-shadow: 0 0 14px rgba(0,150,255,0.6);
+
+  transform:
+    rotate(var(--rotate))
+    translateX(var(--radius))
+    translate(-50%, -50%)
+    scale(1.1);
+}
+
+
+  // === New dark mode toggle css code ===
+        /* Hide default checkbox */
+#darkModeToggle {
+    display: none;
+}
+
+/* Wrapper */
+.toggle-wrapper {
+    position: relative;
+    width: 60px;
+    height: 32px;
+    display: block;
+    margin: 0 auto;
+    cursor: pointer;
+}
+
+/* Background track */
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1e88e5, #42a5f5);
+    border-radius: 50px;
+    transition: 0.4s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Circle knob */
+.toggle-slider::before {
+    content: "";
+    position: absolute;
+    height: 24px;
+    width: 24px;
+    left: 4px;
+    top: 4px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.4s;
+}
+
+/* When checked */
+#darkModeToggle:checked + .toggle-slider {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+#darkModeToggle:checked + .toggle-slider::before {
+    transform: translateX(28px);
+}
+
+
+        // CSS for the task reminder progress bar
+
+        .progress-bar {
+  width: 100%;
+  background-color: #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 20px;
+  margin: 5px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #2b6be6;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+        
+        // Code to keep the width and height of my html centered despite being on mobile or not
+        @media (max-width: 800px) {
+  #modeWheelContainer {
+    width: 90%;
+    height: 90vw;  /* keep circle proportional */
+  }
+  .wheel-option {
+    --radius: 40%;  /* % works with responsive width */
+    width: 100px;
+    font-size: 0.8rem;
+  }
+}
+        
+    </style>
+</head>
+<body>
+<!-- ========== INTRO SCREEN ========== -->
+<div id="introScreen" aria-label="Welcome Screen" role="dialog" aria-modal="true" class="centered-container">
+
+    <!-- Face with eyes and smile -->
+    <div id="face">
+        <div class="eyes" aria-hidden="true">
+            <div class="eye"></div>
+            <div class="eye"></div>
+        </div>
+        <div class="smile"></div>
+    </div>
+
+    <!-- Orbital trail SVG -->
+    <!-- Orbital Trail (static circle) -->
+<svg id="orbitalTrailSVG"
+     width="300"
+     height="300"
+     viewBox="0 0 300 300"
+     style="position:absolute; top:45%; left:50%; transform:translate(-50%, -50%); pointer-events:none; overflow:visible;">
+    <circle cx="150" cy="150" r="140"
+            stroke="rgba(30,136,229,0.3)"
+            stroke-width="4"
+            fill="none"/> </svg>
+    <!-- Intro Text -->
+    <div id="introText" class="centered-container">
+        <div id="introLine1">Greetings scholar</div>
+        <div id="introLine2">I'm <span class="squartiqa">WRIN</span></div>
+
+        <!-- Spinning ball -->
+        <div id="orbitalWrapper" aria-hidden="true">
+  <div id="introBall"></div>
+</div>
+    </div>
+</div>
+<!-- ========== MAIN APP ========== -->
+<main role="main" aria-live="polite"
+      style="display:none; width: 90%; max-width: 1400px; margin: 0 auto;">
+    <h1 id="mainTitle">👋 Welcome back, ready when you are! </h1>
+
+
+    <!-- Dark Mode Toggle -->
+<div id="darkModeContainer" class="centered-container">
+    <label for="darkModeToggle" id="darkModeLabel" class="toggle-wrapper">
+        <input type="checkbox" id="darkModeToggle"/>
+        <span class="toggle-slider"></span>
+    </label>
+</div>
+
+
+    <div id="reminder-tasks-container"></div>
+
+
+    <!-- Start Input -->
+    <div id="startContainer" class="input-group centered-container">
+        <label for="nameInput" id="nameLabel">📝 Ready to invest in yourself, press enter!</label>
+        <input type="text" id="nameInput" placeholder="Your name here..." autocomplete="off" aria-describedby="nameLabel"/>
+        <button id="startBtn"><span class="icon">🎖️</span> Start WRIN </button>
+    </div>
+
+
+
+    <!-- ========== RESPONSE + VIDEO INFO ========== -->
+    <div id="response" aria-live="polite"></div>
+    <div id="video-info"></div>
+
+    <!-- ========== MODE UI CONTAINER ========== -->
+<div id="modeUIContainer" class="centered-container">
+    <section id="modeSection" aria-label="Mode Selection and Interaction" class="centered-container" style="display: none;">
+        <div id="modeWheelContainer">
+            <div id="modeWheel">
+                <div class="wheel-option" data-value="budget">💰 Finance module</div>
+                <div class="wheel-option" data-value="feedback">📝 Feedback</div>
+                <!-- Add other modules here -->
+            </div>
+        </div>
+
+        <!-- Feedback Section (hidden by default) -->
+        <div id="feedback-section" style="margin-top: 20px; display: none;">
+            <h3>💬 Give Feedback on Finance Module</h3>
+            <textarea id="feedback-text" placeholder="Your thoughts here..." rows="3" style="width: 100%;"></textarea>
+            <button id="feedback-submit">Submit Feedback</button>
+            <p id="feedback-response" style="color: green; font-weight: bold;"></p>
+        </div>
+    </section>
+</div>
+
+            <!-- Mode Instructions -->
+            <div id="modeInstructions" class="centered-container" aria-live="polite" aria-atomic="true"></div>
+
+             <!-- General Input Group -->
+        <div id="modeTextInputGroup" class="input-group centered-container" style="display: none;">
+            <label for="modeTextInput">Scholars input:</label>
+            <input type="text" id="modeTextInput" placeholder="Enter here..."/>
+        </div>
+
+            <!-- Query Input Group -->
+        <div id="queryInputGroup" class="input-group centered-container" style="display: none;">
+            <label for="user-input">Ask a question:</label>
+            <input type="text" id="user-input" placeholder="Ask a question..." autocomplete="off"/>
+        </div>
+
+            <!-- House Tidying Input Group -->
+<div id="tidyingInstructions" class="centered-container" style="display: none;">
+    <label for="tidyingTopic" id="tidyingTopicLabel">
+        🏠 What area would you like help tidying?
+        <span style="display: block; font-size: 0.9em; color: #666;">
+            Try one of these: <strong>cleaning</strong>, <strong>energy</strong>,
+            <strong>security</strong>, <strong>organization</strong>, <strong>automation</strong>
+        </span>
+    </label>
+    <input
+        type="text"
+        id="tidyingTopic"
+        placeholder="e.g., cleaning, organization, energy..."
+        autocomplete="off"
+    />
+</div>
+
+
+
+    <!-- Book Selection -->
+        <div id="bookCategoryGroup" class="centered-container" style="display: none;">
+            <label for="bookCategory" id="bookCategoryLabel">Choose a book category:</label>
+            <select id="bookCategory" aria-describedby="bookCategoryLabel">
+                <option value="">-- Select a Category --</option>
+                <option value="fantasy">fantasy</option>
+                <option value="science">science</option>
+                <option value="adventure">adventure</option>
+                <option value="romance">romance</option>
+                <option value="comedy">comedy</option>
+            </select>
+        </div>
+
+        <div id="bookTypeGroup" class="centered-container" style="display: none;">
+            <label id="bookTypeLabel">What kind of recommendation do you want?</label>
+            <label><input type="radio" name="bookType" value="3" checked/> 📚 + 🎧 Both</label>
+        </div>
+
+
+    <!-- Translation -->
+        <div id="translationContainer" class="centered-container">
+            <div id="translationOptions" class="centered-container" style="display: none;">
+                <label for="textToTranslate">Enter text to translate:</label>
+                <textarea id="textToTranslate" placeholder="Type your text here..." rows="4" style="width: 100%;"></textarea>
+
+                <label for="translateTo">Translate to:</label>
+                <select id="translateTo" style="width: 100%;"></select>
+
+                <button id="translateBtn">Translate</button>
+
+                <div id="loadingIndicator" style="display: none; color: #555;">🔄 Translating...</div>
+                <div id="translatedText" style="white-space: pre-wrap; font-weight: bold;"></div>
+            </div>
+        </div>
+
+    <!-- Budget Container -->
+       <div id="budgetChatContainer" class="centered-container" style="border: 1px solid #0047AB; padding: 10px; height: 300px; overflow-y: auto; background: #f9f9f9; text-align:center;">
+        </div>
+
+    <div id="budget-progress-container"></div>
+
+        <button id="sendBtn" style="display:none;">Send</button>
+        <div id="output" style="white-space: pre-wrap;"></div>
+        <div id="modeResponse" aria-live="polite" aria-atomic="true"></div>
+
+
+</main>
+
+<script>
+
+    let currentUserId = null;
+    let userInput = '';
+    let depressionStep = 0;
+    let depressionAnswers = [];
+    let sendBtnMode = 'send';
+
+
+
+
+
+    // Dark mode toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    darkModeToggle.addEventListener('change', () => {
+      document.body.classList.toggle('dark-mode', darkModeToggle.checked);
+    });
+
+    // Elements
+    const startBtn = document.getElementById('startBtn');
+    const responseDiv = document.getElementById('response');
+    const modeSection = document.getElementById('modeSection');
+    const sendBtn = document.getElementById('sendBtn');
+    const modeResponse = document.getElementById('modeResponse');
+    const nameInput = document.getElementById('nameInput');
+    const bookCategoryGroup = document.getElementById('bookCategoryGroup');
+    const bookCategorySelect = document.getElementById('bookCategory');
+    const bookTypeGroup = document.getElementById('bookTypeGroup');
+    const modeInstructions = document.getElementById('modeInstructions');
+    const translationOptions = document.getElementById('translationOptions');
+    const voiceBtn = document.getElementById('voiceBtn');
+    const voiceResponse = document.getElementById('voiceResponse');
+    const wheelOptions = document.querySelectorAll('.wheel-option');
+    const modeTextInput = document.getElementById('modeTextInput');
+    const DarkmodeBox = document.getElementById("Dark mode Toggle container");
+    const budgetProgress = document.getElementById('budget-progress-container');
+
+    async function startSession(username) {
+  try {
+    const response = await fetch('/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: username }),
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to start session.');
+    }
+
+    // Store the userId (which is the sanitized name from backend)
+    localStorage.setItem('userId', data.userId);
+    return data.userId;
+  } catch (error) {
+    alert('Error starting session: ' + error.message);
+    return null;
+  }
+}
+
+
+window.addEventListener("load", () => {
+    const wrapper = document.getElementById("orbitalWrapper");
+    const ball = document.getElementById("introBall");
+
+    // Step 1: appear
+    ball.style.opacity = "0";
+    ball.style.transition = "opacity 0.6s ease";
+
+    setTimeout(() => {
+        ball.style.opacity = "1";
+    }, 300);
+
+    // Step 2: orbit
+    setTimeout(() => {
+        wrapper.style.animation = "orbitText 2.5s ease-in-out forwards";
+    }, 900);
+
+    // Step 3: return to original spot
+    setTimeout(() => {
+        wrapper.style.animation = "none";
+        wrapper.style.transform = "rotate(0deg)";
+    }, 3500);
+});
+
+
+window.addEventListener('DOMContentLoaded', () => {
+  const wheelItems = document.querySelectorAll('.wheel-option');
+  if (!wheelItems.length) return console.warn("No wheel items found.");
+
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true; // disable send until a mode is selected
+
+  function highlightSelectedWheelItem(selectedItem) {
+    wheelItems.forEach(item => item.classList.remove('selected-wheel'));
+    selectedItem.classList.add('selected-wheel');
+
+    // const selectedAngle = parseFloat(selectedItem.style.getPropertyValue('--rotate')) || 0;
+    // const wheel = document.getElementById('modeWheel');
+    // if (wheel) wheel.style.transform = `rotate(${-selectedAngle}deg)`;
+  }
+
+  const total = wheelItems.length;
+  const angleStep = 360 / total;
+
+  wheelItems.forEach((item, i) => {
+    const angle = i * angleStep;
+    item.style.setProperty('--rotate', `${angle}deg`);
+    item.style.transform = `rotate(${angle}deg) translate(150px) rotate(-${angle}deg)`;
+
+    item.addEventListener('click', () => {
+      const modeValue = item.dataset.value; // correctly scoped
+
+      // Store globally
+      window.currentSelectedMode = modeValue;
+
+      // Update the UI for selected mode
+      updateModeUI(modeValue);
+
+      // Highlight the clicked wheel item
+      highlightSelectedWheelItem(item);
+
+      // Enable send button now that a mode is selected
+      sendBtn.disabled = false;
+    });
+  });
+});
+
+window.addEventListener('load', async () => {
+  // You need to define username here or fetch it from somewhere
+  // For example, from an input or localStorage:
+  const username = localStorage.getItem('username') || ''; // or get from input
+
+  if (username) {
+    const userId = await startSession(username);
+    if (!userId) {
+      // handle error if session didn't start properly
+      return;
+    }
+  }
+
+  const intro = document.getElementById('introScreen');
+  const main = document.querySelector('main');
+
+  setTimeout(() => {
+    intro.classList.add('fade-out');
+    intro.addEventListener(
+      'transitionend',
+      () => {
+        intro.style.display = 'none';
+        main.style.display = 'block';
+        requestAnimationFrame(() => {
+          main.classList.add('fade-in');
+          document.getElementById('nameInput').focus();
+        });
+      },
+      { once: true }
+    );
+  }, 9000);
+});
+
+
+    const languages = {
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  zh: "Chinese",
+  ja: "Japanese",
+  ru: "Russian",
+  ar: "Arabic",
+  hi: "Hindi"
+};
+
+const translateTo = document.getElementById('translateTo');
+const textToTranslate = document.getElementById('textToTranslate');
+const translatedText = document.getElementById('translatedText');
+const loadingIndicator = document.getElementById('loadingIndicator');
+const translateBtn = document.getElementById('translateBtn');
+
+function switchSendBtnToMemoryClear() {
+  sendBtn.textContent = '🧹 Clear Memory Logs';
+  sendBtn.dataset.action = 'clear-logs';
+  sendBtn.style.display = 'inline-block';
+  sendBtn.disabled = false;
+}
+//  Function for memory logger to restore and delete it
+function restoreSendBtn() {
+  sendBtn.textContent = 'Send';
+  sendBtn.dataset.action = 'send';
+  sendBtn.disabled = false;
+}
+
+async function clearMemoryLogs() {
+  try {
+    modeResponse.textContent = '🧹 Clearing memory logs...';
+    sendBtn.disabled = true;
+
+    const res = await fetch('/clear-logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUserId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to clear logs');
+    }
+
+    modeResponse.textContent = '✅ All memory logs cleared.';
+  } catch (err) {
+    console.error(err);
+    modeResponse.textContent = '❌ Failed to clear memory logs.';
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+// feedback + finances module
+
+document.querySelectorAll('.wheel-option').forEach(option => {
+    option.addEventListener('click', () => {
+        const mode = option.dataset.value;
+
+        // Hide all module sections initially
+        document.getElementById('feedback-section').style.display = 'none';
+
+        if (mode === 'budget') {
+            startFinanceModule(); // Your existing finance logic
+        } else if (mode === 'feedback') {
+            // Show feedback form
+            document.getElementById('feedback-section').style.display = 'block';
+        }
+    });
+});
+
+// Feedback submission
+document.getElementById('feedback-submit').addEventListener('click', () => {
+    const feedbackText = document.getElementById('feedback-text').value.trim();
+    const responseEl = document.getElementById('feedback-response');
+
+    if (!feedbackText) {
+        responseEl.style.color = 'red';
+        responseEl.textContent = "⚠️ Please enter your feedback.";
+        return;
+    }
+
+    fetch('/feedback', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({feedback: feedbackText})
+    })
+    .then(res => res.json())
+    .then(data => {
+        responseEl.style.color = data.success ? 'green' : 'red';
+        responseEl.textContent = data.message || "Feedback submitted!";
+        if (data.success) {
+            document.getElementById('feedback-text').value = ''; // clear textarea
+        }
+    })
+    .catch(err => {
+        responseEl.style.color = 'red';
+        responseEl.textContent = "⚠️ Error submitting feedback.";
+        console.error(err);
+    });
+});
+
+
+
+
+
+
+
+// Populate the target language dropdown
+function populateTranslateTo() {
+  for (const [code, name] of Object.entries(languages)) {
+    const option = document.createElement('option');
+    option.value = code;
+    option.textContent = name;
+    translateTo.appendChild(option);
+  }
+  translateTo.value = 'en'; // default
+}
+populateTranslateTo();
+
+// Translate button click
+translateBtn.addEventListener('click', async () => {
+  const text = textToTranslate.value.trim();
+  if (!text) return alert("Please enter some text to translate.");
+
+  const target_lang = translateTo.value;
+  translatedText.textContent = '';
+  loadingIndicator.style.display = 'block';
+
+  try {
+    const response = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'translate',
+        input: text,
+        user_translate: true,
+        ai_translate: false,
+        target_lang: target_lang,
+        source_lang: 'auto',  // always auto-detect
+      }),
+    });
+    const data = await response.json();
+    translatedText.textContent = data.translated_input || 'Translation failed.';
+  } catch (err) {
+    translatedText.textContent = 'Network error: ' + err.message;
+  } finally {
+    loadingIndicator.style.display = 'none';
+  }
+});
+
+
+
+async function ensureSession(userId) {
+  const response = await fetch('/create_session', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ userId }),
+  });
+  const data = await response.json();
+  if (!data.success) {
+    alert('Failed to create user session: ' + (data.error || 'Unknown error'));
+  }
+}
+
+async function startApp() {
+    const userId = localStorage.getItem('userId') || prompt("Enter your username:");
+    if (!userId) {
+      alert("Username is required!");
+      return;
+    }
+
+    localStorage.setItem('userId', userId);
+    await ensureSession(userId);
+  }
+
+  document.addEventListener('DOMContentLoaded', startApp);
+
+
+
+    function updateDepressionScoreDisplay() {
+  const scoreDiv = document.getElementById('finalScoreDisplay');
+  if (!scoreDiv) return;
+
+  if (depressionScore > 0) {
+    scoreDiv.textContent = `🧠 Screening Score: ${depressionScore}`;
+    scoreDiv.style.display = 'block';
+  } else {
+    scoreDiv.style.display = 'none';
+  }
+}
+
+
+
+function parseTeenCommand(input) {
+  const words = input.trim().split(' ');
+  const commandWord = words[0].toLowerCase(); // first word
+  const args = words.slice(1).join(' '); // everything after the first word
+
+  // Map teen-friendly word to backend function
+  const commandMap = {
+    show: 'view_reminders',
+    due: 'check_due_reminders',
+    add: 'add_reminder',
+    clear: 'clear_reminders'
+  };
+
+  const backendCommand = commandMap[commandWord] || null;
+  return { backendCommand, args };
+}
+
+
+// Progress bar sections for each of the modes.
+
+    function renderReminders(tasks) {
+  const container = document.getElementById('reminder-tasks-container');
+  container.innerHTML = ''; // clear previous tasks
+
+  tasks.forEach((task, index) => {
+    // Create task wrapper
+    const taskDiv = document.createElement('div');
+    taskDiv.classList.add('task');
+
+    // Task label
+    const label = document.createElement('p');
+    label.textContent = task.text;
+
+    // Progress bar container
+    const progress = document.createElement('div');
+    progress.classList.add('progress-bar');
+
+    // Progress fill (dynamic width)
+    const fill = document.createElement('div');
+    fill.classList.add('progress-fill');
+
+    // Example: dynamically calculate progress (0-100%) if task has progress field
+    const percent = task.percent || 0; // you can calculate in JS
+    fill.style.width = percent + '%';
+    fill.textContent = percent + '%'; // optional, show text inside bar
+
+    progress.appendChild(fill);
+    taskDiv.appendChild(label);
+    taskDiv.appendChild(progress);
+    container.appendChild(taskDiv);
+  });
+}
+
+
+
+// Allow the progress bar to flow
+function animateProgressBar(barElement, targetPercent, duration = 800) {
+  if (!barElement) return;
+
+  const startWidth = parseFloat(barElement.style.width) || 0;
+  const endWidth = Math.min(targetPercent, 100);
+  const startTime = performance.now();
+
+  function step(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const newWidth = startWidth + (endWidth - startWidth) * progress;
+
+    barElement.style.width = newWidth + '%';
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
+
+
+
+function renderGoalProgress(progressData) {
+  const container = document.getElementById('budget-progress-container');
+  container.innerHTML = ''; // clear old progress
+
+  const taskDiv = document.createElement('div');
+  taskDiv.classList.add('task');
+
+  const label = document.createElement('p');
+  label.textContent = `🎯 $${progressData.current} / $${progressData.goal}`;
+
+  const progress = document.createElement('div');
+  progress.classList.add('progress-bar');
+
+  const fill = document.createElement('div');
+  fill.classList.add('progress-fill');
+
+  const percent = Math.min(progressData.progress, 100);
+
+  fill.style.width = '0%';
+  fill.style.transition = 'width 0.6s ease';
+  fill.textContent = percent + '%';
+
+  progress.appendChild(fill);
+  taskDiv.appendChild(label);
+  taskDiv.appendChild(progress);
+  container.appendChild(taskDiv);
+
+  // smooth animate
+  setTimeout(() => {
+    fill.style.width = percent + '%';
+  }, 50);
+}
+
+function renderGoalProgress(progressData) {
+  const budgetProgress = document.getElementById('budget-progress-container');
+  if (!budgetProgress || !progressData) return;
+
+  const percent = Math.min(Math.round(progressData.progress), 100);
+
+  // Simple progress bar HTML
+  budgetProgress.innerHTML = `
+    <div style="background: #eee; width: 100%; border-radius: 6px; height: 20px;">
+      <div style="
+        width: ${percent}%;
+        background: #4caf50;
+        height: 100%;
+        border-radius: 6px;
+        text-align: center;
+        color: white;
+        line-height: 20px;
+        font-size: 12px;
+      ">
+        ${percent}%
+      </div>
+    </div>
+  `;
+
+  budgetProgress.style.display = 'block';
+}
+
+
+function renderWealthSimulation(container, data) {
+    const sim = data.simulation;
+    const sp = data.sp500;
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'width:100%;padding:10px;box-sizing:border-box;';
+
+    // S&P 500 Live Card
+    if (sp) {
+        const spCard = document.createElement('div');
+        const isPositive = !sp.change.includes('-');
+        spCard.style.cssText = 'background:#0047AB;color:white;padding:12px;border-radius:10px;margin-bottom:12px;text-align:center;';
+        spCard.innerHTML = `
+            <div style="font-size:10px;letter-spacing:2px;opacity:0.7">S&P 500 (SPY) LIVE</div>
+            <div style="font-size:26px;font-weight:900">$${parseFloat(sp.price).toFixed(2)}</div>
+            <div style="color:${isPositive ? '#4ECDC4' : '#ff6b6b'};font-weight:bold">${sp.change} (${sp.change_pct})</div>
+            <div style="font-size:11px;margin-top:4px;opacity:0.7">H: $${parseFloat(sp.high).toFixed(2)} · L: $${parseFloat(sp.low).toFixed(2)}</div>
+        `;
+        wrapper.appendChild(spCard);
+    }
+
+    // Simulation Cards
+    const scenarios = [
+        { label: '🟢 Conservative', rate: '5%', data: sim.conservative, color: '#2ecc71' },
+        { label: '🟡 Moderate', rate: '7% — S&P 500 avg', data: sim.moderate, color: '#f1c40f' },
+        { label: '🔴 Aggressive', rate: '10%', data: sim.aggressive, color: '#e74c3c' },
+    ];
+
+    scenarios.forEach(s => {
+        const explain = document.createElement('div');
+explain.style.cssText = 'background:#eef4ff;border-radius:10px;padding:14px;margin-top:10px;font-size:13px;line-height:1.6;';
+explain.innerHTML = `
+    <div style="font-weight:900;margin-bottom:8px;">📚 What does this mean?</div>
+
+    <div style="margin-bottom:8px;">
+        <strong>What you put in:</strong> You're investing
+        <strong>$${sim.monthly}/month</strong> for <strong>${sim.years} years</strong>
+        starting with <strong>$${sim.starting}</strong>. That's
+        <strong>$${sim.conservative.invested_total.toLocaleString()}</strong> total from your pocket.
+    </div>
+
+    <div style="margin-bottom:8px;">
+        <strong>What is a return?</strong> When you invest, your money earns more money over time.
+        A 7% return means for every $100 invested, you earn $7 that year —
+        then next year you earn 7% on $107. That's called <strong>compound interest</strong>.
+    </div>
+
+    <div style="margin-bottom:8px;">
+        <strong>Why S&P 500?</strong> It tracks the 500 biggest US companies.
+        Historically it averages ~7% per year. You don't pick stocks —
+        you own a tiny piece of <em>all</em> of them. Less risk, steady growth.
+    </div>
+
+    <div style="margin-bottom:8px;">
+        <strong>Conservative vs Aggressive?</strong>
+        Conservative (5%) = safer investments like bonds.
+        Aggressive (10%) = higher risk stocks that can grow faster but can also drop.
+        Most beginners start moderate with S&P 500.
+    </div>
+
+    <div style="background:#0047AB;color:white;padding:10px;border-radius:8px;text-align:center;margin-top:10px;">
+        💡 <strong>Bottom line:</strong> You invest
+        <strong>$${sim.conservative.invested_total.toLocaleString()}</strong> and
+        could end up with <strong>$${sim.moderate.future_value.toLocaleString()}</strong>.
+        The extra <strong>$${sim.moderate.growth.toLocaleString()}</strong> is your money working for you while you sleep.
+    </div>
+`;
+wrapper.appendChild(explain);
+renderWealthChart(wrapper, sim);
+    });
+
+    // Footer
+    const footer = document.createElement('div');
+    footer.style.cssText = 'text-align:center;font-size:11px;opacity:0.5;margin-top:8px;';
+    footer.textContent = `Based on ${sim.years} years · $${sim.monthly}/month · Starting $${sim.starting}`;
+    wrapper.appendChild(footer);
+
+    container.appendChild(wrapper);
+    container.scrollTop = container.scrollHeight;
+}
+
+
+
+
+
+
+
+// Render wealth chart that shows live visual data
+function renderWealthChart(wrapper, sim) {
+    // Build year by year data points
+    const labels = [];
+    const conservativeData = [];
+    const moderateData = [];
+    const aggressiveData = [];
+    const investedData = [];
+
+    for (let y = 0; y <= sim.years; y++) {
+        labels.push(`Year ${y}`);
+
+        const c = simulate(sim.starting, sim.monthly, 0.05, y);
+        const m = simulate(sim.starting, sim.monthly, 0.07, y);
+        const a = simulate(sim.starting, sim.monthly, 0.10, y);
+        const inv = (sim.monthly * y * 12) + sim.starting;
+
+        conservativeData.push(c);
+        moderateData.push(m);
+        aggressiveData.push(a);
+        investedData.push(inv);
+    }
+
+    // Chart container
+    const chartWrapper = document.createElement('div');
+    chartWrapper.style.cssText = 'background:white;border-radius:12px;padding:16px;margin-top:12px;';
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:900;font-size:14px;margin-bottom:4px;color:#0047AB;';
+    title.textContent = '📈 Your Wealth Growth Over Time';
+    chartWrapper.appendChild(title);
+
+    const subtitle = document.createElement('div');
+    subtitle.style.cssText = 'font-size:11px;color:#888;margin-bottom:12px;';
+    subtitle.textContent = 'Shows how your money grows year by year vs what you actually put in';
+    chartWrapper.appendChild(subtitle);
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'wealthChart';
+    canvas.style.cssText = 'width:100%;max-height:250px;';
+    chartWrapper.appendChild(canvas);
+    wrapper.appendChild(chartWrapper);
+
+    // Render chart
+    new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'What You Invested',
+                    data: investedData,
+                    borderColor: '#888',
+                    backgroundColor: 'rgba(136,136,136,0.1)',
+                    borderDash: [5, 5],
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                },
+                {
+                    label: '🟢 Conservative 5%',
+                    data: conservativeData,
+                    borderColor: '#2ecc71',
+                    backgroundColor: 'rgba(46,204,113,0.05)',
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                },
+                {
+                    label: '🟡 Moderate 7% (S&P 500)',
+                    data: moderateData,
+                    borderColor: '#f1c40f',
+                    backgroundColor: 'rgba(241,196,15,0.05)',
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    borderWidth: 3,
+                },
+                {
+                    label: '🔴 Aggressive 10%',
+                    data: aggressiveData,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231,76,60,0.05)',
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                },
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 11 } } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.dataset.label}: $${Math.round(ctx.raw).toLocaleString()}`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: val => `$${(val/1000).toFixed(0)}k`
+                    },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    // Chart explanation
+    const chartExplain = document.createElement('div');
+    chartExplain.style.cssText = 'background:#f0f4ff;border-radius:8px;padding:12px;margin-top:10px;font-size:12px;line-height:1.6;';
+    chartExplain.innerHTML = `
+        <strong>📖 How to read this chart:</strong><br><br>
+        <strong>Grey dotted line</strong> = money you actually put in from your pocket<br>
+        <strong>Everything above it</strong> = money your investments earned for you<br><br>
+        Notice how the gap between the dotted line and the colored lines gets
+        <strong>bigger over time</strong> — that's compound interest accelerating.
+        The longer you wait, the steeper the curve. This is why starting at
+        <strong>your age</strong> is one of the best financial decisions you can make.
+    `;
+    wrapper.appendChild(chartExplain);
+}
+
+function simulate(starting, monthly, rate, years) {
+    const months = years * 12;
+    const r = rate / 12;
+    let total = starting;
+    for (let i = 0; i < months; i++) {
+        total = total * (1 + r) + monthly;
+    }
+    return Math.round(total);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Update UI based on mode selection
+    function updateModeUI(selected) {
+    if (!selected) return;
+
+    restoreSendBtn();
+
+    const modeSection = document.getElementById('modeSection');
+    const queryInputGroup = document.getElementById('queryInputGroup');
+    const modeTextInputGroup = document.getElementById('modeTextInputGroup');
+    const chatContainer = document.getElementById('budgetChatContainer');
+    const budgetProgress = document.getElementById('budget-progress-container');
+    if (budgetProgress) {
+      budgetProgress.innerHTML = '';
+      budgetProgress.style.display = 'none';
+    }
+
+    // Reset UI elements
+    sendBtn.style.display = 'inline-block';
+    modeSection.style.display = selected ? 'block' : 'none';
+    chatContainer.style.display = selected === 'budget' ? 'block' : 'none';
+    queryInputGroup.style.display = 'none';
+    modeTextInputGroup.style.display = 'none';
+    bookCategoryGroup.style.display = 'none';
+    bookTypeGroup.style.display = 'none';
+    translationOptions.style.display = 'none';
+    modeInstructions.textContent = '';
+    modeResponse.textContent = '';
+
+  switch (selected) {
+    case 'math':
+    case 'science':
+      queryInputGroup.style.display = 'block';
+      modeInstructions.textContent = `Enter your ${selected === 'math' ? 'math problem' : 'science question'} above and click Send.`;
+      break;
+
+    case 'tidy':
+      // No queryInputGroup or modeTextInputGroup shown here
+      modeInstructions.innerHTML = `
+        <label for="tidyingTopic">
+          🏠 What area would you like help tidying?
+          <span style="display: block; font-size: 0.9em; color: #808080; margin-top: 4px;">
+            Try one of these: <strong>cleaning</strong>, <strong>energy</strong>,
+            <strong>security</strong>, <strong>organization</strong>,
+            <strong>automation</strong>
+          </span>
+        </label>
+        <input
+          type="text"
+          id="tidyingTopic"
+          placeholder="e.g., cleaning, organization, energy..."
+          autocomplete="off"
+          style="margin-top: 8px;"
+        />
+      `;
+      break;
+
+    case 'book':
+      bookCategoryGroup.style.display = 'block';
+      bookTypeGroup.style.display = 'block';
+      modeInstructions.textContent = 'Select a book category and type, then click Send.';
+      break;
+
+    case 'depression':
+      modeTextInputGroup.style.display = 'none';
+      modeResponse.style.display = 'block';
+      modeInstructions.textContent = 'Welcome back! Press "Send" to begin the depression screening.';
+      modeTextInput.style.display = 'block';
+      modeTextInput.focus();
+
+      fetch('/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, mode: 'depression', input: '' })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.response) {
+          if (typeof data.score === 'number') {
+            depressionScore = data.score;
+            updateDepressionScoreDisplay();
+          }
+          modeResponse.innerHTML = data.response.replace(/\n/g, '<br>');
+        }
+      })
+      .catch(() => {});
+      break;
+
+
+    case 'budget':
+  chatContainer.style.display = 'flex';
+  chatContainer.style.flexDirection = 'column';
+  chatContainer.style.alignItems = 'center';
+  chatContainer.innerHTML = '';
+  modeTextInputGroup.style.display = 'block';
+
+  // Show welcome immediately
+  const welcome = document.createElement('div');
+  welcome.style.cssText = 'text-align:center;padding:16px;font-size:14px;line-height:1.8;';
+  welcome.innerHTML = `
+    <div style="font-size:22px">💰</div>
+    <div style="font-weight:900;font-size:16px;color:#0047AB;">Welcome to the Finance Module</div>
+    <div style="margin-top:8px;color:#555;font-size:13px;">Your personal financial coach — ask anything or dive right in.</div>
+    <div style="margin-top:16px;background:#f0f4ff;border-radius:10px;padding:12px;font-size:13px;line-height:1.8;">
+      💬 <strong>Hello there scholar!:</strong><br>
+      I'm going to ask you a question so that we can build a foundation!<br>
+      "Don't be alarmed, risks is how growth happens"<br>
+    </div>
+  `;
+  chatContainer.appendChild(welcome);
+
+  // Simultaneously fire backend to get first prompt
+  const typingMsg = appendChat(chatContainer, 'WREN is typing...', false, true);
+
+  fetch('/mode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: currentUserId, mode: 'budget', input: '' }),
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (typingMsg && typingMsg.parentNode) {
+      typingMsg.parentNode.removeChild(typingMsg);
+    }
+    if (data.simulation) {
+      renderWealthSimulation(chatContainer, data);
+    } else if (data.response) {
+      renderBudgetResponse(chatContainer, data.response, data.suggest);
+    }
+    if (data.goal_progress) {
+      renderGoalProgress(data.goal_progress);
+    }
+  });
+
+  modeInstructions.textContent = 'Ask anything or type "options" for the menu.';
+  break;
+
+    case '1': // Name Recognition
+      modeTextInputGroup.style.display = 'block';
+      modeInstructions.textContent = 'Please dont be afraid to introduce yourself below.';
+      break;
+
+    case 'logs':
+      modeTextInputGroup.style.display = 'none';
+      queryInputGroup.style.display = 'none';
+
+      modeInstructions.textContent = '📜 Displaying your conversations with me...';
+      modeResponse.textContent = 'Loading...';
+
+      switchSendBtnToMemoryClear();
+      handleMemoryLogs();
+      break;
+
+    case '10': // Reminder mode (number or string)
+    case 'reminder':
+      modeTextInputGroup.style.display = 'block';
+      queryInputGroup.style.display = 'none';
+      chatContainer.style.display = 'none'; // hide budget container if shown previously
+
+      modeInstructions.innerHTML = `
+        📝 <strong>Reminder modulee</strong><br><br>
+        I operate based on keywords like..:
+        <ul style="margin-top: 4px; padding-left: 20px; font-size: 0.95em;">
+          <li><code>add finish calc homework (include time by hour with keywords 'at') </code></li>
+          <li><code>show my overall reminders</code></li>
+          <li><code>due reminders listed</code></li>
+          <li><code>clear my recent reminders</code></li>
+        </ul>
+        Enter your command either manually or verbally.. <strong>Send</strong>.
+      `;
+      modeResponse.textContent = '';
+      break;
+
+    default:
+      modeInstructions.textContent = 'Enter the input and press SEND.';
+      sendBtn.style.display = 'inline-block';
+      break;
+  }
+}
+
+
+
+   startBtn.addEventListener("click", async () => {
+  const name = nameInput.value.trim();
+
+  if (!name) {
+    responseDiv.innerText = "⚠️ Please enter your name first.";
+    return;
+  }
+
+  try {
+    // Send name to backend to start session or register user
+    const response = await fetch("/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      currentUserId = result.userId;
+
+      responseDiv.innerText = result.response || `👋 Hello, ${name}! Please interact below to see what I can do for you!`;
+
+      // Show mode selection section, focus input
+      modeSection.style.display = 'block';
+      document.getElementById('modeWheelContainer').scrollIntoView({ behavior: 'smooth' });
+
+      // Disable start inputs & button to prevent re-submission
+      startBtn.disabled = true;
+      nameInput.disabled = true;
+
+      // Show send button for further interactions
+      sendBtn.style.display = 'inline-block';
+    } else {
+      responseDiv.innerText = `❌ ${result.error || 'Unknown error'}`;
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    responseDiv.innerText = "❌ Something went wrong. Try again.";
+
+  }
+});
+
+    sendBtn.addEventListener('click', async () => {
+  // 🔹 Clear the response immediately
+  modeResponse.textContent = ''; // or use innerHTML = '' if you had HTML
+  // Optional: also clear other UI containers if needed
+  const reminderTasksContainer = document.getElementById('reminder-tasks-container');
+  if (reminderTasksContainer) reminderTasksContainer.innerHTML = '';
+
+  // 🔴 FIRST: special button modes
+  if (sendBtnMode === 'clearLogs') {
+    await clearMemoryLogs();
+    return;
+  }
+
+  // 🟢 NORMAL SEND FLOW
+  const mode = window.currentSelectedMode;
+  if (!validateMode(mode)) return;
+  if (!validateSession()) return;
+
+  try {
+    sendBtn.disabled = true;
+    // Show processing text after clearing old content
+    modeResponse.textContent = '⏳ Processing...';
+
+    switch (mode) {
+      case '1':
+        await handleNameRecognition();
+        break;
+      case 'book':
+        await handleBookMode();
+        break;
+      case 'budget':
+        await handleBudgetMode();
+        break;
+      case 'logs':
+        await handleMemoryLogs();
+        break;
+      case 'depression':
+        await handleDepressionMode();
+        break;
+      case 'tidy':
+        await handleTidyMode();
+        break;
+      case 'translate':
+        await handleTranslateMode();
+        break;
+      case 'science':
+      case 'math':
+        await handleGenericMode(mode);
+        break;
+      case 'reminder':
+      case '10':
+        await handleReminderMode();
+        break;
+      default:
+        modeResponse.textContent = `⚠️ Unknown mode: ${mode}`;
+    }
+  } catch (err) {
+    console.error('Error in mode handler:', err);
+    modeResponse.textContent = `❌ ${err.message || 'Unexpected error.'}`;
+  } finally {
+    sendBtn.disabled = false;
+  }
+});
+
+
+// ======= VALIDATION HELPERS =======
+function validateMode(mode) {
+  if (!mode) {
+    modeResponse.textContent = '⚠️ Please select a mode.';
+    return false;
+  }
+  return true;
+}
+
+function validateSession() {
+  if (!currentUserId) {
+    modeResponse.textContent = '⚠️ Please enter your name and start first.';
+    return false;
+  }
+  return true;
+}
+
+// ======= SHARED UTILS =======
+async function postMode(payload) {
+  const res = await fetch('/mode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+function markdownToHtml(markdown = '') {
+  // Links: [text](url)
+  let html = markdown.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  // Bold
+  html = html.replace(/(?:\*\*|__)(.*?)\1/g, '<strong>$1</strong>');
+  // Italic
+  html = html.replace(/(?:\*|_)(.*?)\1/g, '<em>$1</em>');
+  // Numbered list items
+  html = html.replace(/^\s*\d+\.\s+(.*)$/gm, '<li>$1</li>');
+
+  // Wrap consecutive <li> in <ol>
+  html = html.replace(/(?:<li>.*?<\/li>\s*)+/gs, match => `<ol>${match}</ol>`);
+
+  // Replace remaining newlines with <br>
+  html = html.replace(/\n/g, '<br>');
+
+  return html;
+}
+
+// ----------- Memory Log function ---------
+async function handleMemoryLogs() {
+  try {
+    modeResponse.textContent = '📂 Loading memory logs...';
+    sendBtn.disabled = true;
+
+    const response = await fetch('/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUserId
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      modeResponse.textContent = `⚠️ ${data.error}`;
+      return;
+    }
+
+    const logs = data.logs;
+
+    if (!logs || logs.length === 0) {
+      modeResponse.textContent = '📭 No memory logs yet.';
+      return;
+    }
+
+    // Render logs nicely
+    modeResponse.innerHTML = `
+      <strong>🧠 Memory Log</strong><br><br>
+      ${logs.map((log, index) => `
+        <div style="margin-bottom:16px;">
+          <strong>${index + 1}. ${log.timestamp}</strong><br>
+          <em>You:</em> ${log.question}<br>
+          <em>WREN:</em> ${log.response}<br>
+          <small>Emotion: ${log.emotion}</small>
+        </div>
+      `).join('')}
+    `;
+  } catch (err) {
+    console.error('Memory log error:', err);
+    modeResponse.textContent = '❌ Failed to load memory logs.';
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+
+// ----------- Tidy Mode function -----------
+async function handleTidyMode(userInput = "") {
+  try {
+    modeResponse.textContent = '🧹 Loading Tidy Mode...';
+    sendBtn.disabled = true;
+
+    const response = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUserId,
+        mode: "tidy",
+        topic: userInput
+      })
+    });
+
+    // 🔑 Read as text, not JSON
+    const data = await response.text();
+
+    // Display the raw string
+    modeResponse.textContent = data;
+
+  } catch (err) {
+    console.error('Tidy Mode error:', err);
+    modeResponse.textContent = '❌ Failed to load Tidy Mode.';
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+// =========== Depression Mode ===========
+async function handleDepressionMode() {
+  // Clear previous error messages
+  modeResponse.querySelectorAll('.error-message').forEach(el => el.remove());
+
+  // Show typing indicator
+  const wrenMessage = document.createElement('p');
+  wrenMessage.classList.add('processing-message');
+  wrenMessage.innerHTML = `<em>⏳ Processing...</em>`;
+  modeResponse.appendChild(wrenMessage);
+  modeResponse.scrollTop = modeResponse.scrollHeight;
+
+  try {
+    // Send request to backend
+    const payload = {
+      userId: currentUserId,
+      mode: 'depression',
+      step: depressionStep,
+      answers: depressionAnswers,
+      answer: null // no input needed, just click Send
+    };
+
+    const data = await postMode(payload);
+    wrenMessage.remove();
+
+    // Update step and answers from backend
+    depressionStep = data.next_step ?? depressionStep;
+    depressionAnswers = data.answers ?? depressionAnswers;
+
+    // Display backend message (questions, encouragement, or final score)
+    if (data.message?.trim()) {
+      const backendMessage = document.createElement('p');
+      backendMessage.innerHTML = data.message.replace(/\n/g, '<br>');
+      modeResponse.appendChild(backendMessage);
+    }
+
+    if (data.done) {
+      // Screening complete
+      depressionStep = 0;
+      depressionAnswers = [];
+
+      // Hide input when finished
+      modeTextInput.style.display = 'none';
+    } else {
+      // Show input box for next click
+      modeTextInput.style.display = 'block';
+      modeTextInput.focus();
+    }
+
+  } catch (err) {
+    wrenMessage.remove();
+    const errorElem = document.createElement('p');
+    errorElem.classList.add('error-message');
+    errorElem.innerHTML = `❌ Error: ${err.message}`;
+    modeResponse.appendChild(errorElem);
+  } finally {
+    modeResponse.scrollTop = modeResponse.scrollHeight;
+  }
+}
+
+// ============== Task reminder =============
+async function handleReminderMode() {
+  const input = modeTextInput.value.trim(); // Get input from the text box
+
+  if (!input) {
+    modeResponse.textContent = '⚠️ Please enter a reminder command.';
+    return;
+  }
+
+  // --- Teen-friendly command mapping ---
+  function mapTeenCommand(cmd) {
+    const command = cmd.toLowerCase().trim();
+    if (command.startsWith('show')) return 'view';
+    if (command.startsWith('due')) return 'check_due';
+    if (command.startsWith('add') || command.startsWith('create')) return 'add';
+    if (command.startsWith('clear') || command.startsWith('delete')) return 'clear';
+    return 'unknown';
+  }
+
+  const teenCommand = mapTeenCommand(input);
+  if (teenCommand === 'unknown') {
+    modeResponse.textContent = '⚠️ Command not recognized. Try "show", "due", "add", or "clear".';
+    return;
+  }
+
+  try {
+    sendBtn.disabled = true;
+    modeResponse.textContent = '⏳ Processing your reminder...';
+
+    // Send the mapped command to backend, keep any extra arguments
+    const args = input.split(' ').slice(1).join(' '); // everything after first word
+    const payload = {
+      userId: currentUserId,
+      mode: 'reminder',
+      input: teenCommand + (args ? ' ' + args : '')
+    };
+
+    const response = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (data && data.success) {
+      // Render textual response
+      modeResponse.innerHTML = `<strong>📝 Reminder Mode:</strong><br>${data.response.replace(/\n/g, '<br>')}`;
+
+      // --- Render tasks/progress bars if available ---
+      if (data.tasks && data.tasks.length > 0) {
+        const container = document.getElementById('reminder-tasks-container');
+        container.innerHTML = ''; // clear previous tasks
+
+        const now = new Date();
+
+        data.tasks.forEach(task => {
+          const taskDiv = document.createElement('div');
+          taskDiv.classList.add('task');
+
+          // Label: include text and due time if exists
+          const label = document.createElement('p');
+          let dueTimeText = '';
+          if (task.scheduled_time) {
+            const dueTime = new Date(task.scheduled_time);
+            const hours = dueTime.getHours().toString().padStart(2, '0');
+            const minutes = dueTime.getMinutes().toString().padStart(2, '0');
+            const day = dueTime.getDate();
+            const month = dueTime.getMonth() + 1; // zero-indexed
+            dueTimeText = ` (Due: ${month}/${day} ${hours}:${minutes})`;
+          }
+          label.textContent = task.text + dueTimeText;
+
+          // Progress bar
+          const progress = document.createElement('div');
+          progress.classList.add('progress-bar');
+
+          const fill = document.createElement('div');
+          fill.classList.add('progress-fill');
+
+          // Calculate percent complete if due_time exists
+          let percent = 0;
+          if (task.scheduled_time) {
+            const startTime = new Date(); // now
+            const endTime = new Date(task.scheduled_time);
+            const totalMs = endTime - startTime;
+            percent = totalMs <= 0 ? 100 : Math.min(Math.floor(((30 * 60 * 1000 - totalMs) / (30 * 60 * 1000)) * 100), 100);
+          }
+          fill.style.width = percent + '%';
+          fill.textContent = percent + '%';
+
+          progress.appendChild(fill);
+          taskDiv.appendChild(label);
+          taskDiv.appendChild(progress);
+          container.appendChild(taskDiv);
+        });
+      }
+      // --- End progress bars ---
+
+    } else if (data && data.error) {
+      modeResponse.textContent = `⚠️ ${data.error}`;
+    } else {
+      modeResponse.textContent = '⚠️ Unexpected response. Try again!';
+    }
+  } catch (err) {
+    console.error('Reminder mode error:', err);
+    modeResponse.textContent = '❌ Failed to process your reminder. Check your network.';
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+
+
+
+
+// ---- Book Recommender mode -----
+async function handleBookMode() {
+  const topic = modeTextInput.value?.trim() || '';
+  const category = bookCategorySelect?.value || '';
+  const choice = document.querySelector('input[name="bookChoice"]:checked')?.value || '3';
+
+  if (!topic && !category) {
+    modeResponse.textContent = '📚 Oops! Pick a category or enter a topic to start your adventure.';
+    return;
+  }
+
+  try {
+    sendBtn.disabled = true;
+    modeResponse.textContent = '✨ Scouting the perfect story for you...';
+
+    const payload = {
+      userId: currentUserId,
+      mode: 'book',
+      topic,
+      category,
+      choice
+    };
+
+    console.log('Sending payload:', payload); // helpful for debugging
+    const data = await postMode(payload);
+
+    let output = '';
+
+    // --- Book Recommendation ---
+    if (data.book && data.book.title) {
+      const bookUrl = data.book.url || '#';
+      output += `📘 <strong>Book Recommendation:</strong><br>`;
+      output += `🌟 <a href="${bookUrl}" target="_blank" rel="noopener noreferrer">"${data.book.title}"</a><br>`;
+      output += `✍️ Author: ${data.book.author}<br><br>`;
+    }
+
+    // --- Audiobook Picks (only show if choice allows it) ---
+    if ((choice === '2' || choice === '3') && Array.isArray(data.audiobooks) && data.audiobooks.length > 0) {
+      output += `🎧 <strong>Audiobook Picks:</strong><br>`;
+      data.audiobooks.forEach((v) => {
+        if (v.title && v.url) {
+          output += `🔹 <a href="${v.url}" target="_blank" rel="noopener noreferrer">${v.title}</a><br>`;
+        }
+      });
+      output += '<br>';
+    }
+
+    if (!output) {
+      output = '😕 No magical stories found this time. Try a different category or topic!';
+    }
+
+    modeResponse.innerHTML = output;
+  } catch (err) {
+    console.error('Book mode error:', err);
+    modeResponse.textContent = `❌ Oops! Something went wrong: ${err.message || 'Failed to fetch recommendations.'}`;
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+// ---- BUDGET ----
+async function handleBudgetMode() {
+  const inputEl = document.getElementById('modeTextInput');
+  const input = inputEl.value.trim();
+
+  if (!input) {
+    modeResponse.textContent = '⚠️ Please enter your input above.';
+    return;
+  }
+
+  const chatContainer = document.getElementById('budgetChatContainer');
+
+  // Show user message
+  appendChat(chatContainer, `You: ${input}`, true);
+  inputEl.value = '';
+
+  // Typing indicator
+  const typingMsg = appendChat(chatContainer, 'WRIN is typing...', false, true);
+
+  const payload = {
+    userId: currentUserId,
+    mode: 'budget',
+    input
+  };
+
+  try {
+    const data = await postMode(payload);
+
+    // Remove typing indicator safely
+    if (typingMsg && typingMsg.parentNode) {
+      typingMsg.parentNode.removeChild(typingMsg);
+    }
+
+    // Backend failure
+    if (!data || data.success === false) {
+      appendChat(chatContainer, `⚠️ ${data?.error || 'Request failed.'}`);
+      return;
+    }
+
+    if (data.simulation) {
+        renderWealthSimulation(chatContainer, data);
+    } else if (data.response) {
+        renderBudgetResponse(chatContainer, data.response, data.suggest);
+    }
+
+    // Update progress bar (if backend sent progress)
+    if (data.goal_progress) {
+      renderGoalProgress(data.goal_progress);
+    }
+
+  } catch (err) {
+    if (typingMsg && typingMsg.parentNode) {
+      typingMsg.parentNode.removeChild(typingMsg);
+    }
+
+    appendChat(chatContainer, `❌ Error: ${err.message}`);
+  }
+}
+
+function linkify(text) {
+  // Matches https:// or https:// links
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, url => `<a href="${url}" target="_blank" style="color:blue;">${url}</a>`);
+}
+
+function appendChat(container, text, isUser = false, italic = false) {
+  const div = document.createElement('div');
+  div.innerHTML = linkify(text); // <-- convert URLs to clickable links
+  div.style.marginBottom = '8px';
+  if (isUser) div.style.fontWeight = 'bold';
+  if (italic) div.style.fontStyle = 'italic';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+
+
+function renderBudgetResponse(container, text, suggest) {
+    const lines = text.split('\n');
+    const menuItems = lines.filter(l => /^\d+\./.test(l.trim()));
+
+    if (menuItems.length >= 2) {
+        // Existing menu rendering code stays the same
+        const headerLines = lines.filter(l => !/^\d+\./.test(l.trim()) && l.trim());
+        if (headerLines.length) {
+            const header = document.createElement('div');
+            header.textContent = headerLines.join(' ');
+            header.style.marginBottom = '8px';
+            container.appendChild(header);
+        }
+
+        const btnWrapper = document.createElement('div');
+        btnWrapper.style.cssText = 'display:flex;flex-direction:column;gap:6px;align-items:center;';
+
+        menuItems.forEach(item => {
+            const num = item.match(/^(\d+)\./)[1];
+            const label = item.replace(/^\d+\.\s*/, '').trim();
+            const btn = document.createElement('button');
+            btn.textContent = label;
+            btn.style.cssText = 'padding:8px 12px;border-radius:8px;border:none;background:#0047AB;color:white;font-weight:bold;cursor:pointer;text-align:left;width:100%;max-width:300px;';
+            btn.onclick = () => {
+                document.getElementById('modeTextInput').value = num;
+                handleBudgetMode();
+            };
+            btnWrapper.appendChild(btn);
+        });
+
+        container.appendChild(btnWrapper);
+
+    } else {
+        // Conversational response
+        const msg = document.createElement('div');
+        msg.style.cssText = 'background:#f0f4ff;border-radius:10px;padding:14px;margin-bottom:10px;font-size:13px;line-height:1.7;max-width:100%;';
+        msg.innerHTML = linkify(markdownToHtml(text));
+        container.appendChild(msg);
+
+        // Suggestion nudge button
+        if (suggest) {
+            const nudgeWrapper = document.createElement('div');
+            nudgeWrapper.style.cssText = 'margin-top:8px;text-align:center;';
+
+            const nudgeText = document.createElement('div');
+            nudgeText.style.cssText = 'font-size:12px;color:#888;margin-bottom:6px;';
+            nudgeText.textContent = suggest.nudge;
+
+            const nudgeBtn = document.createElement('button');
+            nudgeBtn.textContent = suggest.label;
+            nudgeBtn.style.cssText = 'background:#0047AB;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:13px;';
+            nudgeBtn.onclick = () => {
+                document.getElementById('modeTextInput').value = suggest.action;
+                handleBudgetMode();
+            };
+
+            nudgeWrapper.appendChild(nudgeText);
+            nudgeWrapper.appendChild(nudgeBtn);
+            container.appendChild(nudgeWrapper);
+        }
+
+        // Always show options reminder
+        const optionsHint = document.createElement('div');
+        optionsHint.style.cssText = 'font-size:11px;color:#aaa;text-align:center;margin-top:10px;';
+        optionsHint.textContent = 'Type "options" for the full menu or ask me a more personalized question! ';
+        container.appendChild(optionsHint);
+    }
+
+    container.scrollTop = container.scrollHeight;
+}
+
+
+
+// ---- TRANSLATE ----
+document.getElementById('translateBtn')?.addEventListener('click', handleTranslateMode);
+async function handleTranslateMode() {
+  // ---- DOM Elements ----
+  const targetLang = document.getElementById('translateTo')?.value || 'en';
+  const inputText = document.getElementById('textToTranslate')?.value.trim();
+  const outputDiv = document.getElementById('translatedText');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+
+  // ---- Validate Input ----
+  if (!inputText) {
+    outputDiv.textContent = '⚠️ Please enter text to translate.';
+    return;
+  }
+
+  // ---- Show Loading State ----
+  if (loadingIndicator) loadingIndicator.style.display = 'block';
+  outputDiv.textContent = '';
+
+  // ---- Get or Prompt for User ID ----
+  let userId = currentUserId || localStorage.getItem('userId');
+  if (!userId) {
+    userId = prompt('Enter your username:');
+    if (!userId) {
+      outputDiv.textContent = '⚠️ Username is required!';
+      if (loadingIndicator) loadingIndicator.style.display = 'none';
+      return;
+    }
+    localStorage.setItem('userId', userId);
+    currentUserId = userId;
+  }
+
+  // ---- Prepare Payload for Backend ----
+  const payload = {
+    userId: userId,
+    mode: 'translate',
+    user_input: inputText,
+    user_translate: true,          // always translate
+    target_lang: targetLang,       // only the chosen language
+    memory_logger: null,           // optional: include if logging interactions
+    user_name: userId              // optional: track user
+  };
+
+  try {
+    // ---- Send Translation Request ----
+    const response = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    // ---- Display Result ----
+    if (data.success) {
+      outputDiv.textContent = data.translated_input || '✅ Translation complete.';
+    } else {
+      outputDiv.textContent = '❌ Translation failed: ' + (data.error || 'Unknown error.');
+    }
+  } catch (err) {
+    console.error(err);
+    outputDiv.textContent = '❌ Translation failed. Please try again.';
+  } finally {
+    if (loadingIndicator) loadingIndicator.style.display = 'none';
+  }
+}
+
+// ---- Name Recognition Mode with Last Interaction Teaser ----
+async function handleNameRecognition() {
+  const name = modeTextInput.value?.trim();
+
+  if (!name) {
+    modeResponse.textContent = '🙋‍♂️ Please enter your name to get started!';
+    return;
+  }
+
+  try {
+    sendBtn.disabled = true;
+    modeResponse.textContent = '✨ Recognizing you...';
+
+    const payload = {
+      userId: currentUserId,
+      mode: '1',        // corresponds to handle_mode_1 in your backend
+      input: name
+    };
+
+    const data = await postMode(payload);
+
+    if (data?.response) {
+      let displayText = data.response;
+
+      // If last topic is included in the response, highlight it
+      displayText = displayText.replace(
+        /(Last time we worked on .*?\.)/i,
+        '<span style="color:#ffdd57;font-weight:bold;">$1</span>'
+      );
+
+      modeResponse.innerHTML = `
+        🎉 <strong>Welcome, ${name}!</strong><br><br>
+        ${displayText}
+      `;
+
+      // Optional: add a fun emoji depending on time of day
+      const hour = new Date().getHours();
+      let emoji = '🌞';
+      if (hour >= 17) emoji = '🌙';
+      else if (hour >= 12) emoji = '☀️';
+
+      modeResponse.innerHTML += `<br>${emoji} Let's dive in!`;
+    } else {
+      modeResponse.textContent = '😅 Hmm, something went wrong recognizing your name.';
+    }
+
+  } catch (err) {
+    console.error('Name recognition error:', err);
+    modeResponse.textContent = `❌ Error: ${err.message || 'Failed to process your name.'}`;
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+// ---- GENERIC / FALLBACK DEBUG-SAFE ----
+async function handleGenericMode(mode) {
+  // Determine input element based on mode
+  const inputElement =
+    mode === 'math' || mode === 'science'
+      ? document.getElementById('user-input')
+      : document.getElementById('modeTextInput');
+
+  if (!inputElement) {
+    console.error(`[handleGenericMode] Input element not found for mode: ${mode}`);
+    modeResponse.innerHTML = `⚠️ Input field not found for mode: ${mode}`;
+    return;
+  }
+
+  const input = inputElement.value.trim();
+  if (!input) {
+    console.warn(`[handleGenericMode] Empty input for mode: ${mode}`);
+    modeResponse.innerHTML = '⚠️ Please enter something before sending.';
+    return;
+  }
+
+  if (!currentUserId) {
+    console.error('[handleGenericMode] currentUserId is undefined!');
+    modeResponse.innerHTML = '⚠️ User not logged in. Please start a session first.';
+    return;
+  }
+
+  const payload = { userId: currentUserId, mode, input };
+  console.log('[handleGenericMode] Payload being sent:', payload);
+
+  try {
+    const res = await fetch('/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    // --- Separate parsing for math (JSON) vs science (text) ---
+    let data;
+    if (mode === 'science') {
+      // Text-only mode for science
+      const textResponse = await res.text();
+      data = { response: textResponse };
+    } else {
+      // JSON mode for math (or other structured responses)
+      data = await res.json();
+    }
+
+    console.log('[handleGenericMode] Backend response:', data);
+
+    if (!res.ok) {
+      const errorMsg = data?.error || `HTTP ${res.status} ${res.statusText}`;
+      throw new Error(errorMsg);
+    }
+
+    // Get the response string
+    let fullResponse = (data.steps_output || data.response || '').trim();
+
+    // Convert markdown to HTML and show
+    const formattedHtml = markdownToHtml(fullResponse);
+   modeResponse.innerHTML = formattedHtml;
+
+    // Re-render mathjax if needed
+    if (window.MathJax) {
+      MathJax.typesetPromise();
+    }
+
+  } catch (err) {
+    console.error('[handleGenericMode] Error:', err);
+    modeResponse.innerHTML = `⚠️ Error: ${err.message}`;
+  }
+}
+
+// ======= KEEP YOUR EXISTING DOMContentLoaded LOGIC BELOW =======
+document.addEventListener('DOMContentLoaded', () => {
+  // Existing book category fetch, start session, etc.
+  const bookCategoryDropdown = document.getElementById('bookCategory');
+  if (bookCategoryDropdown) {
+    fetch('/api/book-categories')
+      .then(response => response.json())
+      .then(categories => {
+        bookCategoryDropdown.innerHTML = '<option value="">-- Select a Category --</option>';
+        categories.forEach(category => {
+          const option = document.createElement('option');
+          option.value = category.toLowerCase();
+          option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+          bookCategoryDropdown.appendChild(option);
+        });
+      })
+      .catch(error => {
+        console.error('Failed to load book categories:', error);
+        bookCategoryDropdown.innerHTML = '<option value="">⚠️ Failed to load</option>';
+      });
+  }
+
+  const startSessionBtn = document.getElementById('startSessionBtn');
+  const usernameInput = document.getElementById('usernameInput');
+
+  if (startSessionBtn && usernameInput) {
+    startSessionBtn.addEventListener('click', async () => {
+      const username = usernameInput.value.trim();
+      if (!username) {
+        alert('Please enter your name.');
+        return;
+      }
+
+      const userId = await startSession(username);
+      if (userId) {
+        alert(`Session started for ${username}`);
+        localStorage.setItem('userId', userId);
+      }
+    });
+  }
+});
+
+
+</script>
+
+<style>
+
+
+
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      background: white;
+      color: #333;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .dark-mode {
+      background-color: #121212;
+      color: #eee;
+    }
+
+    .fade-out {
+      opacity: 0;
+      transition: opacity 1s ease-out;
+    }
+
+    .fade-in {
+      opacity: 1;
+      transition: opacity 1s ease-in;
+    }
+
+    #introScreen {
+      text-align: center;
+      margin-top: 100px;
+      font-size: 1.5rem;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input[type="text"], select {
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      width: 100%;
+      max-width: 300px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 1rem;
+      cursor: pointer;
+      background-color: #1e88e5;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    a {
+      color: #1e88e5;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+</style>
+</body>

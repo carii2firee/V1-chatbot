@@ -925,7 +925,7 @@
 
 <script>
 
-    let currentUserId = null;
+    let currentUserId = localStorage.getItem('wrin_user_id');
     let userInput = '';
     let depressionStep = 0;
     let depressionAnswers = [];
@@ -1014,6 +1014,24 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!wheelItems.length) return console.warn("No wheel items found.");
 
   const sendBtn = document.getElementById('sendBtn');
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const sb = document.getElementById('startBtn');
+        const sendb = document.getElementById('sendBtn');
+
+        if (sb && !sb.disabled && sb.offsetParent !== null) {
+            sb.click();
+        } else if (sendb && !sendb.disabled && sendb.offsetParent !== null) {
+            sendb.click();
+        }
+    }
+});
+
+
+
+
   sendBtn.disabled = true; // disable send until a mode is selected
 
   function highlightSelectedWheelItem(selectedItem) {
@@ -1152,11 +1170,25 @@ document.querySelectorAll('.wheel-option').forEach(option => {
         document.getElementById('feedback-section').style.display = 'none';
 
         if (mode === 'budget') {
-            startFinanceModule(); // Your existing finance logic
-        } else if (mode === 'feedback') {
-            // Show feedback form
-            document.getElementById('feedback-section').style.display = 'block';
-        }
+    const chatContainer = document.getElementById('budgetChatContainer');
+    chatContainer.style.display = 'flex';
+    chatContainer.style.flexDirection = 'column';
+    chatContainer.style.alignItems = 'center';
+    chatContainer.innerHTML = '';
+    document.getElementById('modeTextInputGroup').style.display = 'block';
+
+    // Welcome screen
+    const welcome = document.createElement('div');
+    welcome.innerHTML = `
+      <div style="font-size:22px">💰</div>
+      <div style="font-weight:900;font-size:16px;color:#0047AB;">Welcome to the Finance Module</div>
+      <div style="margin-top:16px;background:#f0f4ff;border-radius:10px;padding:12px;font-size:13px;line-height:1.8;">
+        💬 <strong>Hey scholar!</strong><br>
+        Don't be alarmed — risk is how growth happens. 💪
+      </div>
+    `;
+    chatContainer.appendChild(welcome);
+}
     });
 });
 
@@ -1652,7 +1684,27 @@ function simulate(starting, monthly, rate, years) {
 }
 
 
+ // Function that allows for the typewriter affect to occur -----
+function typewriterEffect(container, text, speed = 15) {
+    return new Promise((resolve) => {
+        const msg = document.createElement('div');
+        msg.style.cssText = 'background:#f0f4ff;border-radius:10px;padding:14px;margin-bottom:10px;font-size:13px;line-height:1.7;max-width:100%;';
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
 
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                msg.innerHTML = linkify(text.substring(0, i + 1));
+                i++;
+                container.scrollTop = container.scrollHeight;
+            } else {
+                clearInterval(interval);
+                resolve();
+            }
+        }, speed);
+    });
+}
 
 
 
@@ -1758,52 +1810,50 @@ function simulate(starting, monthly, rate, years) {
 
 
     case 'budget':
-  chatContainer.style.display = 'flex';
-  chatContainer.style.flexDirection = 'column';
-  chatContainer.style.alignItems = 'center';
-  chatContainer.innerHTML = '';
-  modeTextInputGroup.style.display = 'block';
+    chatContainer.style.display = 'flex';
+    chatContainer.style.flexDirection = 'column';
+    chatContainer.style.alignItems = 'center';
+    chatContainer.innerHTML = '';
+    modeTextInputGroup.style.display = 'block';
 
-  // Show welcome immediately
-  const welcome = document.createElement('div');
-  welcome.style.cssText = 'text-align:center;padding:16px;font-size:14px;line-height:1.8;';
-  welcome.innerHTML = `
-    <div style="font-size:22px">💰</div>
-    <div style="font-weight:900;font-size:16px;color:#0047AB;">Welcome to the Finance Module</div>
-    <div style="margin-top:8px;color:#555;font-size:13px;">Your personal financial coach — ask anything or dive right in.</div>
-    <div style="margin-top:16px;background:#f0f4ff;border-radius:10px;padding:12px;font-size:13px;line-height:1.8;">
-      💬 <strong>Hello there scholar!:</strong><br>
-      I'm going to ask you a question so that we can build a foundation!<br>
-      "Don't be alarmed, risks is how growth happens"<br>
-    </div>
-  `;
-  chatContainer.appendChild(welcome);
+    const welcome = document.createElement('div');
+    welcome.style.cssText = 'text-align:center;padding:20px 16px;font-size:14px;line-height:1.8;';
+    welcome.innerHTML = `
+        <div style="font-size:28px;margin-bottom:6px;">💰</div>
+        <div style="font-weight:900;font-size:17px;color:#0047AB;letter-spacing:0.5px;">Welcome to the Finance Module</div>
+        <div style="margin-top:6px;color:#777;font-size:12px;font-style:italic;">Powered by WRIN — your personal financial coach</div>
+        <div style="margin-top:16px;background:linear-gradient(135deg,#eef4ff,#f8fbff);border-left:4px solid #0047AB;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.9;text-align:left;">
+            💬 <strong>Hey scholar!</strong><br>
+            I'm going to ask you one quick question so we can build your financial foundation together.<br><br>
+            <span style="color:#0047AB;font-weight:bold;">Don't be alarmed — taking a risk is exactly how growth happens.</span> 💪
+        </div>
+    `;
+    chatContainer.appendChild(welcome);
 
-  // Simultaneously fire backend to get first prompt
-  const typingMsg = appendChat(chatContainer, 'WREN is typing...', false, true);
+    const typingMsg = appendChat(chatContainer, '✨ WRIN is thinking...', false, true);
 
-  fetch('/mode', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: currentUserId, mode: 'budget', input: '' }),
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (typingMsg && typingMsg.parentNode) {
-      typingMsg.parentNode.removeChild(typingMsg);
-    }
-    if (data.simulation) {
-      renderWealthSimulation(chatContainer, data);
-    } else if (data.response) {
-      renderBudgetResponse(chatContainer, data.response, data.suggest);
-    }
-    if (data.goal_progress) {
-      renderGoalProgress(data.goal_progress);
-    }
-  });
+    fetch('/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, mode: 'budget', input: '' }),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (typingMsg && typingMsg.parentNode) {
+            typingMsg.parentNode.removeChild(typingMsg);
+        }
+        if (data.simulation) {
+            renderWealthSimulation(chatContainer, data);
+        } else if (data.response && data.response.trim()) {
+            renderBudgetResponse(chatContainer, data.response, data.suggest);
+        }
+        if (data.goal_progress) {
+            renderGoalProgress(data.goal_progress);
+        }
+    });
 
-  modeInstructions.textContent = 'Ask anything or type "options" for the menu.';
-  break;
+    modeInstructions.textContent = 'Ask me anything about finances or type "options" for the menu.';
+    break;
 
     case '1': // Name Recognition
       modeTextInputGroup.style.display = 'block';
@@ -1895,61 +1945,40 @@ function simulate(starting, monthly, rate, years) {
   }
 });
 
+
+const reminderTasksContainer = document.getElementById('reminder-tasks-container');
+
+
     sendBtn.addEventListener('click', async () => {
-  // 🔹 Clear the response immediately
-  modeResponse.textContent = ''; // or use innerHTML = '' if you had HTML
-  // Optional: also clear other UI containers if needed
-  const reminderTasksContainer = document.getElementById('reminder-tasks-container');
+  modeResponse.textContent = '';
   if (reminderTasksContainer) reminderTasksContainer.innerHTML = '';
 
-  // 🔴 FIRST: special button modes
   if (sendBtnMode === 'clearLogs') {
     await clearMemoryLogs();
     return;
   }
 
-  // 🟢 NORMAL SEND FLOW
   const mode = window.currentSelectedMode;
   if (!validateMode(mode)) return;
   if (!validateSession()) return;
 
   try {
     sendBtn.disabled = true;
-    // Show processing text after clearing old content
-    modeResponse.textContent = '⏳ Processing...';
+    if (mode !== 'budget') modeResponse.textContent = '⏳ Processing...';
 
     switch (mode) {
-      case '1':
-        await handleNameRecognition();
-        break;
-      case 'book':
-        await handleBookMode();
-        break;
-      case 'budget':
-        await handleBudgetMode();
-        break;
-      case 'logs':
-        await handleMemoryLogs();
-        break;
-      case 'depression':
-        await handleDepressionMode();
-        break;
-      case 'tidy':
-        await handleTidyMode();
-        break;
-      case 'translate':
-        await handleTranslateMode();
-        break;
+      case '1':        await handleNameRecognition(); break;
+      case 'book':     await handleBookMode(); break;
+      case 'budget':   await handleBudgetMode(); break;
+      case 'logs':     await handleMemoryLogs(); break;
+      case 'depression': await handleDepressionMode(); break;
+      case 'tidy':     await handleTidyMode(); break;
+      case 'translate': await handleTranslateMode(); break;
       case 'science':
-      case 'math':
-        await handleGenericMode(mode);
-        break;
+      case 'math':     await handleGenericMode(mode); break;
       case 'reminder':
-      case '10':
-        await handleReminderMode();
-        break;
-      default:
-        modeResponse.textContent = `⚠️ Unknown mode: ${mode}`;
+      case '10':       await handleReminderMode(); break;
+      default:         modeResponse.textContent = `⚠️ Unknown mode: ${mode}`;
     }
   } catch (err) {
     console.error('Error in mode handler:', err);
@@ -2328,15 +2357,14 @@ async function handleBudgetMode() {
   const inputEl = document.getElementById('modeTextInput');
   const input = inputEl.value.trim();
 
-  if (!input) {
-    modeResponse.textContent = '⚠️ Please enter your input above.';
-    return;
-  }
+  if (!input) return;
 
   const chatContainer = document.getElementById('budgetChatContainer');
 
   // Show user message
-  appendChat(chatContainer, `You: ${input}`, true);
+  if (isNaN(input.trim())) {
+    appendChat(chatContainer, `You: ${input}`, true);
+}
   inputEl.value = '';
 
   // Typing indicator
@@ -2406,7 +2434,6 @@ function renderBudgetResponse(container, text, suggest) {
     const menuItems = lines.filter(l => /^\d+\./.test(l.trim()));
 
     if (menuItems.length >= 2) {
-        // Existing menu rendering code stays the same
         const headerLines = lines.filter(l => !/^\d+\./.test(l.trim()) && l.trim());
         if (headerLines.length) {
             const header = document.createElement('div');
@@ -2434,44 +2461,37 @@ function renderBudgetResponse(container, text, suggest) {
         container.appendChild(btnWrapper);
 
     } else {
-        // Conversational response
-        const msg = document.createElement('div');
-        msg.style.cssText = 'background:#f0f4ff;border-radius:10px;padding:14px;margin-bottom:10px;font-size:13px;line-height:1.7;max-width:100%;';
-        msg.innerHTML = linkify(markdownToHtml(text));
-        container.appendChild(msg);
+        typewriterEffect(container, text).then(() => {
+            if (suggest) {
+                const nudgeWrapper = document.createElement('div');
+                nudgeWrapper.style.cssText = 'margin-top:8px;text-align:center;';
 
-        // Suggestion nudge button
-        if (suggest) {
-            const nudgeWrapper = document.createElement('div');
-            nudgeWrapper.style.cssText = 'margin-top:8px;text-align:center;';
+                const nudgeText = document.createElement('div');
+                nudgeText.style.cssText = 'font-size:12px;color:#888;margin-bottom:6px;';
+                nudgeText.textContent = suggest.nudge;
 
-            const nudgeText = document.createElement('div');
-            nudgeText.style.cssText = 'font-size:12px;color:#888;margin-bottom:6px;';
-            nudgeText.textContent = suggest.nudge;
+                const nudgeBtn = document.createElement('button');
+                nudgeBtn.textContent = suggest.label;
+                nudgeBtn.style.cssText = 'background:#0047AB;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:13px;';
+                nudgeBtn.onclick = () => {
+                    document.getElementById('modeTextInput').value = suggest.action;
+                    handleBudgetMode();
+                };
 
-            const nudgeBtn = document.createElement('button');
-            nudgeBtn.textContent = suggest.label;
-            nudgeBtn.style.cssText = 'background:#0047AB;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:13px;';
-            nudgeBtn.onclick = () => {
-                document.getElementById('modeTextInput').value = suggest.action;
-                handleBudgetMode();
-            };
+                nudgeWrapper.appendChild(nudgeText);
+                nudgeWrapper.appendChild(nudgeBtn);
+                container.appendChild(nudgeWrapper);
+            }
 
-            nudgeWrapper.appendChild(nudgeText);
-            nudgeWrapper.appendChild(nudgeBtn);
-            container.appendChild(nudgeWrapper);
-        }
+            const optionsHint = document.createElement('div');
+            optionsHint.style.cssText = 'font-size:11px;color:#aaa;text-align:center;margin-top:10px;';
+            optionsHint.textContent = 'Type "options" for the full menu or ask me anything!';
+            container.appendChild(optionsHint);
 
-        // Always show options reminder
-        const optionsHint = document.createElement('div');
-        optionsHint.style.cssText = 'font-size:11px;color:#aaa;text-align:center;margin-top:10px;';
-        optionsHint.textContent = 'Type "options" for the full menu or ask me a more personalized question! ';
-        container.appendChild(optionsHint);
+            container.scrollTop = container.scrollHeight;
+        });
     }
-
-    container.scrollTop = container.scrollHeight;
 }
-
 
 
 // ---- TRANSLATE ----
@@ -2562,6 +2582,8 @@ async function handleNameRecognition() {
 
     const data = await postMode(payload);
 
+    console.log("RAW BACKEND DATA:", JSON.stringify(data));
+
     if (data?.response) {
       let displayText = data.response;
 
@@ -2617,10 +2639,9 @@ async function handleGenericMode(mode) {
   }
 
   if (!currentUserId) {
-    console.error('[handleGenericMode] currentUserId is undefined!');
-    modeResponse.innerHTML = '⚠️ User not logged in. Please start a session first.';
-    return;
-  }
+    currentUserId = 'user_' + Math.random().toString(36).substring(2, 9);
+    localStorage.setItem('wrin_user_id', currentUserId);
+}
 
   const payload = { userId: currentUserId, mode, input };
   console.log('[handleGenericMode] Payload being sent:', payload);
